@@ -1,0 +1,15 @@
+.git/
+libs/
+linux/
+obj/
+src/a.out
+src/*.pdb
+src/server/win32_resource.res
+vs/
+!vs/*.sln
+!vs/*.vcxproj
+!vs/*.vcxproj.filters
+!vs/bbcommon*.props
+windows/
+!windows/bb.exe
+!windows/bb.pdb

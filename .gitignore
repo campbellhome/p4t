@@ -1,0 +1,33 @@
+# output files
+/linux/
+/windows/
+/libs/
+/obj/
+
+# old intermediate files
+/src/.vs/
+/src/x64/
+/src/*.db
+/src/*.opendb
+
+# intermediate files
+/src/server/win32_resource.res
+/src/server/win32_resource.aps
+/src/vc*.pdb
+/vs/bb.opensdf
+/vs/bb.sdf
+/vs/bb.*.suo
+/vs/.vs/
+/vs/*.db
+/vs/*.opendb
+/vs/nodeid
+/vs/state
+/ve/enc_temp_folder/
+a.out
+*.vcxproj.user
+vc*.pdb
+
+# vim temp files
+*~
+*.swp
+

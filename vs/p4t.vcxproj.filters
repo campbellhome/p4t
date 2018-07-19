@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\p4t\main.cpp">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\app.cpp">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\config.c">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\ui_preferences.cpp">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\imgui_utils.cpp">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\keys.c">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\parson\parson.c">
+      <Filter>ThirdParty\Parson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\json_generated.c">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\sb_json.c">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\sdict_json.c">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\p4.c">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\ui_output.cpp">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\py_parser.c">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\p4t\wrap_imgui.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\app.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\config.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\ui_preferences.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\imgui_utils.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\keys.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\wrap_shellscalingapi.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\parson\parson.h">
+      <Filter>ThirdParty\Parson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\json_generated.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\p4.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\ui_output.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\py_parser.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\thirdparty\imgui\LICENSE">
+      <Filter>ThirdParty\ImGui</Filter>
+    </None>
+    <None Include="..\src\thirdparty\imgui\README.md">
+      <Filter>ThirdParty\ImGui</Filter>
+    </None>
+    <None Include="..\.gitignore">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\.p4ignore">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\README.md">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\src\thirdparty\parson\LICENSE">
+      <Filter>ThirdParty\Parson</Filter>
+    </None>
+    <None Include="..\src\thirdparty\parson\README.md">
+      <Filter>ThirdParty\Parson</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Config">
+      <UniqueIdentifier>{de621544-dd8a-442d-9d0b-86d9eb9b6ad1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{bdb5ed12-ef7b-4bf0-93ef-32ddc9b3d49a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\p4t">
+      <UniqueIdentifier>{3c93cae6-1614-4d91-94c9-d38bb1eb128a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{bf1a8c57-7949-4216-8527-b8038f12505f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\ImGui">
+      <UniqueIdentifier>{8f7e618c-8e45-45cc-93a3-e5809aa2acf4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\Parson">
+      <UniqueIdentifier>{6174e9e3-43dd-4e35-a9b0-f0cc5e86b1ff}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\src\p4t\win32_resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\src\p4t\p4t.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\todo.txt">
+      <Filter>Config</Filter>
+    </Text>
+  </ItemGroup>
+</Project>

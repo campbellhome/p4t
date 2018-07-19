@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{30E52D92-D0BF-4857-9CF6-BEE209F788CE}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>bb</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <OutDir>..\windows\</OutDir>
+    <IntDir>..\obj\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>$(ProjectName)_d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+      <AdditionalIncludeDirectories>..\src\;..\src\common\</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Shcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PreBuildEvent>
+      <Command>$(ProjectDir)..\obj\$(PlatformToolset)\p4t_preproc\$(Platform)\$(Configuration)\p4t_preproc.exe</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Running p4t_preproc</Message>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>..\src\;..\src\common\</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Shcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PreBuildEvent>
+      <Command>$(ProjectDir)..\obj\$(PlatformToolset)\p4t_preproc\$(Platform)\$(Configuration)\p4t_preproc.exe</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Running p4t_preproc</Message>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\p4t\app.h" />
+    <ClInclude Include="..\src\p4t\config.h" />
+    <ClInclude Include="..\src\p4t\imgui_utils.h" />
+    <ClInclude Include="..\src\p4t\json_generated.h" />
+    <ClInclude Include="..\src\p4t\keys.h" />
+    <ClInclude Include="..\src\p4t\p4.h" />
+    <ClInclude Include="..\src\p4t\py_parser.h" />
+    <ClInclude Include="..\src\p4t\ui_output.h" />
+    <ClInclude Include="..\src\p4t\ui_preferences.h" />
+    <ClInclude Include="..\src\p4t\wrap_imgui.h" />
+    <ClInclude Include="..\src\p4t\wrap_shellscalingapi.h" />
+    <ClInclude Include="..\src\thirdparty\parson\parson.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.gitignore" />
+    <None Include="..\.p4ignore" />
+    <None Include="..\README.md" />
+    <None Include="..\src\thirdparty\imgui\LICENSE" />
+    <None Include="..\src\thirdparty\imgui\README.md" />
+    <None Include="..\src\thirdparty\parson\LICENSE" />
+    <None Include="..\src\thirdparty\parson\README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\p4t\app.cpp" />
+    <ClCompile Include="..\src\p4t\config.c" />
+    <ClCompile Include="..\src\p4t\imgui_utils.cpp" />
+    <ClCompile Include="..\src\p4t\json_generated.c" />
+    <ClCompile Include="..\src\p4t\keys.c" />
+    <ClCompile Include="..\src\p4t\main.cpp" />
+    <ClCompile Include="..\src\p4t\p4.c" />
+    <ClCompile Include="..\src\p4t\py_parser.c" />
+    <ClCompile Include="..\src\p4t\sb_json.c" />
+    <ClCompile Include="..\src\p4t\sdict_json.c" />
+    <ClCompile Include="..\src\p4t\ui_output.cpp" />
+    <ClCompile Include="..\src\p4t\ui_preferences.cpp" />
+    <ClCompile Include="..\src\thirdparty\parson\parson.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Level3</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level3</WarningLevel>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\src\p4t\win32_resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\src\p4t\p4t.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="imgui_lib.vcxproj">
+      <Project>{B7C212E2-07F8-4CD1-9D51-26F1D106AC90}</Project>
+    </ProjectReference>
+    <ProjectReference Include="p4t_common_lib.vcxproj">
+      <Project>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\todo.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <Import Project="..\..\bb\vs\bbcommon_internals.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(BBCommonPropsDir)..\src\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>
