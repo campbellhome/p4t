@@ -114,6 +114,7 @@
     <ClInclude Include="..\src\p4t\keys.h" />
     <ClInclude Include="..\src\p4t\p4.h" />
     <ClInclude Include="..\src\p4t\py_parser.h" />
+    <ClInclude Include="..\src\p4t\ui_changelist.h" />
     <ClInclude Include="..\src\p4t\ui_output.h" />
     <ClInclude Include="..\src\p4t\ui_preferences.h" />
     <ClInclude Include="..\src\p4t\wrap_imgui.h" />
@@ -140,6 +141,7 @@
     <ClCompile Include="..\src\p4t\py_parser.c" />
     <ClCompile Include="..\src\p4t\sb_json.c" />
     <ClCompile Include="..\src\p4t\sdict_json.c" />
+    <ClCompile Include="..\src\p4t\ui_changelist.cpp" />
     <ClCompile Include="..\src\p4t\ui_output.cpp" />
     <ClCompile Include="..\src\p4t\ui_preferences.cpp" />
     <ClCompile Include="..\src\thirdparty\parson\parson.c">

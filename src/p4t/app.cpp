@@ -9,6 +9,7 @@
 #include "output.h"
 #include "p4.h"
 #include "tokenize.h"
+#include "ui_changelist.h"
 #include "ui_output.h"
 #include "ui_preferences.h"
 #include "va.h"
@@ -165,6 +166,7 @@ void App_Update()
 	Preferences_Update(&g_config);
 	ImGui::PopStyleColor();
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(30, 30, 30, 255)); // VS Dark Text Window
+	UIChangelist_Update();
 	UIOutput_Update();
 	ImGui::PopStyleColor(3);
 }
