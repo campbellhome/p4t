@@ -21,6 +21,8 @@ void p4_tick(void);
 // per-file: depotFile0, action0, type0, rev0, fileSize0, digest0
 sdict_t *p4_find_changelist(u32 cl);
 
+sdict_t *p4_get_info(void);
+
 //////////////////////////////////////////////////////////////////////////
 
 typedef enum tag_p4Operation {

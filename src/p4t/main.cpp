@@ -161,10 +161,12 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_SETFOCUS:
 		g_hasFocus = true;
 		break;
-	case WM_KILLFOCUS:
+	case WM_KILLFOCUS: {
 		g_hasFocus = false;
 		key_clear_all();
-		break;
+		auto &keysDown = ImGui::GetIO().KeysDown;
+		memset(&keysDown, 0, sizeof(keysDown));
+	} break;
 	case WM_MOUSEMOVE:
 		App_RequestRender();
 		if(!g_trackingMouse) {

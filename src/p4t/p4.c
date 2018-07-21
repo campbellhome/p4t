@@ -131,6 +131,11 @@ sdict_t *p4_find_changelist(u32 cl)
 	return NULL;
 }
 
+sdict_t *p4_get_info(void)
+{
+	return &p4.info;
+}
+
 static void p4_store_info(p4Process *proc)
 {
 	if(proc->dicts.count == 1) {

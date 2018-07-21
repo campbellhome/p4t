@@ -113,6 +113,26 @@ static void UIChangelist_CopySelectedFilesToClipboard(uiChangelistFiles *files, 
 	sb_reset(&sb);
 }
 
+static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files)
+{
+	sdict_t *sd = p4_get_info();
+	const char *dir = sdict_find_safe(sd, "clientRoot");
+
+	sb_t sb = {};
+	for(u32 i = 0; i < sd->count; ++i)
+	{
+		sb_va(&sb, "[%s] %s\r\n", sb_get(&sd->data[i].key), sb_get(&sd->data[i].value));
+	}
+	ImGui::SetClipboardText(sb_get(&sb));
+	sb_reset(&sb);
+
+	for(u32 i = 0; i < files->count; ++i) {
+		//uiChangelistFile *file = files->data + i;
+	}
+
+	process_spawn(dir, "notepad.exe", kProcessSpawn_OneShot);
+}
+
 static void UIChangelist_Logs_ClearSelection(uiChangelistFiles *files)
 {
 	files->lastClickIndex = ~0U;
@@ -318,6 +338,8 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files)
 			UIChangelist_Logs_SelectAll(files);
 		} else if(ImGui::IsKeyPressed('C') && ImGui::GetIO().KeyCtrl) {
 			UIChangelist_CopySelectedFilesToClipboard(files, ImGui::GetIO().KeyShift);
+		} else if(ImGui::IsKeyPressed('D') && ImGui::GetIO().KeyCtrl) {
+			UIChangelist_DiffSelectedFiles(files);
 		} else if(ImGui::IsKeyPressed(ImGui::GetIO().KeyMap[ImGuiKey_Escape])) {
 			UIChangelist_Logs_ClearSelection(files);
 			files->active = false;
