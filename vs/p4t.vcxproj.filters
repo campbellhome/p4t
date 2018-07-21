@@ -107,6 +107,9 @@
     <None Include="..\src\thirdparty\parson\README.md">
       <Filter>ThirdParty\Parson</Filter>
     </None>
+    <None Include="C:\Users\Matt\AppData\Local\p4t\p4t_preferences.json">
+      <Filter>Config</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Config">

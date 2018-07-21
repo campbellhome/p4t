@@ -3,10 +3,25 @@
 
 #pragma once
 
+#include "sdict.h"
+
+typedef struct tag_uiChangelistFile {
+	char *str[5];
+	bool selected;
+	u8 pad[7];
+} uiChangelistFile;
+
+typedef struct tag_uiChangelistFiles {
+	u32 count;
+	u32 allocated;
+	uiChangelistFile *data;
+} uiChangelistFiles;
+
 // for use in other UIs
-void UIChangelist_DrawSingleLine(void);
-void UIChangelist_DrawInformation(void);
-void UIChangelist_DrawFiles(void);
+void UIChangelist_DrawSingleLine(sdict_t *cl);
+void UIChangelist_DrawInformation(sdict_t *cl);
+void UIChangelist_DrawFiles(uiChangelistFiles *files);
 
 // for standalone CL viewer
+void UIChangelist_Shutdown(void);
 void UIChangelist_Update(void);

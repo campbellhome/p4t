@@ -100,6 +100,7 @@ bool App_Init(const char *cmdline)
 
 void App_Shutdown()
 {
+	UIChangelist_Shutdown();
 	p4_shutdown();
 	Preferences_Reset();
 	config_write(&g_config);

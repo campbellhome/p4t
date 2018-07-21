@@ -30,6 +30,7 @@ extern std::vector< enum_s > g_enums;
 struct struct_member_s {
 	std::string name;
 	std::string val;
+	std::string arr;
 	std::string typeStr;
 	std::vector< lexer_token > typeTokens;
 	bool parseempty = false;

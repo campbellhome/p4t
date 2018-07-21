@@ -97,6 +97,7 @@
     <ClCompile Include="..\src\common\sb.c" />
     <ClCompile Include="..\src\common\sdict.c" />
     <ClCompile Include="..\src\common\span.c" />
+    <ClCompile Include="..\src\common\str.c" />
     <ClCompile Include="..\src\common\tokenize.c" />
     <ClCompile Include="..\src\common\va.c" />
     <ClCompile Include="..\src\common\win32_file_utils.c" />
@@ -114,6 +115,7 @@
     <ClInclude Include="..\src\common\sb.h" />
     <ClInclude Include="..\src\common\sdict.h" />
     <ClInclude Include="..\src\common\span.h" />
+    <ClInclude Include="..\src\common\str.h" />
     <ClInclude Include="..\src\common\time_utils.h" />
     <ClInclude Include="..\src\common\tokenize.h" />
     <ClInclude Include="..\src\common\va.h" />

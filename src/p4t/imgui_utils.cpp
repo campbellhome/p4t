@@ -3,6 +3,8 @@
 
 #include "imgui_utils.h"
 
+#include "sb.h"
+
 namespace ImGui
 {
 
@@ -85,6 +87,27 @@ namespace ImGui
 		} else {
 			return kVerticalScroll_None;
 		}
+	}
+
+	void SelectableTextUnformattedMultiline(const char *label, const char *text, ImVec2 size)
+	{
+		InputTextMultiline(label, const_cast< char * >(text), strlen(text) + 1, size, ImGuiInputTextFlags_ReadOnly);
+	}
+
+	void SelectableTextUnformatted(const char *label, const char *text)
+	{
+		InputText(label, const_cast< char * >(text), strlen(text) + 1, ImGuiInputTextFlags_ReadOnly);
+	}
+
+	void SelectableText(const char *label, const char *fmt, ...)
+	{
+		sb_t sb = { 0 };
+		va_list args;
+		va_start(args, fmt);
+		sb_va_list(&sb, fmt, args);
+		SelectableTextUnformatted(label, sb_get(&sb));
+		va_end(args);
+		sb_reset(&sb);
 	}
 
 } // namespace ImGui

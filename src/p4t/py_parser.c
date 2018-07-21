@@ -69,7 +69,7 @@ b32 py_parser_tick(pyParser *parser, sdicts *dicts)
 				++parser->consumed;
 				parser->state = kParser_Idle;
 				ret = true;
-				output_log("finished dict w/%u entries", parser->dict.count);
+				//output_log("finished dict w/%u entries", parser->dict.count);
 				if(bba_add_noclear(*dicts, 1)) {
 					bba_last(*dicts) = parser->dict;
 					memset(&parser->dict, 0, sizeof(parser->dict));
@@ -100,8 +100,7 @@ b32 py_parser_tick(pyParser *parser, sdicts *dicts)
 										sb_append_range(&entry.key, key, key + keyLen);
 										sb_init(&entry.value);
 										sb_append_range(&entry.value, val, val + valLen);
-										output_log("parsed key/value: %s = %s\n",
-										           sb_get(&entry.key), sb_get(&entry.value));
+										output_log("parsed key/value: %s = %s\n", sb_get(&entry.key), sb_get(&entry.value));
 										sdict_add(&parser->dict, &entry);
 									}
 								}
@@ -109,9 +108,16 @@ b32 py_parser_tick(pyParser *parser, sdicts *dicts)
 								++parser->consumed;
 								u32 n;
 								if(parser_peek_u32(parser, &n)) {
-									parser_advance(parser, 4);
-									ret = true;
-									output_log("ignored int key/value: %.*s = %d\n", keyLen, key, n);
+									if(parser_advance(parser, 4)) {
+										ret = true;
+										sdictEntry_t entry;
+										sb_init(&entry.key);
+										sb_append_range(&entry.key, key, key + keyLen);
+										sb_init(&entry.value);
+										sb_va(&entry.value, "%u", n);
+										output_log("parsed key/value: %s = %s\n", sb_get(&entry.key), sb_get(&entry.value));
+										sdict_add(&parser->dict, &entry);
+									}
 								}
 							} else {
 								parser_error(parser, va("saw char 0x%2.2x instead of dict val", c));

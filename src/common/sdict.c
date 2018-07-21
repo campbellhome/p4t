@@ -29,6 +29,33 @@ void sdict_reset(sdict_t *sd)
 	bba_free(*sd);
 }
 
+void sdict_move(sdict_t *target, sdict_t *src)
+{
+	sdict_reset(target);
+	memcpy(target, src, sizeof(*src));
+	memset(src, 0, sizeof(*src));
+}
+
+const char *sdict_find(sdict_t *sd, const char *key)
+{
+	for(u32 i = 0; i < sd->count; ++i) {
+		sdictEntry_t *e = sd->data + i;
+		if(!strcmp(key, sb_get(&e->key))) {
+			return sb_get(&e->value);
+		}
+	}
+	return NULL;
+}
+
+const char *sdict_find_safe(sdict_t *sd, const char *key)
+{
+	const char *result = sdict_find(sd, key);
+	if(!result) {
+		result = "";
+	}
+	return result;
+}
+
 b32 sdict_grow(sdict_t *sd, u32 len)
 {
 	u32 originalCount = sd->count;
@@ -74,8 +101,8 @@ b32 sdict_remove(sdict_t *sd, const char *key)
 
 int sdict_compare(const void *_a, const void *_b)
 {
-	sdictEntry_t *a = (sdictEntry_t*)_a;
-	sdictEntry_t *b = (sdictEntry_t*)_b;
+	sdictEntry_t *a = (sdictEntry_t *)_a;
+	sdictEntry_t *b = (sdictEntry_t *)_b;
 	return strcmp(sb_get(&a->key), sb_get(&b->key));
 }
 

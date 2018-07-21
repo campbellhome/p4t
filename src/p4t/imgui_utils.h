@@ -33,4 +33,8 @@ namespace ImGui
 	};
 	verticalScrollDir_e GetVerticalScrollDir();
 
+	void SelectableTextUnformattedMultiline(const char *label, const char *text, ImVec2 size = ImVec2(0.0f, 0.0f));
+	void SelectableTextUnformatted(const char *label, const char *text);
+	void SelectableText(const char *label, const char *fmt, ...);
+
 } // namespace ImGui

@@ -129,6 +129,7 @@
     <None Include="..\src\thirdparty\imgui\README.md" />
     <None Include="..\src\thirdparty\parson\LICENSE" />
     <None Include="..\src\thirdparty\parson\README.md" />
+    <None Include="C:\Users\Matt\AppData\Local\p4t\p4t_preferences.json" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\p4t\app.cpp" />

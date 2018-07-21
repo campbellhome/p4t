@@ -87,6 +87,7 @@ static void GenerateJsonSource(sb_t *srcDir)
 	sb_append(s, "// clang-format off\n");
 	sb_append(s, "\n");
 	sb_append(s, "#include \"json_generated.h\"\n");
+	sb_append(s, "#include \"va.h\"\n");
 	sb_append(s, "\n");
 	for(const std::string &str : g_paths) {
 		sb_va(s, "#include \"%s\"\n", str.c_str());
@@ -105,19 +106,38 @@ static void GenerateJsonSource(sb_t *srcDir)
 		sb_append(s, "\t\tJSON_Object *obj = json_value_get_object(src);\n");
 		sb_append(s, "\t\tif(obj) {\n");
 		for(const struct_member_s &m : o.members) {
-			switch(ClassifyMemberJson(m)) {
-			case kMemberJsonObject:
-				sb_va(s, "\t\t\tdst.%s = json_deserialize_%s(json_object_get_value(obj, \"%s\"));\n",
-				      m.name.c_str(), m.typeStr.c_str(), m.name.c_str());
-				break;
-			case kMemberJsonNumber:
-				sb_va(s, "\t\t\tdst.%s = (%s)json_object_get_number(obj, \"%s\");\n",
-				      m.name.c_str(), m.typeStr.c_str(), m.name.c_str());
-				break;
-			case kMemberJsonBoolean:
-				sb_va(s, "\t\t\tdst.%s = json_object_get_boolean(obj, \"%s\");\n",
-				      m.name.c_str(), m.name.c_str());
-				break;
+			if(m.arr.empty()) {
+				switch(ClassifyMemberJson(m)) {
+				case kMemberJsonObject:
+					sb_va(s, "\t\t\tdst.%s = json_deserialize_%s(json_object_get_value(obj, \"%s\"));\n",
+					      m.name.c_str(), m.typeStr.c_str(), m.name.c_str());
+					break;
+				case kMemberJsonNumber:
+					sb_va(s, "\t\t\tdst.%s = (%s)json_object_get_number(obj, \"%s\");\n",
+					      m.name.c_str(), m.typeStr.c_str(), m.name.c_str());
+					break;
+				case kMemberJsonBoolean:
+					sb_va(s, "\t\t\tdst.%s = json_object_get_boolean(obj, \"%s\");\n",
+					      m.name.c_str(), m.name.c_str());
+					break;
+				}
+			} else {
+				sb_va(s, "\t\t\tfor(u32 i = 0; i < BB_ARRAYSIZE(dst.%s); ++i) {\n", m.name.c_str());
+				switch(ClassifyMemberJson(m)) {
+				case kMemberJsonObject:
+					sb_va(s, "\t\t\t\tdst.%s[i] = json_deserialize_%s(json_object_get_value(obj, va(\"%s.%%u\", i));\n",
+					      m.name.c_str(), m.typeStr.c_str(), m.name.c_str());
+					break;
+				case kMemberJsonNumber:
+					sb_va(s, "\t\t\t\tdst.%s[i] = (%s)json_object_get_number(obj, va(\"%s.%%u\", i));\n",
+					      m.name.c_str(), m.typeStr.c_str(), m.name.c_str());
+					break;
+				case kMemberJsonBoolean:
+					sb_va(s, "\t\t\t\tdst.%s[i] = json_object_get_boolean(obj, va(\"%s.%%u\", i));\n",
+					      m.name.c_str(), m.name.c_str());
+					break;
+				}
+				sb_append(s, "\t\t\t}\n");
 			}
 		}
 		sb_append(s, "\t\t}\n");
@@ -137,19 +157,38 @@ static void GenerateJsonSource(sb_t *srcDir)
 		sb_append(s, "\tJSON_Object *obj = json_value_get_object(val);\n");
 		sb_append(s, "\tif(obj) {\n");
 		for(const struct_member_s &m : o.members) {
-			switch(ClassifyMemberJson(m)) {
-			case kMemberJsonObject:
-				sb_va(s, "\t\tjson_object_set_value(obj, \"%s\", json_serialize_%s(&src->%s));\n",
-				      m.name.c_str(), m.typeStr.c_str(), m.name.c_str());
-				break;
-			case kMemberJsonNumber:
-				sb_va(s, "\t\tjson_object_set_number(obj, \"%s\", src->%s);\n",
-				      m.name.c_str(), m.name.c_str());
-				break;
-			case kMemberJsonBoolean:
-				sb_va(s, "\t\tjson_object_set_boolean(obj, \"%s\", src->%s);\n",
-				      m.name.c_str(), m.name.c_str());
-				break;
+			if(m.arr.empty()) {
+				switch(ClassifyMemberJson(m)) {
+				case kMemberJsonObject:
+					sb_va(s, "\t\tjson_object_set_value(obj, \"%s\", json_serialize_%s(&src->%s));\n",
+					      m.name.c_str(), m.typeStr.c_str(), m.name.c_str());
+					break;
+				case kMemberJsonNumber:
+					sb_va(s, "\t\tjson_object_set_number(obj, \"%s\", src->%s);\n",
+					      m.name.c_str(), m.name.c_str());
+					break;
+				case kMemberJsonBoolean:
+					sb_va(s, "\t\tjson_object_set_boolean(obj, \"%s\", src->%s);\n",
+					      m.name.c_str(), m.name.c_str());
+					break;
+				}
+			} else {
+				sb_va(s, "\t\tfor(u32 i = 0; i < BB_ARRAYSIZE(src->%s); ++i) {\n", m.name.c_str());
+				switch(ClassifyMemberJson(m)) {
+				case kMemberJsonObject:
+					sb_va(s, "\t\t\tjson_object_set_value(obj, va(\"%s.%%u\", i), json_serialize_%s(&src->%s[i]));\n",
+					      m.name.c_str(), m.typeStr.c_str(), m.name.c_str());
+					break;
+				case kMemberJsonNumber:
+					sb_va(s, "\t\t\tjson_object_set_number(obj, va(\"%s.%%u\", i), src->%s[i]);\n",
+					      m.name.c_str(), m.name.c_str());
+					break;
+				case kMemberJsonBoolean:
+					sb_va(s, "\t\t\tjson_object_set_boolean(obj, va(\"%s.%%u\", i), src->%s[i]);\n",
+					      m.name.c_str(), m.name.c_str());
+					break;
+				}
+				sb_append(s, "\t\t}\n");
 			}
 		}
 		sb_append(s, "\t}\n");

@@ -140,6 +140,7 @@ bool mm_lexer_parse_struct(lexer *lex, bool autovalidate, bool headerOnly, bool 
 			std::vector< lexer_token > tokens;
 			tokens.push_back(tok);
 			size_t equalsIndex = 0;
+			size_t bracketIndex = 0;
 			while(1) {
 				if(!lexer_read(lex, &tok)) {
 					BB_ERROR("mm_lexer::parse_struct", "Failed to parse '%s': out of data on line %u", s.name.c_str(), lex->line);
@@ -153,12 +154,22 @@ bool mm_lexer_parse_struct(lexer *lex, bool autovalidate, bool headerOnly, bool 
 							equalsIndex = tokens.size();
 						}
 					}
+					if(tok.type == LEXER_TOKEN_PUNCTUATION && tok.subtype == LEXER_PUNCT_BRACKET_OPEN) {
+						if(!bracketIndex) {
+							bracketIndex = tokens.size();
+						}
+					}
 					tokens.push_back(tok);
 				}
 			}
 
 			if(tokens.size() < 2)
 				return false;
+
+			if(equalsIndex > 0 && bracketIndex > 0) {
+				BB_ERROR("mm_lexer::parse_struct", "Failed to parse '%s': [] and = cannot be combined on line %u", s.name.c_str(), lex->line);
+				return false;
+			}
 
 			if(equalsIndex > 1) {
 				lexer_token name = tokens[equalsIndex - 1];
@@ -185,6 +196,34 @@ bool mm_lexer_parse_struct(lexer *lex, bool autovalidate, bool headerOnly, bool 
 				m.name = lexer_token_string(name);
 				m.val = valstr[0] == ' ' ? valstr.c_str() + 1 : valstr;
 				for(auto i = 0; i < equalsIndex - 1; ++i) {
+					m.typeTokens.push_back(tokens[i]);
+				}
+				s.members.push_back(m);
+			} else if(bracketIndex > 1) {
+				lexer_token name = tokens[bracketIndex - 1];
+				if(name.type != LEXER_TOKEN_NAME) {
+					BB_ERROR("mm_lexer::parse_struct", "Failed to parse '%s': expected name on line %u", s.name.c_str(), lex->line);
+					return false;
+				}
+
+				std::string typestr;
+				for(auto i = 0; i < bracketIndex - 1; ++i) {
+					typestr += " ";
+					typestr += lexer_token_string(tokens[i]);
+				}
+
+				std::string valstr;
+				for(auto i = bracketIndex + 1; i < tokens.size() - 1; ++i) {
+					valstr += " ";
+					valstr += lexer_token_string(tokens[i]);
+				}
+
+				//BB_LOG("mm_lexer", "member %s:\n  type:%s\n  val:%s", lexer_token_string(name), typestr.c_str(), valstr.c_str());
+
+				struct_member_s m;
+				m.name = lexer_token_string(name);
+				m.arr = valstr[0] == ' ' ? valstr.c_str() + 1 : valstr;
+				for(auto i = 0; i < bracketIndex - 1; ++i) {
 					m.typeTokens.push_back(tokens[i]);
 				}
 				s.members.push_back(m);
@@ -251,10 +290,13 @@ bool mm_lexer_parse_struct(lexer *lex, bool autovalidate, bool headerOnly, bool 
 			pt = it;
 		}
 
-		if(m.val.empty()) {
-			sb_va(&sb, "  %s %s\n", m.typeStr.c_str(), m.name.c_str());
-		} else {
+		if(!m.val.empty()) {
 			sb_va(&sb, "  %s %s = %s\n", m.typeStr.c_str(), m.name.c_str(), m.val.c_str());
+		} else if(!m.arr.empty()) {
+			sb_va(&sb, "  %s %s[%s]\n", m.typeStr.c_str(), m.name.c_str(), m.arr.c_str());
+		}
+		else {
+			sb_va(&sb, "  %s %s\n", m.typeStr.c_str(), m.name.c_str());
 		}
 	}
 	g_structs.push_back(s);

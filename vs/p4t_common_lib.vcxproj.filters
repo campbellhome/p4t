@@ -48,6 +48,9 @@
     <ClCompile Include="..\src\common\output.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\common\str.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\common\file_utils.h">
@@ -90,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\output.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\str.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

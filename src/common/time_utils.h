@@ -9,6 +9,7 @@ double Time_GetCurrentTime(void);
 void Time_StartNewFrame(void);
 float Time_GetDT(void);
 u64 Time_GetFrameNumber(void);
+const char *Time_StringFromEpochTime(u32 epochTime);
 
 #if defined(__cplusplus)
 }

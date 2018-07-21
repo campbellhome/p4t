@@ -6,6 +6,7 @@
 // clang-format off
 
 #include "json_generated.h"
+#include "va.h"
 
 #include "config.h"
 #include "sb.h"
@@ -76,6 +77,23 @@ fontConfig_t json_deserialize_fontConfig_t(JSON_Value *src)
 	return dst;
 }
 
+uiChangelistConfig json_deserialize_uiChangelistConfig(JSON_Value *src)
+{
+	uiChangelistConfig dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.columnWidth); ++i) {
+				dst.columnWidth[i] = (float)json_object_get_number(obj, va("columnWidth.%u", i));
+			}
+			dst.sortDescending = json_object_get_boolean(obj, "sortDescending");
+			dst.sortColumn = (u32)json_object_get_number(obj, "sortColumn");
+		}
+	}
+	return dst;
+}
+
 config_t json_deserialize_config_t(JSON_Value *src)
 {
 	config_t dst;
@@ -85,6 +103,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 		if(obj) {
 			dst.logFontConfig = json_deserialize_fontConfig_t(json_object_get_value(obj, "logFontConfig"));
 			dst.uiFontConfig = json_deserialize_fontConfig_t(json_object_get_value(obj, "uiFontConfig"));
+			dst.uiChangelist = json_deserialize_uiChangelistConfig(json_object_get_value(obj, "uiChangelist"));
 			dst.wp = json_deserialize_WINDOWPLACEMENT(json_object_get_value(obj, "wp"));
 			dst.autoTileViews = json_object_get_boolean(obj, "autoTileViews");
 			dst.alternateRowBackground = json_object_get_boolean(obj, "alternateRowBackground");
@@ -96,7 +115,6 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.doubleClickSeconds = (float)json_object_get_number(obj, "doubleClickSeconds");
 			dst.dpiScale = (float)json_object_get_number(obj, "dpiScale");
 			dst.version = (u32)json_object_get_number(obj, "version");
-			dst.pad = (u32)json_object_get_number(obj, "pad");
 		}
 	}
 	return dst;
@@ -169,6 +187,20 @@ JSON_Value *json_serialize_fontConfig_t(const fontConfig_t *src)
 	return val;
 }
 
+JSON_Value *json_serialize_uiChangelistConfig(const uiChangelistConfig *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->columnWidth); ++i) {
+			json_object_set_number(obj, va("columnWidth.%u", i), src->columnWidth[i]);
+		}
+		json_object_set_boolean(obj, "sortDescending", src->sortDescending);
+		json_object_set_number(obj, "sortColumn", src->sortColumn);
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_config_t(const config_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -176,6 +208,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 	if(obj) {
 		json_object_set_value(obj, "logFontConfig", json_serialize_fontConfig_t(&src->logFontConfig));
 		json_object_set_value(obj, "uiFontConfig", json_serialize_fontConfig_t(&src->uiFontConfig));
+		json_object_set_value(obj, "uiChangelist", json_serialize_uiChangelistConfig(&src->uiChangelist));
 		json_object_set_value(obj, "wp", json_serialize_WINDOWPLACEMENT(&src->wp));
 		json_object_set_boolean(obj, "autoTileViews", src->autoTileViews);
 		json_object_set_boolean(obj, "alternateRowBackground", src->alternateRowBackground);
@@ -187,7 +220,6 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_number(obj, "doubleClickSeconds", src->doubleClickSeconds);
 		json_object_set_number(obj, "dpiScale", src->dpiScale);
 		json_object_set_number(obj, "version", src->version);
-		json_object_set_number(obj, "pad", src->pad);
 	}
 	return val;
 }
