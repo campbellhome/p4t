@@ -15,6 +15,8 @@ typedef struct tag_uiChangelistFiles {
 	u32 count;
 	u32 allocated;
 	uiChangelistFile *data;
+	u32 lastClickIndex;
+	b32 active;
 } uiChangelistFiles;
 
 // for use in other UIs
