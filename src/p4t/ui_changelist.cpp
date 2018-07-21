@@ -187,9 +187,26 @@ void UIChangelist_DrawInformation(sdict_t *cl)
 	ImGui::SameLine();
 	UIChangelist_DrawInformationColumn(cl, fullWidth * 0.5f, s_changeFields[1]);
 
+	float scale = (g_config.dpiScale <= 0.0f) ? 1.0f : g_config.dpiScale;
+	if(g_config.uiChangelist.descHeight <= 0.0f) {
+		g_config.uiChangelist.descHeight = (ImGui::GetTextLineHeight() * 8.0f + ImGui::GetStyle().FramePadding.y * 2.0f) / scale;
+	}
+
 	ImGui::AlignFirstTextHeightToWidgets();
 	ImGui::TextUnformatted("Description:");
-	ImGui::SelectableTextUnformattedMultiline("###desc", sdict_find_safe(cl, "desc"), ImVec2(fullWidth, 0.0f));
+	ImGui::SelectableTextUnformattedMultiline("###desc", sdict_find_safe(cl, "desc"), ImVec2(fullWidth, g_config.uiChangelist.descHeight * scale));
+
+	const float normal = 0.4f;
+	const float hovered = 0.8f;
+	const float active = 0.8f;
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
+	ImGui::Button("-###sepDesc", ImVec2(ImGui::GetContentRegionAvailWidth(), 2.0f * g_config.dpiScale));
+	ImGui::PopStyleColor(3);
+	if(ImGui::IsItemActive()) {
+		g_config.uiChangelist.descHeight += ImGui::GetIO().MouseDelta.y / scale;
+	}
 }
 
 static void UIChangelist_DrawFileColumn(float offset, float width, const char *text, const char *end = nullptr)
@@ -278,7 +295,6 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files)
 			if(ImGui::IsItemClicked()) {
 				UIChangelist_HandleClick(files, i);
 			}
-			//scrollDir = ImGui::GetVerticalScrollDir();
 		}
 		if(ImGui::IsItemActive()) {
 			anyActive = true;
@@ -357,28 +373,49 @@ static void UIChangelist_PopulateFiles(sdict_t *cl)
 
 void UIChangelist_Update(void)
 {
-	if(!requestedChangelist) {
-		ImGui::TextUnformatted("Changelist:");
-		ImGui::SameLine();
-		static char inputChangelist[64];
-		ImGui::SetKeyboardFocusHere();
-		if(ImGui::InputText("###CL", inputChangelist, sizeof(inputChangelist), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_EnterReturnsTrue)) {
-			s32 testChangelist = strtos32(inputChangelist);
-			if(testChangelist > 0) {
-				requestedChangelist = (u32)testChangelist;
-				p4_describe_changelist(requestedChangelist);
+	float startY = ImGui::GetItemsLineHeightWithSpacing();
+	ImGuiIO &io = ImGui::GetIO();
+	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiSetCond_Always);
+	ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
+
+	bool open = true;
+	if(ImGui::Begin("ViewChangelist", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
+		if(!requestedChangelist) {
+			ImGui::TextUnformatted("Changelist:");
+			ImGui::SameLine();
+			static bool s_focused = false;
+			if(!s_focused) {
+				ImGui::SetKeyboardFocusHere();
+			}
+			if(ImGui::IsWindowFocused()) {
+				s_focused = true;
+			}
+			static char inputChangelist[64];
+			if(ImGui::InputText("###CL", inputChangelist, sizeof(inputChangelist), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_EnterReturnsTrue)) {
+				s32 testChangelist = strtos32(inputChangelist);
+				if(testChangelist > 0) {
+					requestedChangelist = (u32)testChangelist;
+					p4_describe_changelist(requestedChangelist);
+				}
+			}
+		}
+
+		sdict_t *cl = p4_find_changelist(requestedChangelist);
+		if(cl) {
+			if(!displayedChangelist) {
+				displayedChangelist = requestedChangelist;
+				UIChangelist_PopulateFiles(cl);
+			}
+			UIChangelist_DrawInformation(cl);
+			UIChangelist_DrawFiles(&s_files);
+			ImGui::Separator();
+			if(ImGui::TreeNode("Raw Key/Values")) {
+				for(u32 i = 0; i < cl->count; ++i) {
+					ImGui::Text("[%s] = %s", sb_get(&cl->data[i].key), sb_get(&cl->data[i].value));
+				}
+				ImGui::TreePop();
 			}
 		}
 	}
-
-	sdict_t *cl = p4_find_changelist(requestedChangelist);
-	if(cl) {
-		if(!displayedChangelist) {
-			displayedChangelist = requestedChangelist;
-			UIChangelist_PopulateFiles(cl);
-		}
-		UIChangelist_DrawInformation(cl);
-		UIChangelist_DrawFiles(&s_files);
-		ImGui::Separator();
-	}
+	ImGui::End();
 }

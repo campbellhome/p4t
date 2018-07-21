@@ -84,11 +84,15 @@ uiChangelistConfig json_deserialize_uiChangelistConfig(JSON_Value *src)
 	if(src) {
 		JSON_Object *obj = json_value_get_object(src);
 		if(obj) {
+			dst.descHeight = (float)json_object_get_number(obj, "descHeight");
 			for(u32 i = 0; i < BB_ARRAYSIZE(dst.columnWidth); ++i) {
 				dst.columnWidth[i] = (float)json_object_get_number(obj, va("columnWidth.%u", i));
 			}
 			dst.sortDescending = json_object_get_boolean(obj, "sortDescending");
 			dst.sortColumn = (u32)json_object_get_number(obj, "sortColumn");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
 		}
 	}
 	return dst;
@@ -192,11 +196,15 @@ JSON_Value *json_serialize_uiChangelistConfig(const uiChangelistConfig *src)
 	JSON_Value *val = json_value_init_object();
 	JSON_Object *obj = json_value_get_object(val);
 	if(obj) {
+		json_object_set_number(obj, "descHeight", src->descHeight);
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->columnWidth); ++i) {
 			json_object_set_number(obj, va("columnWidth.%u", i), src->columnWidth[i]);
 		}
 		json_object_set_boolean(obj, "sortDescending", src->sortDescending);
 		json_object_set_number(obj, "sortColumn", src->sortColumn);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
 	}
 	return val;
 }

@@ -46,9 +46,11 @@ AUTOJSON typedef struct fontConfig_s {
 } fontConfig_t;
 
 AUTOJSON typedef struct tag_uiChangelistConfig {
+	float descHeight;
 	float columnWidth[5];
 	b32 sortDescending;
 	u32 sortColumn;
+	u8 pad[4];
 } uiChangelistConfig;
 
 AUTOJSON typedef struct config_s {
