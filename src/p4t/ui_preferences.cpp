@@ -79,8 +79,14 @@ void Preferences_Update(config_t *config)
 				Text("Path:");
 				SameLine();
 				PushItemWidth(300.0f * g_config.dpiScale);
-				//ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
-				//InputText("##path", s_preferencesConfig->uiFontConfig.path, sizeof(s_preferencesConfig->uiFontConfig.path), flags);
+				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
+				char buffer[1024];
+				bb_strncpy(buffer, sb_get(&s_preferencesConfig->uiFontConfig.path), sizeof(buffer));
+				InputText("##path", buffer, sizeof(buffer), flags);
+				if(strcmp(buffer, sb_get(&s_preferencesConfig->uiFontConfig.path))) {
+					s_preferencesConfig->uiFontConfig.path.count = 0;
+					sb_append(&s_preferencesConfig->uiFontConfig.path, buffer);
+				}
 				PopItemWidth();
 			}
 			PopID();
@@ -99,8 +105,14 @@ void Preferences_Update(config_t *config)
 				Text("Path:");
 				SameLine();
 				PushItemWidth(300.0f * g_config.dpiScale);
-				//ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
-				//InputText("##path", s_preferencesConfig->logFontConfig.path, sizeof(s_preferencesConfig->logFontConfig.path), flags);
+				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
+				char buffer[1024];
+				bb_strncpy(buffer, sb_get(&s_preferencesConfig->logFontConfig.path), sizeof(buffer));
+				InputText("##path", buffer, sizeof(buffer), flags);
+				if(strcmp(buffer, sb_get(&s_preferencesConfig->logFontConfig.path))) {
+					s_preferencesConfig->logFontConfig.path.count = 0;
+					sb_append(&s_preferencesConfig->logFontConfig.path, buffer);
+				}
 				PopItemWidth();
 			}
 			PopID();
