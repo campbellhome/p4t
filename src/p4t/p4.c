@@ -11,6 +11,7 @@
 #include "py_parser.h"
 #include "span.h"
 #include "str.h"
+#include "tasks.h"
 #include "tokenize.h"
 #include "va.h"
 
@@ -220,8 +221,70 @@ static b32 p4_track_process(p4Operation op, processSpawnResult_t spawn)
 	return ret;
 }
 
+typedef struct tag_task_process {
+	task header;
+	process_t *process;
+	sb_t dir;
+	sb_t cmdline;
+	sb_t stdout;
+	sb_t stderr;
+	processSpawnType_t spawnType;
+	u8 pad[4];
+} task_process;
+
+void task_process_tick(task *_t)
+{
+	task_process *t = (task_process *)_t;
+	processTickResult_t res = process_tick(t->process);
+	if(res.stdoutIO.nBytes) {
+		bba_add_array(t->stdout, res.stdoutIO.buffer, res.stdoutIO.nBytes);
+	}
+	if(res.stderrIO.nBytes) {
+		bba_add_array(t->stderr, res.stderrIO.buffer, res.stderrIO.nBytes);
+	}
+	if(res.done) {
+		task_set_state(_t, t->stderr.count ? kTaskState_Failed : kTaskState_Succeeded);
+	}
+	task_tick_subtasks(_t);
+}
+
+void task_process_statechanged(task *_t)
+{
+	task_process *t = (task_process *)_t;
+	if(t->header.state == kTaskState_Running) {
+		t->process = process_spawn(sb_get(&t->dir), sb_get(&t->cmdline), t->spawnType).process;
+		if(!t->process) {
+			task_set_state(_t, kTaskState_Failed);
+		}
+	}
+}
+
+void task_process_reset(task *_t)
+{
+	task_process *t = (task_process *)_t;
+	sb_reset(&t->dir);
+	sb_reset(&t->cmdline);
+	sb_reset(&t->stdout);
+	sb_reset(&t->stderr);
+	if(t->process) {
+		process_free(t->process);
+		t->process = NULL;
+	}
+}
+
 void p4_info(void)
 {
+	task_process *p = malloc(sizeof(task_process));
+	memset(p, 0, sizeof(*p));
+	p->header.tick = task_process_tick;
+	p->header.stateChanged = task_process_statechanged;
+	p->header.reset = task_process_reset;
+	p->header.autoReset = true;
+	sb_append(&p->dir, p4_dir());
+	sb_va(&p->cmdline, "\"%s\" -G info", p4_exe());
+	p->spawnType = kProcessSpawn_Tracked;
+	task_queue(&p->header);
+
 	p4_track_process(kP4Op_Info, process_spawn(p4_dir(), va("\"%s\" -G info", p4_exe()), kProcessSpawn_Tracked));
 	//p4_track_process(kP4Op_Info, process_spawn(p4_dir(), va("\"%s\" -G describe 1", p4_exe()), kProcessSpawn_Tracked));
 	//p4_track_process(kP4Op_Info, process_spawn(p4_dir(), va("\"%s\" -G describe 4", p4_exe()), kProcessSpawn_Tracked));

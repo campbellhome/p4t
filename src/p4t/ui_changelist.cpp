@@ -400,12 +400,19 @@ void UIChangelist_Update(void)
 	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiSetCond_Always);
 	ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
 
+	static bool s_focused = false;
+
+	if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
+		requestedChangelist = 0;
+		s_focused = false;
+		UIChangelist_FreeFiles();
+	}
+
 	bool open = true;
 	if(ImGui::Begin("ViewChangelist", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
 		if(!requestedChangelist) {
 			ImGui::TextUnformatted("Changelist:");
 			ImGui::SameLine();
-			static bool s_focused = false;
 			if(!s_focused) {
 				ImGui::SetKeyboardFocusHere();
 			}

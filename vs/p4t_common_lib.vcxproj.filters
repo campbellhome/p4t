@@ -51,6 +51,9 @@
     <ClCompile Include="..\src\common\str.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\common\tasks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\common\file_utils.h">
@@ -96,6 +99,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\str.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\tasks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

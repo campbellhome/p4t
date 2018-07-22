@@ -12,6 +12,7 @@
 #include "ui_changelist.h"
 #include "ui_output.h"
 #include "ui_preferences.h"
+#include "tasks.h"
 #include "va.h"
 #include "win32_resource.h"
 #include "wrap_shellscalingapi.h"
@@ -92,6 +93,7 @@ bool App_Init(const char *cmdline)
 	g_config.autoTileViews = 1;
 	g_config.autoDeleteAfterDays = 0;
 
+	tasks_startup();
 	process_init();
 	p4_init();
 
@@ -102,6 +104,7 @@ void App_Shutdown()
 {
 	UIChangelist_Shutdown();
 	p4_shutdown();
+	tasks_shutdown();
 	Preferences_Reset();
 	config_write(&g_config);
 	config_reset(&g_config);
@@ -132,6 +135,7 @@ extern "C" bool App_GetAndClearRequestRender(void)
 
 void App_Update()
 {
+	tasks_tick();
 	p4_tick();
 	BB_TICK();
 	if(ImGui::BeginMainMenuBar()) {

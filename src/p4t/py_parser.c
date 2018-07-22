@@ -69,7 +69,7 @@ b32 py_parser_tick(pyParser *parser, sdicts *dicts)
 				++parser->consumed;
 				parser->state = kParser_Idle;
 				ret = true;
-				//output_log("finished dict w/%u entries", parser->dict.count);
+				output_log("finished dict w/%u entries", parser->dict.count);
 				if(bba_add_noclear(*dicts, 1)) {
 					bba_last(*dicts) = parser->dict;
 					memset(&parser->dict, 0, sizeof(parser->dict));
