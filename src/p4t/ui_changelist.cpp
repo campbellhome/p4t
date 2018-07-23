@@ -246,6 +246,14 @@ static b32 UIChangelist_DrawFileColumnHeader(uiChangelistFiles *files, const cha
 	}
 	float scale = (g_config.dpiScale <= 0.0f) ? 1.0f : g_config.dpiScale;
 	float startOffset = ImGui::GetCursorPosX();
+
+	const float normal = 0.4f;
+	const float hovered = 0.8f;
+	const float active = 0.8f;
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
+
 	if(ImGui::Button(va("###%s", text), ImVec2(*width * scale, 0.0f))) {
 		if(config->sortColumn == columnIndex) {
 			config->sortDescending = !config->sortDescending;
@@ -262,20 +270,15 @@ static b32 UIChangelist_DrawFileColumnHeader(uiChangelistFiles *files, const cha
 	UIChangelist_DrawFileColumn(startOffset + ImGui::GetStyle().ItemInnerSpacing.x, *width * scale - itemPad, columnText);
 	ImGui::SameLine(endOffset);
 	if(!last) {
-		const float normal = 0.4f;
-		const float hovered = 0.8f;
-		const float active = 0.8f;
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
 		ImGui::Button(va("|###sep%s", text), ImVec2(2.0f * g_config.dpiScale, 0.0f));
-		ImGui::PopStyleColor(3);
 		if(ImGui::IsItemActive()) {
 			anyActive = true;
 			*width += ImGui::GetIO().MouseDelta.x / scale;
 		}
 		ImGui::SameLine();
 	}
+
+	ImGui::PopStyleColor(3);
 
 	*offset = ImGui::GetCursorPosX();
 	return anyActive;
