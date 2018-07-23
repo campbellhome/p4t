@@ -19,6 +19,7 @@ typedef struct tag_task_p4 {
 
 void task_p4_tick(task *);
 void task_p4_reset(task *);
+task p4_task_create(Task_StateChanged *statechanged, const char *dir, const char *cmdlineFmt, ...);
 task *p4_task_queue(Task_StateChanged *statechanged, const char *dir, const char *cmdlineFmt, ...);
 
 #if defined(__cplusplus)

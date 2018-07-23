@@ -135,9 +135,8 @@ extern "C" bool App_GetAndClearRequestRender(void)
 
 void App_Update()
 {
-	tasks_tick();
-	p4_tick();
 	BB_TICK();
+	tasks_tick();
 	if(ImGui::BeginMainMenuBar()) {
 		if(ImGui::BeginMenu("File")) {
 			if(ImGui::MenuItem("Exit")) {

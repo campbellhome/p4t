@@ -12,7 +12,6 @@ extern "C" {
 #endif
 
 typedef struct tag_task_process {
-	task header;
 	process_t *process;
 	sb_t dir;
 	sb_t cmdline;

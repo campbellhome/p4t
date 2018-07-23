@@ -7,7 +7,7 @@
 
 void task_process_tick(task *_t)
 {
-	task_process *t = (task_process *)_t;
+	task_process *t = (task_process *)_t->userdata;
 	processTickResult_t res = process_tick(t->process);
 	if(res.stdoutIO.nBytes) {
 		bba_add_array(t->stdoutBuf, res.stdoutIO.buffer, res.stdoutIO.nBytes);
@@ -23,8 +23,8 @@ void task_process_tick(task *_t)
 
 void task_process_statechanged(task *_t)
 {
-	task_process *t = (task_process *)_t;
-	if(t->header.state == kTaskState_Running) {
+	task_process *t = (task_process *)_t->userdata;
+	if(_t->state == kTaskState_Running) {
 		t->process = process_spawn(sb_get(&t->dir), sb_get(&t->cmdline), t->spawnType).process;
 		if(!t->process) {
 			task_set_state(_t, kTaskState_Failed);
@@ -34,7 +34,7 @@ void task_process_statechanged(task *_t)
 
 void task_process_reset(task *_t)
 {
-	task_process *t = (task_process *)_t;
+	task_process *t = (task_process *)_t->userdata;
 	sb_reset(&t->dir);
 	sb_reset(&t->cmdline);
 	sb_reset(&t->stdoutBuf);
@@ -43,4 +43,6 @@ void task_process_reset(task *_t)
 		process_free(t->process);
 		t->process = NULL;
 	}
+	free(_t->userdata);
+	_t->userdata = NULL;
 }

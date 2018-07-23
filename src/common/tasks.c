@@ -16,9 +16,8 @@ static void task_reset(task *t)
 		t->reset(t);
 	}
 	for(u32 i = 0; i < t->subtasks.count; ++i) {
-		task *s = t->subtasks.data[i];
+		task *s = t->subtasks.data + i;
 		task_reset(s);
-		free(s);
 	}
 	bba_free(t->subtasks);
 }
@@ -30,9 +29,8 @@ void tasks_startup(void)
 void tasks_shutdown(void)
 {
 	for(u32 i = 0; i < s_tasks.count; ++i) {
-		task *t = s_tasks.data[i];
+		task *t = s_tasks.data + i;
 		task_reset(t);
-		free(t);
 	}
 	bba_free(s_tasks);
 }
@@ -41,7 +39,7 @@ static void tasks_setid(task *t)
 {
 	t->id = ++s_lastId;
 	for(u32 i = 0; i < t->subtasks.count; ++i) {
-		tasks_setid(t->subtasks.data[i]);
+		tasks_setid(t->subtasks.data + i);
 	}
 }
 
@@ -56,20 +54,19 @@ void task_set_state(task *t, taskState state)
 	}
 }
 
-task *task_queue(task *t)
+task *task_queue(task t)
 {
-	if(t->tick) {
+	if(t.tick) {
 		if(bba_add_noclear(s_tasks, 1)) {
-			tasks_setid(t);
+			tasks_setid(&t);
 			bba_last(s_tasks) = t;
-			BB_LOG("tasks", "queued task %u", t->id);
-			return t;
+			BB_LOG("tasks", "queued task %u", t.id);
+			return &bba_last(s_tasks);
 		}
 	}
 
 	BB_ERROR("tasks", "failed to queue task");
-	task_reset(t);
-	free(t);
+	task_reset(&t);
 	return NULL;
 }
 
@@ -78,7 +75,7 @@ void task_tick_subtasks(task *t)
 	if(t->subtasks.count) {
 		u32 states[kTaskState_Count] = { 0 };
 		for(u32 i = 0; i < t->subtasks.count; ++i) {
-			task *s = t->subtasks.data[i];
+			task *s = t->subtasks.data + i;
 			if(!task_started(s)) {
 				if(t->parallel || !states[kTaskState_Running]) {
 					task_set_state(s, kTaskState_Running);
@@ -106,11 +103,10 @@ void tasks_tick(void)
 {
 	u32 active = 0;
 	for(u32 i = s_tasks.count - 1; i < s_tasks.count; --i) {
-		task *t = s_tasks.data[i];
+		task *t = s_tasks.data + i;
 		if(task_started(t)) {
 			if(task_done(t)) {
 				task_reset(t);
-				free(t);
 				bba_erase(s_tasks, i);
 			} else {
 				t->tick(t);
@@ -121,7 +117,7 @@ void tasks_tick(void)
 
 	if(!active) {
 		for(u32 i = 0; i < s_tasks.count; ++i) {
-			task *t = s_tasks.data[i];
+			task *t = s_tasks.data + i;
 			if(!task_started(t)) {
 				task_set_state(t, kTaskState_Running);
 			}

@@ -103,21 +103,6 @@ sdict_t *p4_get_info(void)
 	return &p4.info;
 }
 
-void p4_tick(void)
-{
-}
-
-//task_process *p = malloc(sizeof(task_process));
-//memset(p, 0, sizeof(*p));
-//p->header.tick = task_process_tick;
-//p->header.stateChanged = task_process_statechanged;
-//p->header.reset = task_process_reset;
-//p->header.autoReset = true;
-//sb_append(&p->dir, p4_dir());
-//sb_va(&p->cmdline, "\"%s\" -G info", p4_exe());
-//p->spawnType = kProcessSpawn_Tracked;
-//task_queue(&p->header);
-
 static void task_p4info_statechanged(task *_t)
 {
 	task_process_statechanged(_t);
@@ -140,19 +125,21 @@ void p4_changes(void)
 
 static void task_p4describe_statechanged(task *_t)
 {
-	task_process_statechanged(_t);
 	if(_t->state == kTaskState_Succeeded) {
-		task_p4 *t = (task_p4 *)_t;
-		if(t->dicts.count == 1) {
-			const char *change = sdict_find(t->dicts.data, "change");
-			if(change) {
-				p4Changelist cl = { 0 };
-				cl.number = strtou32(change);
-				sdict_move(&cl.dict, t->dicts.data);
-				if(bba_add_noclear(p4.changelists, 1)) {
-					bba_last(p4.changelists) = cl;
-				} else {
-					sdict_reset(&cl.dict);
+		if(_t->subtasks.count) {
+			task *s = _t->subtasks.data + 0;
+			task_p4 *t = (task_p4 *)s->userdata;
+			if(t->dicts.count == 1) {
+				const char *change = sdict_find(t->dicts.data, "change");
+				if(change) {
+					p4Changelist cl = { 0 };
+					cl.number = strtou32(change);
+					sdict_move(&cl.dict, t->dicts.data);
+					if(bba_add_noclear(p4.changelists, 1)) {
+						bba_last(p4.changelists) = cl;
+					} else {
+						sdict_reset(&cl.dict);
+					}
 				}
 			}
 		}
@@ -160,5 +147,15 @@ static void task_p4describe_statechanged(task *_t)
 }
 void p4_describe_changelist(u32 cl)
 {
-	p4_task_queue(task_p4describe_statechanged, p4_dir(), "\"%s\" -G describe -s %u", p4_exe(), cl);
+	sdict_t *sd = p4_find_changelist(cl);
+	if(!sd || strcmp(sdict_find_safe(sd, "status"), "submitted")) {
+		task t = { 0 };
+		t.tick = task_tick_subtasks;
+		t.stateChanged = task_p4describe_statechanged;
+		task t1 = p4_task_create(task_process_statechanged, p4_dir(), "\"%s\" -G describe -s %u", p4_exe(), cl);
+		bba_push(t.subtasks, t1);
+		task t2 = p4_task_create(task_process_statechanged, p4_dir(), "\"%s\" -G describe -s -S %u", p4_exe(), cl);
+		bba_push(t.subtasks, t2);
+		task_queue(t);
+	}
 }

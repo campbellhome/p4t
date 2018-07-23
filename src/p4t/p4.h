@@ -13,7 +13,6 @@ typedef struct sdict_s sdict_t;
 
 b32 p4_init(void);
 void p4_shutdown(void);
-void p4_tick(void);
 
 //////////////////////////////////////////////////////////////////////////
 

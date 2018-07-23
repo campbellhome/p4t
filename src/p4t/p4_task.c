@@ -10,7 +10,7 @@
 
 void task_p4_tick(task *_t)
 {
-	task_p4 *t = (task_p4 *)_t;
+	task_p4 *t = (task_p4 *)_t->userdata;
 	processTickResult_t res = process_tick(t->base.process);
 	if(res.stdoutIO.nBytes) {
 		bba_add_array(t->base.stdoutBuf, res.stdoutIO.buffer, res.stdoutIO.nBytes);
@@ -33,29 +33,52 @@ void task_p4_tick(task *_t)
 
 void task_p4_reset(task *_t)
 {
-	task_p4 *t = (task_p4 *)_t;
+	task_p4 *t = (task_p4 *)_t->userdata;
 	for(u32 i = 0; i < t->dicts.count; ++i) {
 		sdict_reset(t->dicts.data + i);
 	}
 	bba_free(t->dicts);
 	bba_free(t->parser);
 	sdict_reset(&t->parser.dict);
-	task_process_reset(&t->base.header);
+	task_process_reset(_t);
 }
 
-task *p4_task_queue(Task_StateChanged *statechanged, const char *dir, const char *cmdlineFmt, ...)
+task p4_task_create(Task_StateChanged *statechanged, const char *dir, const char *cmdlineFmt, ...)
 {
-	task_p4 *p = malloc(sizeof(task_p4));
+	task t = { 0 };
+	t.tick = task_p4_tick;
+	t.stateChanged = statechanged;
+	t.reset = task_p4_reset;
+	t.autoReset = true;
+	t.userdata = malloc(sizeof(task_p4)); 
+
+	task_p4 *p = t.userdata;
 	memset(p, 0, sizeof(*p));
-	p->base.header.tick = task_p4_tick;
-	p->base.header.stateChanged = statechanged;
-	p->base.header.reset = task_p4_reset;
-	p->base.header.autoReset = true;
 	sb_append(&p->base.dir, dir);
 	va_list args;
 	va_start(args, cmdlineFmt);
 	sb_va_list(&p->base.cmdline, cmdlineFmt, args);
 	va_end(args);
 	p->base.spawnType = kProcessSpawn_Tracked;
-	return task_queue(&p->base.header);
+	return t;
+}
+
+task *p4_task_queue(Task_StateChanged *statechanged, const char *dir, const char *cmdlineFmt, ...)
+{
+	task t = { 0 };
+	t.tick = task_p4_tick;
+	t.stateChanged = statechanged;
+	t.reset = task_p4_reset;
+	t.autoReset = true;
+	t.userdata = malloc(sizeof(task_p4)); 
+
+	task_p4 *p = t.userdata;
+	memset(p, 0, sizeof(*p));
+	sb_append(&p->base.dir, dir);
+	va_list args;
+	va_start(args, cmdlineFmt);
+	sb_va_list(&p->base.cmdline, cmdlineFmt, args);
+	va_end(args);
+	p->base.spawnType = kProcessSpawn_Tracked;
+	return task_queue(t);
 }

@@ -35,7 +35,7 @@ void task_tick_subtasks(task *t);
 typedef struct tag_tasks {
 	u32 count;
 	u32 allocated;
-	task **data;
+	task *data;
 } tasks;
 
 typedef struct tag_task {
@@ -46,12 +46,13 @@ typedef struct tag_task {
 	tasks subtasks;
 	b32 parallel;
 	b32 autoReset;
+	void *userdata;
 	Task_Tick *tick;
 	Task_StateChanged *stateChanged;
 	Task_Reset *reset;
 } task;
 
-task *task_queue(task *t);
+task *task_queue(task t);
 void task_set_state(task *t, taskState state);
 
 inline b32 task_started(task *t)
