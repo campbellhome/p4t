@@ -4,6 +4,7 @@
 #pragma once
 
 #include "common.h"
+#include "sdict.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -16,9 +17,16 @@ void p4_shutdown(void);
 
 //////////////////////////////////////////////////////////////////////////
 
-// general: code(stat), change, user, client, time, desc, status, changeType, path
+typedef struct tag_p4Changelist {
+	sdict_t normal;
+	sdict_t shelved;
+	u32 number;
+	u8 pad[4];
+} p4Changelist;
+
+// general: code(stat), change, user, client, time, desc, status, changeType, path, shelved
 // per-file: depotFile0, action0, type0, rev0, fileSize0, digest0
-sdict_t *p4_find_changelist(u32 cl);
+p4Changelist *p4_find_changelist(u32 cl);
 
 sdict_t *p4_get_info(void);
 

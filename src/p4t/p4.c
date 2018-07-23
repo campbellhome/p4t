@@ -18,12 +18,6 @@
 
 #include <stdlib.h>
 
-typedef struct tag_p4Changelist {
-	sdict_t dict;
-	u32 number;
-	u8 pad[4];
-} p4Changelist;
-
 typedef struct tag_p4Changelists {
 	u32 count;
 	u32 allocated;
@@ -82,17 +76,18 @@ void p4_shutdown(void)
 	sb_reset(&p4.exe);
 	sdict_reset(&p4.info);
 	for(u32 i = 0; i < p4.changelists.count; ++i) {
-		sdict_reset(&p4.changelists.data[i].dict);
+		sdict_reset(&p4.changelists.data[i].normal);
+		sdict_reset(&p4.changelists.data[i].shelved);
 	}
 	bba_free(p4.changelists);
 }
 
-sdict_t *p4_find_changelist(u32 cl)
+p4Changelist *p4_find_changelist(u32 cl)
 {
 	for(u32 i = 0; i < p4.changelists.count; ++i) {
 		p4Changelist *change = p4.changelists.data + i;
 		if(change->number == cl) {
-			return &change->dict;
+			return change;
 		}
 	}
 	return NULL;
@@ -126,19 +121,30 @@ void p4_changes(void)
 static void task_p4describe_statechanged(task *_t)
 {
 	if(_t->state == kTaskState_Succeeded) {
-		if(_t->subtasks.count) {
+		if(_t->subtasks.count == 2) {
 			task *s = _t->subtasks.data + 0;
+			task *s2 = _t->subtasks.data + 1;
 			task_p4 *t = (task_p4 *)s->userdata;
+			task_p4 *t2 = (task_p4 *)s2->userdata;
 			if(t->dicts.count == 1) {
 				const char *change = sdict_find(t->dicts.data, "change");
 				if(change) {
 					p4Changelist cl = { 0 };
 					cl.number = strtou32(change);
-					sdict_move(&cl.dict, t->dicts.data);
-					if(bba_add_noclear(p4.changelists, 1)) {
+					sdict_move(&cl.normal, t->dicts.data);
+					if(t2->dicts.count == 1) {
+						sdict_move(&cl.shelved, t2->dicts.data);
+					}
+					p4Changelist *existing = p4_find_changelist(cl.number);
+					if(existing) {
+						sdict_reset(&existing->normal);
+						sdict_reset(&existing->shelved);
+						*existing = cl;
+					} else if(bba_add_noclear(p4.changelists, 1)) {
 						bba_last(p4.changelists) = cl;
 					} else {
-						sdict_reset(&cl.dict);
+						sdict_reset(&cl.normal);
+						sdict_reset(&cl.shelved);
 					}
 				}
 			}
@@ -147,8 +153,8 @@ static void task_p4describe_statechanged(task *_t)
 }
 void p4_describe_changelist(u32 cl)
 {
-	sdict_t *sd = p4_find_changelist(cl);
-	if(!sd || strcmp(sdict_find_safe(sd, "status"), "submitted")) {
+	p4Changelist *changelist = p4_find_changelist(cl);
+	if(!changelist || strcmp(sdict_find_safe(&changelist->normal, "status"), "submitted")) {
 		task t = { 0 };
 		t.tick = task_tick_subtasks;
 		t.stateChanged = task_p4describe_statechanged;

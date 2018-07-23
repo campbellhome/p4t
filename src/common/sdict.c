@@ -36,6 +36,28 @@ void sdict_move(sdict_t *target, sdict_t *src)
 	memset(src, 0, sizeof(*src));
 }
 
+u32 sdict_find_index(sdict_t *sd, const char *key)
+{
+	for(u32 i = 0; i < sd->count; ++i) {
+		sdictEntry_t *e = sd->data + i;
+		if(!strcmp(key, sb_get(&e->key))) {
+			return i;
+		}
+	}
+	return ~0U;
+}
+
+u32 sdict_find_index_from(sdict_t *sd, const char *key, u32 startIndex)
+{
+	for(u32 i = startIndex; i < sd->count; ++i) {
+		sdictEntry_t *e = sd->data + i;
+		if(!strcmp(key, sb_get(&e->key))) {
+			return i;
+		}
+	}
+	return ~0U;
+}
+
 const char *sdict_find(sdict_t *sd, const char *key)
 {
 	for(u32 i = 0; i < sd->count; ++i) {

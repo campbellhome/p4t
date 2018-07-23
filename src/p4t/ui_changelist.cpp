@@ -23,15 +23,6 @@ BB_WARNING_POP
 
 //////////////////////////////////////////////////////////////////////////
 
-static const char *sdict_getPrefix(sdictEntry_t *e, const char *prefix)
-{
-	const char *key = sb_get(&e->key);
-	if(strncmp(key, prefix, strlen(prefix))) {
-		return "";
-	}
-	return sb_get(&e->value);
-}
-
 typedef struct tag_changelistField {
 	const char *desc;
 	const char *key;
@@ -119,8 +110,7 @@ static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files)
 	const char *dir = sdict_find_safe(sd, "clientRoot");
 
 	sb_t sb = {};
-	for(u32 i = 0; i < sd->count; ++i)
-	{
+	for(u32 i = 0; i < sd->count; ++i) {
 		sb_va(&sb, "[%s] %s\r\n", sb_get(&sd->data[i].key), sb_get(&sd->data[i].value));
 	}
 	ImGui::SetClipboardText(sb_get(&sb));
@@ -352,45 +342,57 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files)
 
 static u32 requestedChangelist;
 static u32 displayedChangelist;
-static uiChangelistFiles s_files;
+static uiChangelistFiles s_normalFiles;
+static uiChangelistFiles s_shelvedFiles;
 
-static void UIChangelist_FreeFiles(void)
+static void UIChangelist_FreeFiles(uiChangelistFiles *files)
 {
-	for(u32 i = 0; i < s_files.count; ++i) {
-		for(u32 col = 0; col < BB_ARRAYSIZE(s_files.data[i].str); ++col) {
-			free(s_files.data[i].str[col]);
+	for(u32 i = 0; i < files->count; ++i) {
+		for(u32 col = 0; col < BB_ARRAYSIZE(files->data[i].str); ++col) {
+			free(files->data[i].str[col]);
 		}
 	}
-	bba_free(s_files);
+	bba_free(*files);
 }
 
 void UIChangelist_Shutdown(void)
 {
-	UIChangelist_FreeFiles();
+	UIChangelist_FreeFiles(&s_normalFiles);
+	UIChangelist_FreeFiles(&s_shelvedFiles);
 }
 
-static void UIChangelist_PopulateFiles(sdict_t *cl)
+static void UIChangelist_PopulateFiles(sdict_t *sd, uiChangelistFiles *files)
 {
-	UIChangelist_FreeFiles();
-	for(u32 i = 9; i + 5 < cl->count; i += 6) {
-		const char *depotFile = sdict_getPrefix(cl->data + i + 0, "depotFile");
-		const char *action = sdict_getPrefix(cl->data + i + 1, "action");
-		const char *type = sdict_getPrefix(cl->data + i + 2, "type");
-		const char *rev = sdict_getPrefix(cl->data + i + 3, "rev");
-		const char *lastSlash = strrchr(depotFile, '/');
-		const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
-
-		if(filename && bba_add(s_files, 1)) {
-			uiChangelistFile &file = bba_last(s_files);
-			file.str[0] = _strdup(filename);
-			file.str[1] = _strdup(rev);
-			file.str[2] = _strdup(action);
-			file.str[3] = _strdup(type);
-			file.str[4] = _strdup(depotFile);
+	UIChangelist_FreeFiles(files);
+	u32 sdictIndex = 0;
+	while(1) {
+		u32 fileIndex = files->count;
+		u32 depotFileIndex = sdict_find_index_from(sd, va("depotFile%u", fileIndex), sdictIndex);
+		u32 actionIndex = sdict_find_index_from(sd, va("action%u", fileIndex), depotFileIndex);
+		u32 typeIndex = sdict_find_index_from(sd, va("type%u", fileIndex), actionIndex);
+		u32 revIndex = sdict_find_index_from(sd, va("rev%u", fileIndex), typeIndex);
+		sdictIndex = revIndex;
+		if(revIndex < sd->count) {
+			const char *depotFile = sb_get(&sd->data[depotFileIndex].value);
+			const char *action = sb_get(&sd->data[actionIndex].value);
+			const char *type = sb_get(&sd->data[typeIndex].value);
+			const char *rev = sb_get(&sd->data[revIndex].value);
+			const char *lastSlash = strrchr(depotFile, '/');
+			const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
+			if(filename && bba_add(*files, 1)) {
+				uiChangelistFile &file = bba_last(*files);
+				file.str[0] = _strdup(filename);
+				file.str[1] = _strdup(rev);
+				file.str[2] = _strdup(action);
+				file.str[3] = _strdup(type);
+				file.str[4] = _strdup(depotFile);
+			}
+		} else {
+			break;
 		}
 	}
-	qsort(s_files.data, s_files.count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
-	s_files.lastClickIndex = ~0u;
+	qsort(files->data, files->count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
+	files->lastClickIndex = ~0u;
 }
 
 void UIChangelist_Update(void)
@@ -405,7 +407,8 @@ void UIChangelist_Update(void)
 	if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
 		requestedChangelist = 0;
 		s_focused = false;
-		UIChangelist_FreeFiles();
+		UIChangelist_FreeFiles(&s_normalFiles);
+		UIChangelist_FreeFiles(&s_shelvedFiles);
 	}
 
 	bool open = true;
@@ -424,23 +427,41 @@ void UIChangelist_Update(void)
 				s32 testChangelist = strtos32(inputChangelist);
 				if(testChangelist > 0) {
 					requestedChangelist = (u32)testChangelist;
+					displayedChangelist = 0;
 					p4_describe_changelist(requestedChangelist);
 				}
 			}
 		}
 
-		sdict_t *cl = p4_find_changelist(requestedChangelist);
+		p4Changelist *cl = p4_find_changelist(requestedChangelist);
 		if(cl) {
 			if(!displayedChangelist) {
 				displayedChangelist = requestedChangelist;
-				UIChangelist_PopulateFiles(cl);
+				UIChangelist_PopulateFiles(&cl->normal, &s_normalFiles);
+				if(sdict_find(&cl->normal, "shelved")) {
+					UIChangelist_PopulateFiles(&cl->shelved, &s_shelvedFiles);
+				} else {
+					UIChangelist_FreeFiles(&s_shelvedFiles);
+				}
 			}
-			UIChangelist_DrawInformation(cl);
-			UIChangelist_DrawFiles(&s_files);
+			UIChangelist_DrawInformation(&cl->normal);
+			ImGui::Text("File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count);
+			UIChangelist_DrawFiles(&s_normalFiles);
+			if(s_shelvedFiles.count) {
+				ImGui::Separator();
+				ImGui::Text("Shelved File%s: %u", s_shelvedFiles.count == 1 ? "" : "s", s_shelvedFiles.count);
+				UIChangelist_DrawFiles(&s_shelvedFiles);
+			}
 			ImGui::Separator();
-			if(ImGui::TreeNode("Raw Key/Values")) {
-				for(u32 i = 0; i < cl->count; ++i) {
-					ImGui::Text("[%s] = %s", sb_get(&cl->data[i].key), sb_get(&cl->data[i].value));
+			if(ImGui::TreeNode("Raw Key/Values (normal)")) {
+				for(u32 i = 0; i < cl->normal.count; ++i) {
+					ImGui::Text("[%s] = %s", sb_get(&cl->normal.data[i].key), sb_get(&cl->normal.data[i].value));
+				}
+				ImGui::TreePop();
+			}
+			if(ImGui::TreeNode("Raw Key/Values (shelved)")) {
+				for(u32 i = 0; i < cl->shelved.count; ++i) {
+					ImGui::Text("[%s] = %s", sb_get(&cl->shelved.data[i].key), sb_get(&cl->shelved.data[i].value));
 				}
 				ImGui::TreePop();
 			}
