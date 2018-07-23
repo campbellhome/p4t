@@ -113,6 +113,7 @@
     <ClInclude Include="..\src\p4t\json_generated.h" />
     <ClInclude Include="..\src\p4t\keys.h" />
     <ClInclude Include="..\src\p4t\p4.h" />
+    <ClInclude Include="..\src\p4t\p4_task.h" />
     <ClInclude Include="..\src\p4t\py_parser.h" />
     <ClInclude Include="..\src\p4t\ui_changelist.h" />
     <ClInclude Include="..\src\p4t\ui_output.h" />
@@ -139,6 +140,7 @@
     <ClCompile Include="..\src\p4t\keys.c" />
     <ClCompile Include="..\src\p4t\main.cpp" />
     <ClCompile Include="..\src\p4t\p4.c" />
+    <ClCompile Include="..\src\p4t\p4_task.c" />
     <ClCompile Include="..\src\p4t\py_parser.c" />
     <ClCompile Include="..\src\p4t\sb_json.c" />
     <ClCompile Include="..\src\p4t\sdict_json.c" />

@@ -43,6 +43,9 @@
     <ClCompile Include="..\src\p4t\ui_changelist.cpp">
       <Filter>Source\p4t</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\p4t\p4_task.c">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\p4t\wrap_imgui.h">
@@ -82,6 +85,9 @@
       <Filter>Source\p4t</Filter>
     </ClInclude>
     <ClInclude Include="..\src\p4t\ui_changelist.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\p4_task.h">
       <Filter>Source\p4t</Filter>
     </ClInclude>
   </ItemGroup>

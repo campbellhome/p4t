@@ -56,21 +56,21 @@ void task_set_state(task *t, taskState state)
 	}
 }
 
-taskId task_queue(task *t)
+task *task_queue(task *t)
 {
 	if(t->tick) {
 		if(bba_add_noclear(s_tasks, 1)) {
 			tasks_setid(t);
 			bba_last(s_tasks) = t;
 			BB_LOG("tasks", "queued task %u", t->id);
-			return t->id;
+			return t;
 		}
 	}
 
 	BB_ERROR("tasks", "failed to queue task");
 	task_reset(t);
 	free(t);
-	return kTaskIdInvalid;
+	return NULL;
 }
 
 void task_tick_subtasks(task *t)

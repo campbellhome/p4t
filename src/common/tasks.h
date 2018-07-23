@@ -51,7 +51,7 @@ typedef struct tag_task {
 	Task_Reset *reset;
 } task;
 
-taskId task_queue(task *t);
+task *task_queue(task *t);
 void task_set_state(task *t, taskState state);
 
 inline b32 task_started(task *t)

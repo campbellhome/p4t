@@ -94,6 +94,7 @@
     <ClCompile Include="..\src\common\output.c" />
     <ClCompile Include="..\src\common\path_utils.c" />
     <ClCompile Include="..\src\common\process.c" />
+    <ClCompile Include="..\src\common\process_task.c" />
     <ClCompile Include="..\src\common\sb.c" />
     <ClCompile Include="..\src\common\sdict.c" />
     <ClCompile Include="..\src\common\span.c" />
@@ -113,6 +114,7 @@
     <ClInclude Include="..\src\common\output.h" />
     <ClInclude Include="..\src\common\path_utils.h" />
     <ClInclude Include="..\src\common\process.h" />
+    <ClInclude Include="..\src\common\process_task.h" />
     <ClInclude Include="..\src\common\sb.h" />
     <ClInclude Include="..\src\common\sdict.h" />
     <ClInclude Include="..\src\common\span.h" />
