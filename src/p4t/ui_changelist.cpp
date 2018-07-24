@@ -247,20 +247,27 @@ static b32 UIChangelist_DrawFileColumnHeader(uiChangelistFiles *files, const cha
 	float scale = (g_config.dpiScale <= 0.0f) ? 1.0f : g_config.dpiScale;
 	float startOffset = ImGui::GetCursorPosX();
 
-	const float normal = 0.4f;
-	const float hovered = 0.8f;
-	const float active = 0.8f;
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
-
-	if(ImGui::Button(va("###%s", text), ImVec2(*width * scale, 0.0f))) {
-		if(config->sortColumn == columnIndex) {
-			config->sortDescending = !config->sortDescending;
-		} else {
-			config->sortColumn = columnIndex;
-			config->sortDescending = false;
+	{
+		const float normal = 0.4f;
+		const float hovered = 0.6f;
+		const float active = 0.6f;
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
+		if(ImGui::Button(va("###%s", text), ImVec2(*width * scale, 0.0f))) {
+			if(config->sortColumn == columnIndex) {
+				config->sortDescending = !config->sortDescending;
+			} else {
+				config->sortColumn = columnIndex;
+				config->sortDescending = false;
+			}
 		}
+		ImGui::PopStyleColor(3);
+	}
+
+	if(files->sortColumn != config->sortColumn || files->sortDescending != config->sortDescending) {
+		files->sortColumn = config->sortColumn;
+		files->sortDescending = config->sortDescending;
 		qsort(files->data, files->count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
 	}
 	anyActive = anyActive || ImGui::IsItemActive();
@@ -270,15 +277,20 @@ static b32 UIChangelist_DrawFileColumnHeader(uiChangelistFiles *files, const cha
 	UIChangelist_DrawFileColumn(startOffset + ImGui::GetStyle().ItemInnerSpacing.x, *width * scale - itemPad, columnText);
 	ImGui::SameLine(endOffset);
 	if(!last) {
+		const float normal = 0.4f;
+		const float hovered = 0.8f;
+		const float active = 0.8f;
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
 		ImGui::Button(va("|###sep%s", text), ImVec2(2.0f * g_config.dpiScale, 0.0f));
+		ImGui::PopStyleColor(3);
 		if(ImGui::IsItemActive()) {
 			anyActive = true;
 			*width += ImGui::GetIO().MouseDelta.x / scale;
 		}
 		ImGui::SameLine();
 	}
-
-	ImGui::PopStyleColor(3);
 
 	*offset = ImGui::GetCursorPosX();
 	return anyActive;
@@ -287,6 +299,8 @@ static b32 UIChangelist_DrawFileColumnHeader(uiChangelistFiles *files, const cha
 void UIChangelist_DrawFiles(uiChangelistFiles *files)
 {
 	// Columns: File Name, Revision, Action, Filetype, In Folder
+
+	ImGui::PushID(files);
 
 	float columnOffsets[6] = {};
 
@@ -338,13 +352,16 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files)
 			files->active = false;
 		}
 	}
+
+	ImGui::PopID();
 }
 
 //////////////////////////////////////////////////////////////////////////
 // for standalone CL viewer
 
-static u32 requestedChangelist;
-static u32 displayedChangelist;
+static u32 s_requestedChangelist;
+static u32 s_displayedChangelist;
+static u32 s_parity;
 static uiChangelistFiles s_normalFiles;
 static uiChangelistFiles s_shelvedFiles;
 
@@ -364,22 +381,16 @@ void UIChangelist_Shutdown(void)
 	UIChangelist_FreeFiles(&s_shelvedFiles);
 }
 
-static void UIChangelist_PopulateFiles(sdict_t *sd, uiChangelistFiles *files)
+static void UIChangelist_PopulateFiles(sdicts *sds, uiChangelistFiles *files)
 {
 	UIChangelist_FreeFiles(files);
-	u32 sdictIndex = 0;
-	while(1) {
-		u32 fileIndex = files->count;
-		u32 depotFileIndex = sdict_find_index_from(sd, va("depotFile%u", fileIndex), sdictIndex);
-		u32 actionIndex = sdict_find_index_from(sd, va("action%u", fileIndex), depotFileIndex);
-		u32 typeIndex = sdict_find_index_from(sd, va("type%u", fileIndex), actionIndex);
-		u32 revIndex = sdict_find_index_from(sd, va("rev%u", fileIndex), typeIndex);
-		sdictIndex = revIndex;
-		if(revIndex < sd->count) {
-			const char *depotFile = sb_get(&sd->data[depotFileIndex].value);
-			const char *action = sb_get(&sd->data[actionIndex].value);
-			const char *type = sb_get(&sd->data[typeIndex].value);
-			const char *rev = sb_get(&sd->data[revIndex].value);
+	for(u32 i = 0; i < sds->count; ++i) {
+		sdict_t *sd = sds->data + i;
+		const char *depotFile = sdict_find(sd, "depotFile");
+		const char *action = sdict_find(sd, "action");
+		const char *type = sdict_find(sd, "type");
+		const char *rev = sdict_find(sd, "haveRev");
+		if(depotFile && action && type && rev) {
 			const char *lastSlash = strrchr(depotFile, '/');
 			const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
 			if(filename && bba_add(*files, 1)) {
@@ -390,8 +401,6 @@ static void UIChangelist_PopulateFiles(sdict_t *sd, uiChangelistFiles *files)
 				file.str[3] = _strdup(type);
 				file.str[4] = _strdup(depotFile);
 			}
-		} else {
-			break;
 		}
 	}
 	qsort(files->data, files->count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
@@ -408,7 +417,7 @@ void UIChangelist_Update(void)
 	static bool s_focused = false;
 
 	if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
-		requestedChangelist = 0;
+		s_requestedChangelist = 0;
 		s_focused = false;
 		UIChangelist_FreeFiles(&s_normalFiles);
 		UIChangelist_FreeFiles(&s_shelvedFiles);
@@ -416,7 +425,7 @@ void UIChangelist_Update(void)
 
 	bool open = true;
 	if(ImGui::Begin("ViewChangelist", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
-		if(!requestedChangelist) {
+		if(!s_requestedChangelist) {
 			ImGui::TextUnformatted("Changelist:");
 			ImGui::SameLine();
 			if(!s_focused) {
@@ -429,44 +438,32 @@ void UIChangelist_Update(void)
 			if(ImGui::InputText("###CL", inputChangelist, sizeof(inputChangelist), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_EnterReturnsTrue)) {
 				s32 testChangelist = strtos32(inputChangelist);
 				if(testChangelist > 0) {
-					requestedChangelist = (u32)testChangelist;
-					displayedChangelist = 0;
-					p4_describe_changelist(requestedChangelist);
+					s_requestedChangelist = (u32)testChangelist;
+					s_displayedChangelist = 0;
+					p4_describe_changelist(s_requestedChangelist);
 				}
 			}
 		}
 
-		p4Changelist *cl = p4_find_changelist(requestedChangelist);
+		p4Changelist *cl = p4_find_changelist(s_requestedChangelist);
 		if(cl) {
-			if(!displayedChangelist) {
-				displayedChangelist = requestedChangelist;
-				UIChangelist_PopulateFiles(&cl->normal, &s_normalFiles);
-				if(sdict_find(&cl->normal, "shelved")) {
-					UIChangelist_PopulateFiles(&cl->shelved, &s_shelvedFiles);
+			if(!s_displayedChangelist || s_parity != cl->parity) {
+				s_displayedChangelist = s_requestedChangelist;
+				s_parity = cl->parity;
+				UIChangelist_PopulateFiles(&cl->normalFiles, &s_normalFiles);
+				if(sdict_find(&cl->desc, "shelved")) {
+					UIChangelist_PopulateFiles(&cl->shelvedFiles, &s_shelvedFiles);
 				} else {
 					UIChangelist_FreeFiles(&s_shelvedFiles);
 				}
 			}
-			UIChangelist_DrawInformation(&cl->normal);
+			UIChangelist_DrawInformation(&cl->desc);
 			ImGui::Text("File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count);
 			UIChangelist_DrawFiles(&s_normalFiles);
 			if(s_shelvedFiles.count) {
 				ImGui::Separator();
 				ImGui::Text("Shelved File%s: %u", s_shelvedFiles.count == 1 ? "" : "s", s_shelvedFiles.count);
 				UIChangelist_DrawFiles(&s_shelvedFiles);
-			}
-			ImGui::Separator();
-			if(ImGui::TreeNode("Raw Key/Values (normal)")) {
-				for(u32 i = 0; i < cl->normal.count; ++i) {
-					ImGui::Text("[%s] = %s", sb_get(&cl->normal.data[i].key), sb_get(&cl->normal.data[i].value));
-				}
-				ImGui::TreePop();
-			}
-			if(ImGui::TreeNode("Raw Key/Values (shelved)")) {
-				for(u32 i = 0; i < cl->shelved.count; ++i) {
-					ImGui::Text("[%s] = %s", sb_get(&cl->shelved.data[i].key), sb_get(&cl->shelved.data[i].value));
-				}
-				ImGui::TreePop();
 			}
 		}
 	}

@@ -17,6 +17,8 @@ typedef struct tag_uiChangelistFiles {
 	uiChangelistFile *data;
 	u32 lastClickIndex;
 	b32 active;
+	u32 sortColumn;
+	b32 sortDescending;
 } uiChangelistFiles;
 
 // for use in other UIs

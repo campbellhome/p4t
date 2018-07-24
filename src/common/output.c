@@ -31,7 +31,7 @@ static void output_add(const char *fmt, va_list args, output_level_t level)
 	}
 }
 
-void output_log(const char *fmt, ...)
+void output_log_impl(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -39,7 +39,7 @@ void output_log(const char *fmt, ...)
 	va_end(args);
 }
 
-void output_warning(const char *fmt, ...)
+void output_warning_impl(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -47,7 +47,7 @@ void output_warning(const char *fmt, ...)
 	va_end(args);
 }
 
-void output_error(const char *fmt, ...)
+void output_error_impl(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);

@@ -42,10 +42,9 @@ typedef struct tag_task {
 	taskId id;
 	taskState state;
 	taskState prevState;
-	u8 pad[4];
-	tasks subtasks;
 	b32 parallel;
-	b32 autoReset;
+	tasks subtasks;
+	task *parent;
 	void *userdata;
 	Task_Tick *tick;
 	Task_StateChanged *stateChanged;

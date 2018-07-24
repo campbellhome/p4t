@@ -71,13 +71,19 @@ b32 p4_init(void)
 	}
 }
 
+static void p4_reset_changelist(p4Changelist *cl)
+{
+	sdict_reset(&cl->desc);
+	sdicts_reset(&cl->normalFiles);
+	sdicts_reset(&cl->shelvedFiles);
+}
+
 void p4_shutdown(void)
 {
 	sb_reset(&p4.exe);
 	sdict_reset(&p4.info);
 	for(u32 i = 0; i < p4.changelists.count; ++i) {
-		sdict_reset(&p4.changelists.data[i].normal);
-		sdict_reset(&p4.changelists.data[i].shelved);
+		p4_reset_changelist(p4.changelists.data + i);
 	}
 	bba_free(p4.changelists);
 }
@@ -102,7 +108,7 @@ static void task_p4info_statechanged(task *_t)
 {
 	task_process_statechanged(_t);
 	if(_t->state == kTaskState_Succeeded) {
-		task_p4 *t = (task_p4 *)_t;
+		task_p4 *t = (task_p4 *)_t->userdata;
 		if(t->dicts.count == 1) {
 			sdict_move(&p4.info, t->dicts.data);
 		}
@@ -110,42 +116,77 @@ static void task_p4info_statechanged(task *_t)
 }
 void p4_info(void)
 {
-	p4_task_queue(task_p4info_statechanged, p4_dir(), "\"%s\" -G info", p4_exe());
+	task_queue(p4_task_create(task_p4info_statechanged, p4_dir(), NULL, "\"%s\" -G info", p4_exe()));
 }
 
 void p4_changes(void)
 {
-	p4_task_queue(task_process_statechanged, p4_dir(), "\"%s\" -G changes", p4_exe());
+	task_queue(p4_task_create(task_process_statechanged, p4_dir(), NULL, "\"%s\" -G changes", p4_exe()));
 }
 
-static void task_p4describe_statechanged(task *_t)
+static void task_describe_changelist_statechanged_fstat_shelved(task *t)
 {
-	if(_t->state == kTaskState_Succeeded) {
-		if(_t->subtasks.count == 2) {
-			task *s = _t->subtasks.data + 0;
-			task *s2 = _t->subtasks.data + 1;
-			task_p4 *t = (task_p4 *)s->userdata;
-			task_p4 *t2 = (task_p4 *)s2->userdata;
-			if(t->dicts.count == 1) {
-				const char *change = sdict_find(t->dicts.data, "change");
-				if(change) {
-					p4Changelist cl = { 0 };
-					cl.number = strtou32(change);
-					sdict_move(&cl.normal, t->dicts.data);
-					if(t2->dicts.count == 1) {
-						sdict_move(&cl.shelved, t2->dicts.data);
-					}
-					p4Changelist *existing = p4_find_changelist(cl.number);
-					if(existing) {
-						sdict_reset(&existing->normal);
-						sdict_reset(&existing->shelved);
-						*existing = cl;
-					} else if(bba_add_noclear(p4.changelists, 1)) {
-						bba_last(p4.changelists) = cl;
-					} else {
-						sdict_reset(&cl.normal);
-						sdict_reset(&cl.shelved);
-					}
+	task_process_statechanged(t);
+	if(t->state == kTaskState_Succeeded) {
+		task_p4 *p = t->userdata;
+		u32 changeNumber = strtou32(sdict_find_safe(&p->extraData, "change"));
+		if(changeNumber) {
+			p4Changelist *cl = p4_find_changelist(changeNumber);
+			if(cl) {
+				sdicts_move(&cl->shelvedFiles, &p->dicts);
+				++cl->parity;
+			}
+		}
+	}
+}
+static void task_describe_changelist_statechanged_fstat_normal(task *t)
+{
+	task_process_statechanged(t);
+	if(t->state == kTaskState_Succeeded) {
+		task_p4 *p = t->userdata;
+		u32 changeNumber = strtou32(sdict_find_safe(&p->extraData, "change"));
+		if(changeNumber) {
+			p4Changelist *cl = p4_find_changelist(changeNumber);
+			if(cl) {
+				sdicts_move(&cl->normalFiles, &p->dicts);
+				++cl->parity;
+				if(sdict_find(&cl->desc, "shelved")) {
+					const char *clientName = sdict_find_safe(&cl->desc, "client");
+					task_queue(p4_task_create(
+					    task_describe_changelist_statechanged_fstat_shelved, p4_dir(), &p->extraData,
+					    "\"%s\" -G fstat -Op -Rs -e %u //%s/...", p4_exe(), changeNumber, clientName));
+				}
+			}
+		}
+	}
+}
+static void task_describe_changelist_statechanged_desc(task *t)
+{
+	task_process_statechanged(t);
+	if(t->state == kTaskState_Succeeded) {
+		task_p4 *p = t->userdata;
+		if(p->dicts.count == 1) {
+			u32 changeNumber = strtou32(sdict_find_safe(p->dicts.data, "change"));
+			if(changeNumber) {
+				sdictEntry_t e = { 0 };
+				sb_append(&e.key, "change");
+				sb_va(&e.value, va("%u", changeNumber));
+				sdict_add(&p->extraData, &e);
+				p4Changelist *cl = p4_find_changelist(changeNumber);
+				if(cl) {
+					sdict_move(&cl->desc, p->dicts.data);
+					++cl->parity;
+				} else if(bba_add(p4.changelists, 1)) {
+					cl = &bba_last(p4.changelists);
+					cl->number = changeNumber;
+					cl->parity = 1;
+					sdict_move(&cl->desc, p->dicts.data);
+				}
+				if(cl) {
+					const char *clientName = sdict_find_safe(&cl->desc, "client");
+					task_queue(p4_task_create(
+					    task_describe_changelist_statechanged_fstat_normal, p4_dir(), &p->extraData,
+					    "\"%s\" -G fstat -Olhp -Rco -e %u //%s/...", p4_exe(), changeNumber, clientName));
 				}
 			}
 		}
@@ -153,15 +194,7 @@ static void task_p4describe_statechanged(task *_t)
 }
 void p4_describe_changelist(u32 cl)
 {
-	p4Changelist *changelist = p4_find_changelist(cl);
-	if(!changelist || strcmp(sdict_find_safe(&changelist->normal, "status"), "submitted")) {
-		task t = { 0 };
-		t.tick = task_tick_subtasks;
-		t.stateChanged = task_p4describe_statechanged;
-		task t1 = p4_task_create(task_process_statechanged, p4_dir(), "\"%s\" -G describe -s %u", p4_exe(), cl);
-		bba_push(t.subtasks, t1);
-		task t2 = p4_task_create(task_process_statechanged, p4_dir(), "\"%s\" -G describe -s -S %u", p4_exe(), cl);
-		bba_push(t.subtasks, t2);
-		task_queue(t);
-	}
+	task_queue(p4_task_create(
+	    task_describe_changelist_statechanged_desc, p4_dir(), NULL,
+	    "\"%s\" -G describe -s %u", p4_exe(), cl));
 }

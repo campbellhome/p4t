@@ -40,6 +40,10 @@ b32 sdict_add(sdict_t *sd, sdictEntry_t *entry);
 b32 sdict_remove(sdict_t *sd, const char *key);
 void sdict_sort(sdict_t *sd);
 
+void sdicts_init(sdicts *sds);
+void sdicts_reset(sdicts *sds);
+void sdicts_move(sdicts *target, sdicts *src);
+
 #if defined(__cplusplus)
 }
 #endif

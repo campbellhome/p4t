@@ -18,10 +18,11 @@ void p4_shutdown(void);
 //////////////////////////////////////////////////////////////////////////
 
 typedef struct tag_p4Changelist {
-	sdict_t normal;
-	sdict_t shelved;
+	sdict_t desc;
+	sdicts normalFiles;
+	sdicts shelvedFiles;
 	u32 number;
-	u8 pad[4];
+	u32 parity;
 } p4Changelist;
 
 // general: code(stat), change, user, client, time, desc, status, changeType, path, shelved

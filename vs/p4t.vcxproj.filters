@@ -147,5 +147,8 @@
     <Text Include="..\todo.txt">
       <Filter>Config</Filter>
     </Text>
+    <Text Include="..\notes.txt">
+      <Filter>Config</Filter>
+    </Text>
   </ItemGroup>
 </Project>

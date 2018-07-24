@@ -35,11 +35,14 @@ void tasks_shutdown(void)
 	bba_free(s_tasks);
 }
 
-static void tasks_setid(task *t)
+static void task_prep(task *t)
 {
-	t->id = ++s_lastId;
+	if(!t->id) {
+		t->id = ++s_lastId;
+	}
 	for(u32 i = 0; i < t->subtasks.count; ++i) {
-		tasks_setid(t->subtasks.data + i);
+		task_prep(t->subtasks.data + i);
+		t->subtasks.data[i].parent = t;
 	}
 }
 
@@ -58,7 +61,7 @@ task *task_queue(task t)
 {
 	if(t.tick) {
 		if(bba_add_noclear(s_tasks, 1)) {
-			tasks_setid(&t);
+			task_prep(&t);
 			bba_last(s_tasks) = t;
 			BB_LOG("tasks", "queued task %u", t.id);
 			return &bba_last(s_tasks);

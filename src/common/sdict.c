@@ -132,3 +132,24 @@ void sdict_sort(sdict_t *sd)
 {
 	qsort(sd->data, sd->count, sizeof(sdictEntry_t), &sdict_compare);
 }
+
+void sdicts_init(sdicts *sds)
+{
+	sds->count = sds->allocated = 0;
+	sds->data = NULL;
+}
+
+void sdicts_reset(sdicts *sds)
+{
+	for(u32 i = 0; i < sds->count; ++i) {
+		sdict_reset(sds->data + i);
+	}
+	bba_free(*sds);
+}
+
+void sdicts_move(sdicts *target, sdicts *src)
+{
+	sdicts_reset(target);
+	memcpy(target, src, sizeof(*src));
+	memset(src, 0, sizeof(*src));
+}
