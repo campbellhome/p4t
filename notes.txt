@@ -1,0 +1,64 @@
+//////////////////////////////////////////////////////////////////////////
+p4v login:
+
+p4 spec -o change
+p4 changes -s pending -l -u matt -c matt_mattwin7
+p4 login -s
+p4 counter change
+    'login' not necessary, no password set for this user.
+p4 fstat -Olhp -Dl -F ^headAction=delete & ^headAction=move/delete //depot/* //depot/personal/* //depot/personal/mc_sln_check/*
+p4 fstat -m1 -Olhp -Rcu -e 157 //matt_mattwin7/...
+p4 fstat -m1 -Olhp -Rcu -e 120 //matt_mattwin7/...
+p4 fstat -m1 -Olhp -Rcu -e default //matt_mattwin7/...
+p4 change -o
+p4 change -o
+p4 fstat -Olhp -Rco -e default //matt_mattwin7/...
+p4 fstat -Olhp -Dl -F ^headAction=delete & ^headAction=move/delete //depot/*
+p4 fstat -Olhp d:\Projects\personal\mc_sln_check\mc_string.c d:\Projects\personal\mc_sln_check\slncheck.v11.suo d:\Projects\personal\mc_sln_check\win32_nocrt.c d:\Projects\personal\_clang-format {12 more items}
+
+//////////////////////////////////////////////////////////////////////////
+p4v expand pending CL 120 w/normal and shelved files:
+
+p4 change -o 120
+p4 describe -S 120
+p4 fstat -Olhp -Rco -e 120 //matt_mattwin7/...
+
+//////////////////////////////////////////////////////////////////////////
+p4v expand shelved files in pending CL 120:
+
+p4 fstat -Op -Rs -e 120 //...
+
+//////////////////////////////////////////////////////////////////////////
+p4v diff local file vs have:
+
+p4 change -o 120
+p4 describe -S 120
+p4 fstat -Olhp -Rco -e 120 //matt_mattwin7/...
+p4 fstat -Olhp //depot/personal/mc_sln_check/slncheck.c
+p4 fstat -Olp //depot/personal/mc_sln_check/slncheck.c#4
+p4 diff -f -se //depot/personal/mc_sln_check/slncheck.c#4
+p4 print -o C:\Users\Matt\AppData\Local\Temp\p4v\MattWin7_MattWin7_1666\depot\personal\mc_sln_check\slncheck#4.c //depot/personal/mc_sln_check/slncheck.c#4
+
+//////////////////////////////////////////////////////////////////////////
+p4v diff shelved file vs source revision:
+
+p4 fstat -Olhp //depot/personal/sidescroller/src/main.cpp
+p4 fstat -Olhp //depot/personal/sidescroller/src/main.cpp
+p4 fstat -Olp //depot/personal/sidescroller/src/main.cpp@=120
+p4 fstat -Olp //depot/personal/sidescroller/src/main.cpp#3
+p4 diff2 //depot/personal/sidescroller/src/main.cpp#3 //depot/personal/sidescroller/src/main.cpp@=120
+p4 print -o C:\Users\Matt\AppData\Local\Temp\p4v\MattWin7_MattWin7_1666\depot\personal\sidescroller\src\main#3.cpp //depot/personal/sidescroller/src/main.cpp#3
+p4 print -o C:\Users\Matt\AppData\Local\Temp\p4v\MattWin7_MattWin7_1666\depot\personal\sidescroller\src\main@=120.cpp //depot/personal/sidescroller/src/main.cpp@=120
+
+//////////////////////////////////////////////////////////////////////////
+p4v diff shelved file vs workspace:
+
+p4 fstat -Olhp //depot/personal/sidescroller/src/main.cpp
+p4 fstat -Olp //depot/personal/sidescroller/src/main.cpp@=120
+p4 fstat -Olhp //depot/personal/sidescroller/src/main.cpp d:\Projects\personal\sidescroller\src\main.cpp
+p4 diff -f -se //depot/personal/sidescroller/src/main.cpp@=120
+p4 print -o C:\Users\Matt\AppData\Local\Temp\p4v\MattWin7_MattWin7_1666\depot\personal\sidescroller\src\main@=120.cpp //depot/personal/sidescroller/src/main.cpp@=120
+
+//////////////////////////////////////////////////////////////////////////
+
+

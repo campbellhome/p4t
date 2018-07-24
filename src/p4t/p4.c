@@ -39,7 +39,7 @@ static const char *p4_exe(void)
 
 static const char *p4_dir(void)
 {
-	return "D:\\Backups\\MattC_Home\\Projects";
+	return "C:\\";
 }
 
 b32 p4_init(void)
@@ -73,7 +73,8 @@ b32 p4_init(void)
 
 static void p4_reset_changelist(p4Changelist *cl)
 {
-	sdict_reset(&cl->desc);
+	sdict_reset(&cl->normal);
+	sdict_reset(&cl->shelved);
 	sdicts_reset(&cl->normalFiles);
 	sdicts_reset(&cl->shelvedFiles);
 }
@@ -139,6 +140,38 @@ static void task_describe_changelist_statechanged_fstat_shelved(task *t)
 		}
 	}
 }
+static void task_describe_changelist_statechanged_desc_shelved(task *t)
+{
+	task_process_statechanged(t);
+	if(t->state == kTaskState_Succeeded) {
+		task_p4 *p = t->userdata;
+		if(p->dicts.count == 1) {
+			u32 changeNumber = strtou32(sdict_find_safe(p->dicts.data, "change"));
+			if(changeNumber) {
+				sdictEntry_t e = { 0 };
+				sb_append(&e.key, "change");
+				sb_va(&e.value, va("%u", changeNumber));
+				sdict_add(&p->extraData, &e);
+				p4Changelist *cl = p4_find_changelist(changeNumber);
+				if(cl) {
+					sdict_move(&cl->shelved, p->dicts.data);
+					++cl->parity;
+				} else if(bba_add(p4.changelists, 1)) {
+					cl = &bba_last(p4.changelists);
+					cl->number = changeNumber;
+					cl->parity = 1;
+					sdict_move(&cl->shelved, p->dicts.data);
+				}
+				if(cl) {
+					const char *clientName = sdict_find_safe(&cl->normal, "client");
+					task_queue(p4_task_create(
+					    task_describe_changelist_statechanged_fstat_shelved, p4_dir(), &p->extraData,
+					    "\"%s\" -G fstat -Op -Rs -e %u //%s/...", p4_exe(), changeNumber, clientName));
+				}
+			}
+		}
+	}
+}
 static void task_describe_changelist_statechanged_fstat_normal(task *t)
 {
 	task_process_statechanged(t);
@@ -150,11 +183,10 @@ static void task_describe_changelist_statechanged_fstat_normal(task *t)
 			if(cl) {
 				sdicts_move(&cl->normalFiles, &p->dicts);
 				++cl->parity;
-				if(sdict_find(&cl->desc, "shelved")) {
-					const char *clientName = sdict_find_safe(&cl->desc, "client");
+				if(sdict_find(&cl->normal, "shelved")) {
 					task_queue(p4_task_create(
-					    task_describe_changelist_statechanged_fstat_shelved, p4_dir(), &p->extraData,
-					    "\"%s\" -G fstat -Op -Rs -e %u //%s/...", p4_exe(), changeNumber, clientName));
+					    task_describe_changelist_statechanged_desc_shelved, p4_dir(), &p->extraData,
+					    "\"%s\" -G describe -s -S %u", p4_exe(), changeNumber));
 				}
 			}
 		}
@@ -174,16 +206,16 @@ static void task_describe_changelist_statechanged_desc(task *t)
 				sdict_add(&p->extraData, &e);
 				p4Changelist *cl = p4_find_changelist(changeNumber);
 				if(cl) {
-					sdict_move(&cl->desc, p->dicts.data);
+					sdict_move(&cl->normal, p->dicts.data);
 					++cl->parity;
 				} else if(bba_add(p4.changelists, 1)) {
 					cl = &bba_last(p4.changelists);
 					cl->number = changeNumber;
 					cl->parity = 1;
-					sdict_move(&cl->desc, p->dicts.data);
+					sdict_move(&cl->normal, p->dicts.data);
 				}
 				if(cl) {
-					const char *clientName = sdict_find_safe(&cl->desc, "client");
+					const char *clientName = sdict_find_safe(&cl->normal, "client");
 					task_queue(p4_task_create(
 					    task_describe_changelist_statechanged_fstat_normal, p4_dir(), &p->extraData,
 					    "\"%s\" -G fstat -Olhp -Rco -e %u //%s/...", p4_exe(), changeNumber, clientName));

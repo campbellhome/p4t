@@ -381,25 +381,55 @@ void UIChangelist_Shutdown(void)
 	UIChangelist_FreeFiles(&s_shelvedFiles);
 }
 
-static void UIChangelist_PopulateFiles(sdicts *sds, uiChangelistFiles *files)
+static void UIChangelist_PopulateFiles(sdict_t *change, sdicts *sds, uiChangelistFiles *files)
 {
 	UIChangelist_FreeFiles(files);
-	for(u32 i = 0; i < sds->count; ++i) {
-		sdict_t *sd = sds->data + i;
-		const char *depotFile = sdict_find(sd, "depotFile");
-		const char *action = sdict_find(sd, "action");
-		const char *type = sdict_find(sd, "type");
-		const char *rev = sdict_find(sd, "haveRev");
-		if(depotFile && action && type && rev) {
-			const char *lastSlash = strrchr(depotFile, '/');
-			const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
-			if(filename && bba_add(*files, 1)) {
-				uiChangelistFile &file = bba_last(*files);
-				file.str[0] = _strdup(filename);
-				file.str[1] = _strdup(rev);
-				file.str[2] = _strdup(action);
-				file.str[3] = _strdup(type);
-				file.str[4] = _strdup(depotFile);
+	if(sds->count > 1) {
+		for(u32 i = 0; i < sds->count; ++i) {
+			sdict_t *sd = sds->data + i;
+			const char *depotFile = sdict_find(sd, "depotFile");
+			const char *action = sdict_find(sd, "action");
+			const char *type = sdict_find(sd, "type");
+			const char *rev = sdict_find(sd, "haveRev");
+			if(depotFile && action && type && rev) {
+				const char *lastSlash = strrchr(depotFile, '/');
+				const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
+				if(filename && bba_add(*files, 1)) {
+					uiChangelistFile &file = bba_last(*files);
+					file.str[0] = _strdup(filename);
+					file.str[1] = _strdup(rev);
+					file.str[2] = _strdup(action);
+					file.str[3] = _strdup(type);
+					file.str[4] = _strdup(depotFile);
+				}
+			}
+		}
+	} else {
+		u32 sdictIndex = 0;
+		while(1) {
+			u32 fileIndex = files->count;
+			u32 depotFileIndex = sdict_find_index_from(change, va("depotFile%u", fileIndex), sdictIndex);
+			u32 actionIndex = sdict_find_index_from(change, va("action%u", fileIndex), depotFileIndex);
+			u32 typeIndex = sdict_find_index_from(change, va("type%u", fileIndex), actionIndex);
+			u32 revIndex = sdict_find_index_from(change, va("rev%u", fileIndex), typeIndex);
+			sdictIndex = revIndex;
+			if(revIndex < change->count) {
+				const char *depotFile = sb_get(&change->data[depotFileIndex].value);
+				const char *action = sb_get(&change->data[actionIndex].value);
+				const char *type = sb_get(&change->data[typeIndex].value);
+				const char *rev = sb_get(&change->data[revIndex].value);
+				const char *lastSlash = strrchr(depotFile, '/');
+				const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
+				if(filename && bba_add(*files, 1)) {
+					uiChangelistFile &file = bba_last(*files);
+					file.str[0] = _strdup(filename);
+					file.str[1] = _strdup(rev);
+					file.str[2] = _strdup(action);
+					file.str[3] = _strdup(type);
+					file.str[4] = _strdup(depotFile);
+				}
+			} else {
+				break;
 			}
 		}
 	}
@@ -435,7 +465,7 @@ void UIChangelist_Update(void)
 				s_focused = true;
 			}
 			static char inputChangelist[64];
-			if(ImGui::InputText("###CL", inputChangelist, sizeof(inputChangelist), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_EnterReturnsTrue)) {
+			if(ImGui::InputText("###CL", inputChangelist, sizeof(inputChangelist), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
 				s32 testChangelist = strtos32(inputChangelist);
 				if(testChangelist > 0) {
 					s_requestedChangelist = (u32)testChangelist;
@@ -450,14 +480,14 @@ void UIChangelist_Update(void)
 			if(!s_displayedChangelist || s_parity != cl->parity) {
 				s_displayedChangelist = s_requestedChangelist;
 				s_parity = cl->parity;
-				UIChangelist_PopulateFiles(&cl->normalFiles, &s_normalFiles);
-				if(sdict_find(&cl->desc, "shelved")) {
-					UIChangelist_PopulateFiles(&cl->shelvedFiles, &s_shelvedFiles);
+				UIChangelist_PopulateFiles(&cl->normal, &cl->normalFiles, &s_normalFiles);
+				if(sdict_find(&cl->normal, "shelved")) {
+					UIChangelist_PopulateFiles(&cl->shelved, &cl->shelvedFiles, &s_shelvedFiles);
 				} else {
 					UIChangelist_FreeFiles(&s_shelvedFiles);
 				}
 			}
-			UIChangelist_DrawInformation(&cl->desc);
+			UIChangelist_DrawInformation(&cl->normal);
 			ImGui::Text("File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count);
 			UIChangelist_DrawFiles(&s_normalFiles);
 			if(s_shelvedFiles.count) {

@@ -18,7 +18,8 @@ void p4_shutdown(void);
 //////////////////////////////////////////////////////////////////////////
 
 typedef struct tag_p4Changelist {
-	sdict_t desc;
+	sdict_t normal;
+	sdict_t shelved;
 	sdicts normalFiles;
 	sdicts shelvedFiles;
 	u32 number;
