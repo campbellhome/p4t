@@ -112,10 +112,12 @@
     <ClInclude Include="..\src\p4t\imgui_utils.h" />
     <ClInclude Include="..\src\p4t\json_generated.h" />
     <ClInclude Include="..\src\p4t\keys.h" />
+    <ClInclude Include="..\src\p4t\message_box.h" />
     <ClInclude Include="..\src\p4t\p4.h" />
     <ClInclude Include="..\src\p4t\p4_task.h" />
     <ClInclude Include="..\src\p4t\py_parser.h" />
     <ClInclude Include="..\src\p4t\ui_changelist.h" />
+    <ClInclude Include="..\src\p4t\ui_message_box.h" />
     <ClInclude Include="..\src\p4t\ui_output.h" />
     <ClInclude Include="..\src\p4t\ui_preferences.h" />
     <ClInclude Include="..\src\p4t\wrap_imgui.h" />
@@ -139,12 +141,14 @@
     <ClCompile Include="..\src\p4t\json_generated.c" />
     <ClCompile Include="..\src\p4t\keys.c" />
     <ClCompile Include="..\src\p4t\main.cpp" />
+    <ClCompile Include="..\src\p4t\message_box.c" />
     <ClCompile Include="..\src\p4t\p4.c" />
     <ClCompile Include="..\src\p4t\p4_task.c" />
     <ClCompile Include="..\src\p4t\py_parser.c" />
     <ClCompile Include="..\src\p4t\sb_json.c" />
     <ClCompile Include="..\src\p4t\sdict_json.c" />
     <ClCompile Include="..\src\p4t\ui_changelist.cpp" />
+    <ClCompile Include="..\src\p4t\ui_message_box.cpp" />
     <ClCompile Include="..\src\p4t\ui_output.cpp" />
     <ClCompile Include="..\src\p4t\ui_preferences.cpp" />
     <ClCompile Include="..\src\thirdparty\parson\parson.c">

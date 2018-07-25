@@ -58,6 +58,17 @@ u32 sdict_find_index_from(sdict_t *sd, const char *key, u32 startIndex)
 	return ~0U;
 }
 
+sdictEntry_t *sdict_find_entry(sdict_t *sd, const char *key)
+{
+	for(u32 i = 0; i < sd->count; ++i) {
+		sdictEntry_t *e = sd->data + i;
+		if(!strcmp(key, sb_get(&e->key))) {
+			return e;
+		}
+	}
+	return NULL;
+}
+
 const char *sdict_find(sdict_t *sd, const char *key)
 {
 	for(u32 i = 0; i < sd->count; ++i) {
@@ -102,6 +113,14 @@ b32 sdict_add(sdict_t *sd, sdictEntry_t *entry)
 	}
 	sdictEntry_reset(entry);
 	return false;
+}
+
+b32 sdict_add_raw(sdict_t *sd, const char *key, const char *value)
+{
+	sdictEntry_t e = { 0 };
+	sb_append(&e.key, key);
+	sb_append(&e.value, value);
+	return sdict_add(sd, &e);
 }
 
 b32 sdict_remove(sdict_t *sd, const char *key)

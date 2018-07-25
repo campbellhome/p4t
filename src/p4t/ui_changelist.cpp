@@ -5,6 +5,7 @@
 
 #include "config.h"
 #include "imgui_utils.h"
+#include "message_box.h"
 #include "output.h"
 #include "p4.h"
 #include "sdict.h"
@@ -437,6 +438,19 @@ static void UIChangelist_PopulateFiles(sdict_t *change, sdicts *sds, uiChangelis
 	files->lastClickIndex = ~0u;
 }
 
+static void UIChangelist_MessageBoxCallback(messageBox *mb, const char *action)
+{
+	if(action) {
+		const char *inputNumber = sdict_find_safe(&mb->data, "inputNumber");
+		s32 testChangelist = strtos32(inputNumber);
+		if(testChangelist > 0) {
+			s_requestedChangelist = (u32)testChangelist;
+			s_displayedChangelist = 0;
+			p4_describe_changelist(s_requestedChangelist);
+		}
+	}
+}
+
 void UIChangelist_Update(void)
 {
 	float startY = ImGui::GetItemsLineHeightWithSpacing();
@@ -444,37 +458,19 @@ void UIChangelist_Update(void)
 	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiSetCond_Always);
 	ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
 
-	static bool s_focused = false;
-
-	if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
-		s_requestedChangelist = 0;
-		s_focused = false;
-		UIChangelist_FreeFiles(&s_normalFiles);
-		UIChangelist_FreeFiles(&s_shelvedFiles);
+	static bool doneInit = false;
+	if(!doneInit || ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
+		doneInit = true;
+		messageBox mb = {};
+		mb.callback = UIChangelist_MessageBoxCallback;
+		sdict_add_raw(&mb.data, "title", "View Changelist");
+		sdict_add_raw(&mb.data, "text", "Enter changelist to view:");
+		sdict_add_raw(&mb.data, "inputNumber", va("%u", s_requestedChangelist));
+		mb_queue(mb);
 	}
 
 	bool open = true;
 	if(ImGui::Begin("ViewChangelist", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
-		if(!s_requestedChangelist) {
-			ImGui::TextUnformatted("Changelist:");
-			ImGui::SameLine();
-			if(!s_focused) {
-				ImGui::SetKeyboardFocusHere();
-			}
-			if(ImGui::IsWindowFocused()) {
-				s_focused = true;
-			}
-			static char inputChangelist[64];
-			if(ImGui::InputText("###CL", inputChangelist, sizeof(inputChangelist), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
-				s32 testChangelist = strtos32(inputChangelist);
-				if(testChangelist > 0) {
-					s_requestedChangelist = (u32)testChangelist;
-					s_displayedChangelist = 0;
-					p4_describe_changelist(s_requestedChangelist);
-				}
-			}
-		}
-
 		p4Changelist *cl = p4_find_changelist(s_requestedChangelist);
 		if(cl) {
 			if(!s_displayedChangelist || s_parity != cl->parity) {

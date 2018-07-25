@@ -33,10 +33,12 @@ void sdict_reset(sdict_t *sd);
 void sdict_move(sdict_t *target, sdict_t *src);
 u32 sdict_find_index(sdict_t *sd, const char *key);
 u32 sdict_find_index_from(sdict_t *sd, const char *key, u32 startIndex);
+sdictEntry_t *sdict_find_entry(sdict_t *sd, const char *key);
 const char *sdict_find(sdict_t *sd, const char *key);
 const char *sdict_find_safe(sdict_t *sd, const char *key);
 b32 sdict_grow(sdict_t *sd, u32 len);
 b32 sdict_add(sdict_t *sd, sdictEntry_t *entry);
+b32 sdict_add_raw(sdict_t *sd, const char *key, const char *value);
 b32 sdict_remove(sdict_t *sd, const char *key);
 void sdict_sort(sdict_t *sd);
 

@@ -46,6 +46,12 @@
     <ClCompile Include="..\src\p4t\p4_task.c">
       <Filter>Source\p4t</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\p4t\message_box.c">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\p4t\ui_message_box.cpp">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\p4t\wrap_imgui.h">
@@ -88,6 +94,12 @@
       <Filter>Source\p4t</Filter>
     </ClInclude>
     <ClInclude Include="..\src\p4t\p4_task.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\message_box.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\ui_message_box.h">
       <Filter>Source\p4t</Filter>
     </ClInclude>
   </ItemGroup>

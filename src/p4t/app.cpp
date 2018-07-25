@@ -6,10 +6,12 @@
 #include "config.h"
 #include "env_utils.h"
 #include "imgui_utils.h"
+#include "message_box.h"
 #include "output.h"
 #include "p4.h"
 #include "tokenize.h"
 #include "ui_changelist.h"
+#include "ui_message_box.h"
 #include "ui_output.h"
 #include "ui_preferences.h"
 #include "tasks.h"
@@ -105,6 +107,7 @@ void App_Shutdown()
 	UIChangelist_Shutdown();
 	p4_shutdown();
 	tasks_shutdown();
+	mb_shutdown();
 	Preferences_Reset();
 	config_write(&g_config);
 	config_reset(&g_config);
@@ -172,6 +175,7 @@ void App_Update()
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(30, 30, 30, 255)); // VS Dark Text Window
 	UIChangelist_Update();
 	UIOutput_Update();
+	UIMessageBox_Update();
 	ImGui::PopStyleColor(3);
 }
 
