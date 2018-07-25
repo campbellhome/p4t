@@ -488,7 +488,15 @@ void UIChangelist_Update(void)
 				}
 			}
 			UIChangelist_DrawInformation(&cl->normal);
-			ImGui::Text("File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count);
+			const char *status = sdict_find_safe(&cl->normal, "status");
+			b32 pending = !strcmp(status, "pending");
+			if(pending) {
+				ImGui::Text("Pending File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count);
+			} else if(*status) {
+				ImGui::Text("Submitted File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count);
+			} else {
+				ImGui::TextUnformatted("Files: 0");
+			}
 			UIChangelist_DrawFiles(&s_normalFiles, cl, &s_shelvedFiles);
 			if(s_shelvedFiles.count) {
 				ImGui::Separator();
