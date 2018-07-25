@@ -107,14 +107,33 @@ static void UIChangelist_CopySelectedFilesToClipboard(uiChangelistFiles *files, 
 
 static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files, p4Changelist *cl)
 {
+	const char *infoClientName = sdict_find_safe(&p4.info, "clientName");
+	const char *clientName = sdict_find_safe(&cl->normal, "client");
+	bool localClient = !strcmp(infoClientName, clientName);
+
+	const char *status = sdict_find_safe(&cl->normal, "status");
+	b32 pending = !strcmp(status, "pending");
+	b32 shelved = files->shelved;
+
 	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile *file = files->data + i;
 		if(file->selected) {
 			u32 rev = strtou32(file->field.rev);
-			if(files->shelved) {
-				p4_diff_against_depot(file->field.depotPath, va("#%u", rev), file->field.depotPath, va("@=%u", cl->number));
-			} else if(rev) {
-				p4_diff_against_depot(file->field.depotPath, va("#%u", rev), file->field.depotPath, va("#%u", rev - 1));
+
+			if(pending) {
+				if(shelved) {
+					p4_diff_against_depot(file->field.depotPath, va("#%u", rev), file->field.depotPath, va("@=%u", cl->number));
+				} else if(localClient) {
+					if(*file->field.localPath) {
+						p4_diff_against_local(file->field.depotPath, va("#%u", rev), file->field.localPath);
+					}
+				}
+			} else {
+				if(rev) {
+					p4_diff_against_depot(file->field.depotPath, va("#%u", rev), file->field.depotPath, va("#%u", rev - 1));
+				} else {
+					// #todo: diff against empty file for rev 0
+				}
 			}
 		}
 	}
@@ -384,7 +403,7 @@ void UIChangelist_Shutdown(void)
 static void UIChangelist_PopulateFiles(sdict_t *change, sdicts *sds, uiChangelistFiles *files)
 {
 	UIChangelist_FreeFiles(files);
-	if(sds->count > 1) {
+	if(sds->count > 1 && 0) {
 		for(u32 i = 0; i < sds->count; ++i) {
 			sdict_t *sd = sds->data + i;
 			const char *depotFile = sdict_find(sd, "depotFile");
@@ -420,6 +439,15 @@ static void UIChangelist_PopulateFiles(sdict_t *change, sdicts *sds, uiChangelis
 				const char *rev = sb_get(&change->data[revIndex].value);
 				const char *lastSlash = strrchr(depotFile, '/');
 				const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
+				const char *localPath = "";
+				for(u32 i = 0; i < sds->count; ++i) {
+					sdict_t *sd = sds->data + i;
+					const char *detailedDepotFile = sdict_find_safe(sd, "depotFile");
+					if(!strcmp(detailedDepotFile, depotFile)) {
+						localPath = sdict_find_safe(sd, "path");
+					}
+				}
+
 				if(filename && bba_add(*files, 1)) {
 					uiChangelistFile &file = bba_last(*files);
 					file.field.filename = _strdup(filename);
@@ -427,6 +455,7 @@ static void UIChangelist_PopulateFiles(sdict_t *change, sdicts *sds, uiChangelis
 					file.field.action = _strdup(action);
 					file.field.filetype = _strdup(type);
 					file.field.depotPath = _strdup(depotFile);
+					file.field.localPath = _strdup(localPath);
 				}
 			} else {
 				break;

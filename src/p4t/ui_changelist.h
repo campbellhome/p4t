@@ -7,13 +7,14 @@
 
 typedef struct tag_uiChangelistFile {
 	union {
-		char *str[5];
+		char *str[6];
 		struct {
 			char *filename;
 			char *rev;
 			char *action;
 			char *filetype;
 			char *depotPath;
+			char *localPath;
 		} field;
 	};
 	bool selected;

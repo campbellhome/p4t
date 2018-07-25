@@ -17,6 +17,41 @@ static sbs_t s_diffFiles;
 static sbs_t s_diffDirs;
 static u32 s_diffCount;
 
+void p4_diff_against_local(const char *depotPath, const char *rev, const char *localPath)
+{
+	const char *filename = strrchr(depotPath, '/');
+	if(!filename++)
+		return;
+
+	sb_t temp = env_get("TEMP");
+	if(!temp.data)
+		return;
+
+	DWORD procId = GetCurrentProcessId();
+	sb_t diffDir = { 0 }, target = { 0 };
+	sb_va(&diffDir, "%s\\p4t\\%u\\%u", sb_get(&temp), procId, s_diffCount);
+	sb_va(&target, "%s\\%s%s", sb_get(&diffDir), filename, rev);
+	sb_reset(&temp);
+	++s_diffCount;
+
+	const char *p4dir = p4_dir();
+	const char *p4exe = p4_exe();
+	const char *diffExe = "C:\\Program Files\\Beyond Compare 4\\BComp.exe";
+
+	task t = { 0 };
+	t.tick = task_tick_subtasks;
+	bba_push(t.subtasks, p4_task_create(task_process_statechanged, p4dir, NULL,
+	                                    "\"%s\" -G print -o %s %s%s",
+	                                    p4exe, sb_get(&target), depotPath, rev));
+	bba_push(t.subtasks, process_task_create(kProcessSpawn_OneShot, p4dir,
+	                                         "\"%s\" \"%s\" \"%s\"",
+	                                         diffExe, sb_get(&target), localPath));
+	task_queue(t);
+
+	bba_push(s_diffDirs, diffDir);
+	bba_push(s_diffFiles, target);
+}
+
 void p4_diff_against_depot(const char *depotPathA, const char *revA, const char *depotPathB, const char *revB)
 {
 	const char *filenameA = strrchr(depotPathA, '/');
@@ -51,11 +86,7 @@ void p4_diff_against_depot(const char *depotPathA, const char *revA, const char 
 	bba_push(t.subtasks, process_task_create(kProcessSpawn_OneShot, p4dir,
 	                                         "\"%s\" \"%s\" \"%s\"",
 	                                         diffExe, sb_get(&targetA), sb_get(&targetB)));
-	task *queued = task_queue(t);
-	if(queued) {
-		sdict_add_raw(&queued->extraData, "targetA", sb_get(&targetA));
-		sdict_add_raw(&queued->extraData, "targetB", sb_get(&targetB));
-	}
+	task_queue(t);
 
 	bba_push(s_diffDirs, diffDir);
 	bba_push(s_diffFiles, targetA);
