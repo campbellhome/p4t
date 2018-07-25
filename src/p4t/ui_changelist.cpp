@@ -119,7 +119,6 @@ static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files, p4Changelis
 		uiChangelistFile *file = files->data + i;
 		if(file->selected) {
 			u32 rev = strtou32(file->field.rev);
-
 			if(pending) {
 				if(shelved) {
 					p4_diff_against_depot(file->field.depotPath, va("#%u", rev), file->field.depotPath, va("@=%u", cl->number));
@@ -130,9 +129,7 @@ static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files, p4Changelis
 				}
 			} else {
 				if(rev) {
-					p4_diff_against_depot(file->field.depotPath, va("#%u", rev), file->field.depotPath, va("#%u", rev - 1));
-				} else {
-					// #todo: diff against empty file for rev 0
+					p4_diff_against_depot(file->field.depotPath, va("#%u", rev - 1), file->field.depotPath, va("#%u", rev));
 				}
 			}
 		}
@@ -403,63 +400,40 @@ void UIChangelist_Shutdown(void)
 static void UIChangelist_PopulateFiles(sdict_t *change, sdicts *sds, uiChangelistFiles *files)
 {
 	UIChangelist_FreeFiles(files);
-	if(sds->count > 1 && 0) {
-		for(u32 i = 0; i < sds->count; ++i) {
-			sdict_t *sd = sds->data + i;
-			const char *depotFile = sdict_find(sd, "depotFile");
-			const char *action = sdict_find(sd, "action");
-			const char *type = sdict_find(sd, "type");
-			const char *rev = sdict_find(sd, "haveRev");
-			if(depotFile && action && type && rev) {
-				const char *lastSlash = strrchr(depotFile, '/');
-				const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
-				if(filename && bba_add(*files, 1)) {
-					uiChangelistFile &file = bba_last(*files);
-					file.field.filename = _strdup(filename);
-					file.field.rev = _strdup(rev);
-					file.field.action = _strdup(action);
-					file.field.filetype = _strdup(type);
-					file.field.depotPath = _strdup(depotFile);
+	u32 sdictIndex = 0;
+	while(1) {
+		u32 fileIndex = files->count;
+		u32 depotFileIndex = sdict_find_index_from(change, va("depotFile%u", fileIndex), sdictIndex);
+		u32 actionIndex = sdict_find_index_from(change, va("action%u", fileIndex), depotFileIndex);
+		u32 typeIndex = sdict_find_index_from(change, va("type%u", fileIndex), actionIndex);
+		u32 revIndex = sdict_find_index_from(change, va("rev%u", fileIndex), typeIndex);
+		sdictIndex = revIndex;
+		if(revIndex < change->count) {
+			const char *depotFile = sb_get(&change->data[depotFileIndex].value);
+			const char *action = sb_get(&change->data[actionIndex].value);
+			const char *type = sb_get(&change->data[typeIndex].value);
+			const char *rev = sb_get(&change->data[revIndex].value);
+			const char *lastSlash = strrchr(depotFile, '/');
+			const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
+			const char *localPath = "";
+			for(u32 i = 0; i < sds->count; ++i) {
+				sdict_t *sd = sds->data + i;
+				const char *detailedDepotFile = sdict_find_safe(sd, "depotFile");
+				if(!strcmp(detailedDepotFile, depotFile)) {
+					localPath = sdict_find_safe(sd, "path");
 				}
 			}
-		}
-	} else {
-		u32 sdictIndex = 0;
-		while(1) {
-			u32 fileIndex = files->count;
-			u32 depotFileIndex = sdict_find_index_from(change, va("depotFile%u", fileIndex), sdictIndex);
-			u32 actionIndex = sdict_find_index_from(change, va("action%u", fileIndex), depotFileIndex);
-			u32 typeIndex = sdict_find_index_from(change, va("type%u", fileIndex), actionIndex);
-			u32 revIndex = sdict_find_index_from(change, va("rev%u", fileIndex), typeIndex);
-			sdictIndex = revIndex;
-			if(revIndex < change->count) {
-				const char *depotFile = sb_get(&change->data[depotFileIndex].value);
-				const char *action = sb_get(&change->data[actionIndex].value);
-				const char *type = sb_get(&change->data[typeIndex].value);
-				const char *rev = sb_get(&change->data[revIndex].value);
-				const char *lastSlash = strrchr(depotFile, '/');
-				const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
-				const char *localPath = "";
-				for(u32 i = 0; i < sds->count; ++i) {
-					sdict_t *sd = sds->data + i;
-					const char *detailedDepotFile = sdict_find_safe(sd, "depotFile");
-					if(!strcmp(detailedDepotFile, depotFile)) {
-						localPath = sdict_find_safe(sd, "path");
-					}
-				}
-
-				if(filename && bba_add(*files, 1)) {
-					uiChangelistFile &file = bba_last(*files);
-					file.field.filename = _strdup(filename);
-					file.field.rev = _strdup(rev);
-					file.field.action = _strdup(action);
-					file.field.filetype = _strdup(type);
-					file.field.depotPath = _strdup(depotFile);
-					file.field.localPath = _strdup(localPath);
-				}
-			} else {
-				break;
+			if(filename && bba_add(*files, 1)) {
+				uiChangelistFile &file = bba_last(*files);
+				file.field.filename = _strdup(filename);
+				file.field.rev = _strdup(rev);
+				file.field.action = _strdup(action);
+				file.field.filetype = _strdup(type);
+				file.field.depotPath = _strdup(depotFile);
+				file.field.localPath = _strdup(localPath);
 			}
+		} else {
+			break;
 		}
 	}
 	qsort(files->data, files->count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
