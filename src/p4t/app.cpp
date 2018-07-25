@@ -83,7 +83,11 @@ bool App_Init(const char *cmdline)
 	io.IniFilename = sb_get(&s_imguiPath);
 
 	const char *applicationName = "p4t";
-	BB_INIT(applicationName);
+#ifdef _DEBUG
+	BB_INIT_WITH_FLAGS(applicationName, 0);
+#else
+	BB_INIT_WITH_FLAGS(applicationName, kBBInitFlag_NoOpenView);
+#endif
 
 	BB_THREAD_SET_NAME("main");
 	BB_LOG("Startup", "%s cmdline: %s\n", applicationName, cmdline);
