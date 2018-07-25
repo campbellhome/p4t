@@ -88,6 +88,12 @@ b32 fileData_writeIfChanged(const char *pathname, const char *tempPathname, file
 	return result;
 }
 
+b32 file_delete(const char *pathname)
+{
+	SetFileAttributesA(pathname, FILE_ATTRIBUTE_TEMPORARY);
+	return DeleteFileA(pathname);
+}
+
 /*
 FILETIME GetFileLastWriteTime(char *path)
 {

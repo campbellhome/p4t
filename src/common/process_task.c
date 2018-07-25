@@ -46,3 +46,22 @@ void task_process_reset(task *_t)
 	free(_t->userdata);
 	_t->userdata = NULL;
 }
+
+task process_task_create(processSpawnType_t spawnType, const char *dir, const char *cmdlineFmt, ...)
+{
+	task t = { 0 };
+	t.tick = task_process_tick;
+	t.stateChanged = task_process_statechanged;
+	t.reset = task_process_reset;
+	t.userdata = malloc(sizeof(task_process));
+
+	task_process *p = t.userdata;
+	memset(p, 0, sizeof(*p));
+	sb_append(&p->dir, dir);
+	va_list args;
+	va_start(args, cmdlineFmt);
+	sb_va_list(&p->cmdline, cmdlineFmt, args);
+	va_end(args);
+	p->spawnType = spawnType;
+	return t;
+}

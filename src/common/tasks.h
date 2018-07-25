@@ -4,6 +4,7 @@
 #pragma once
 
 #include "common.h"
+#include "sdict.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -46,6 +47,7 @@ typedef struct tag_task {
 	tasks subtasks;
 	task *parent;
 	void *userdata;
+	sdict_t extraData;
 	Task_Tick *tick;
 	Task_StateChanged *stateChanged;
 	Task_Reset *reset;

@@ -96,6 +96,10 @@ bool path_mkdir(const char *path)
 	}
 	return success;
 }
+bool path_rmdir(const char *path)
+{
+	return _rmdir(path);
+}
 #else
 #include <pwd.h>
 #include <sys/stat.h>

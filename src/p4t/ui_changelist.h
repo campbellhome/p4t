@@ -6,7 +6,16 @@
 #include "sdict.h"
 
 typedef struct tag_uiChangelistFile {
-	char *str[5];
+	union {
+		char *str[5];
+		struct {
+			char *filename;
+			char *rev;
+			char *action;
+			char *filetype;
+			char *depotPath;
+		} field;
+	};
 	bool selected;
 	u8 pad[7];
 } uiChangelistFile;
@@ -17,14 +26,16 @@ typedef struct tag_uiChangelistFiles {
 	uiChangelistFile *data;
 	u32 lastClickIndex;
 	b32 active;
+	b32 shelved;
 	u32 sortColumn;
 	b32 sortDescending;
+	u8 pad[4];
 } uiChangelistFiles;
 
 // for use in other UIs
 void UIChangelist_DrawSingleLine(sdict_t *cl);
 void UIChangelist_DrawInformation(sdict_t *cl);
-void UIChangelist_DrawFiles(uiChangelistFiles *files);
+void UIChangelist_DrawFiles(uiChangelistFiles *files, struct tag_p4Changelist *cl, uiChangelistFiles *otherFiles = nullptr);
 
 // for standalone CL viewer
 void UIChangelist_Shutdown(void);

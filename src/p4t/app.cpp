@@ -104,6 +104,7 @@ bool App_Init(const char *cmdline)
 
 void App_Shutdown()
 {
+	p4_diff_shutdown();
 	UIChangelist_Shutdown();
 	p4_shutdown();
 	tasks_shutdown();

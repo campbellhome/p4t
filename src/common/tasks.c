@@ -20,6 +20,7 @@ static void task_reset(task *t)
 		task_reset(s);
 	}
 	bba_free(t->subtasks);
+	sdict_reset(&t->extraData);
 }
 
 void tasks_startup(void)
@@ -118,7 +119,7 @@ void tasks_tick(void)
 		}
 	}
 
-	if(!active) {
+	if(!active || 1) {
 		for(u32 i = 0; i < s_tasks.count; ++i) {
 			task *t = s_tasks.data + i;
 			if(!task_started(t)) {

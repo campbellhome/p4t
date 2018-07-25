@@ -94,9 +94,9 @@ static void UIChangelist_CopySelectedFilesToClipboard(uiChangelistFiles *files, 
 		uiChangelistFile *file = files->data + i;
 		if(file->selected) {
 			if(extraInfo) {
-				sb_va(&sb, "%s#%s\n", file->str[4], file->str[1]);
+				sb_va(&sb, "%s#%s\n", file->field.depotPath, file->field.rev);
 			} else {
-				sb_va(&sb, "%s\n", file->str[4]);
+				sb_va(&sb, "%s\n", file->field.depotPath);
 			}
 		}
 	}
@@ -105,23 +105,19 @@ static void UIChangelist_CopySelectedFilesToClipboard(uiChangelistFiles *files, 
 	sb_reset(&sb);
 }
 
-static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files)
+static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files, p4Changelist *cl)
 {
-	sdict_t *sd = p4_get_info();
-	const char *dir = sdict_find_safe(sd, "clientRoot");
-
-	sb_t sb = {};
-	for(u32 i = 0; i < sd->count; ++i) {
-		sb_va(&sb, "[%s] %s\r\n", sb_get(&sd->data[i].key), sb_get(&sd->data[i].value));
-	}
-	ImGui::SetClipboardText(sb_get(&sb));
-	sb_reset(&sb);
-
 	for(u32 i = 0; i < files->count; ++i) {
-		//uiChangelistFile *file = files->data + i;
+		uiChangelistFile *file = files->data + i;
+		if(file->selected) {
+			u32 rev = strtou32(file->field.rev);
+			if(files->shelved) {
+				p4_diff_against_depot(file->field.depotPath, va("#%u", rev), file->field.depotPath, va("@=%u", cl->number));
+			} else if(rev) {
+				p4_diff_against_depot(file->field.depotPath, va("#%u", rev), file->field.depotPath, va("#%u", rev - 1));
+			}
+		}
 	}
-
-	process_spawn(dir, "notepad.exe", kProcessSpawn_OneShot);
 }
 
 static void UIChangelist_Logs_ClearSelection(uiChangelistFiles *files)
@@ -297,7 +293,7 @@ static b32 UIChangelist_DrawFileColumnHeader(uiChangelistFiles *files, const cha
 	return anyActive;
 }
 
-void UIChangelist_DrawFiles(uiChangelistFiles *files)
+void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles)
 {
 	// Columns: File Name, Revision, Action, Filetype, In Folder
 
@@ -318,10 +314,13 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files)
 	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile &file = files->data[i];
-		ImGui::Selectable(va("###%s", file.str[0]), file.selected != 0);
+		ImGui::Selectable(va("###%s", file.field.filename), file.selected != 0);
 		if(ImGui::IsItemHovered()) {
 			if(ImGui::IsItemClicked()) {
 				UIChangelist_HandleClick(files, i);
+				if(otherFiles) {
+					UIChangelist_Logs_ClearSelection(otherFiles);
+				}
 			}
 		}
 		if(ImGui::IsItemActive()) {
@@ -347,7 +346,7 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files)
 		} else if(ImGui::IsKeyPressed('C') && ImGui::GetIO().KeyCtrl) {
 			UIChangelist_CopySelectedFilesToClipboard(files, ImGui::GetIO().KeyShift);
 		} else if(ImGui::IsKeyPressed('D') && ImGui::GetIO().KeyCtrl) {
-			UIChangelist_DiffSelectedFiles(files);
+			UIChangelist_DiffSelectedFiles(files, cl);
 		} else if(ImGui::IsKeyPressed(ImGui::GetIO().KeyMap[ImGuiKey_Escape])) {
 			UIChangelist_Logs_ClearSelection(files);
 			files->active = false;
@@ -397,11 +396,11 @@ static void UIChangelist_PopulateFiles(sdict_t *change, sdicts *sds, uiChangelis
 				const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
 				if(filename && bba_add(*files, 1)) {
 					uiChangelistFile &file = bba_last(*files);
-					file.str[0] = _strdup(filename);
-					file.str[1] = _strdup(rev);
-					file.str[2] = _strdup(action);
-					file.str[3] = _strdup(type);
-					file.str[4] = _strdup(depotFile);
+					file.field.filename = _strdup(filename);
+					file.field.rev = _strdup(rev);
+					file.field.action = _strdup(action);
+					file.field.filetype = _strdup(type);
+					file.field.depotPath = _strdup(depotFile);
 				}
 			}
 		}
@@ -423,11 +422,11 @@ static void UIChangelist_PopulateFiles(sdict_t *change, sdicts *sds, uiChangelis
 				const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
 				if(filename && bba_add(*files, 1)) {
 					uiChangelistFile &file = bba_last(*files);
-					file.str[0] = _strdup(filename);
-					file.str[1] = _strdup(rev);
-					file.str[2] = _strdup(action);
-					file.str[3] = _strdup(type);
-					file.str[4] = _strdup(depotFile);
+					file.field.filename = _strdup(filename);
+					file.field.rev = _strdup(rev);
+					file.field.action = _strdup(action);
+					file.field.filetype = _strdup(type);
+					file.field.depotPath = _strdup(depotFile);
 				}
 			} else {
 				break;
@@ -472,12 +471,17 @@ void UIChangelist_Update(void)
 	bool open = true;
 	if(ImGui::Begin("ViewChangelist", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
 		p4Changelist *cl = p4_find_changelist(s_requestedChangelist);
+		p4Changelist empty = {};
+		if(!cl) {
+			cl = &empty;
+		}
 		if(cl) {
 			if(!s_displayedChangelist || s_parity != cl->parity) {
 				s_displayedChangelist = s_requestedChangelist;
 				s_parity = cl->parity;
 				UIChangelist_PopulateFiles(&cl->normal, &cl->normalFiles, &s_normalFiles);
 				if(sdict_find(&cl->normal, "shelved")) {
+					s_shelvedFiles.shelved = true;
 					UIChangelist_PopulateFiles(&cl->shelved, &cl->shelvedFiles, &s_shelvedFiles);
 				} else {
 					UIChangelist_FreeFiles(&s_shelvedFiles);
@@ -485,11 +489,11 @@ void UIChangelist_Update(void)
 			}
 			UIChangelist_DrawInformation(&cl->normal);
 			ImGui::Text("File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count);
-			UIChangelist_DrawFiles(&s_normalFiles);
+			UIChangelist_DrawFiles(&s_normalFiles, cl, &s_shelvedFiles);
 			if(s_shelvedFiles.count) {
 				ImGui::Separator();
 				ImGui::Text("Shelved File%s: %u", s_shelvedFiles.count == 1 ? "" : "s", s_shelvedFiles.count);
-				UIChangelist_DrawFiles(&s_shelvedFiles);
+				UIChangelist_DrawFiles(&s_shelvedFiles, cl, &s_normalFiles);
 			}
 		}
 	}

@@ -102,3 +102,11 @@ void sb_va_list(sb_t *sb, const char *fmt, va_list args)
 		}
 	}
 }
+
+void sbs_reset(sbs_t *sbs)
+{
+	for(u32 i = 0; i < sbs->count; ++i) {
+		sb_reset(sbs->data + i);
+	}
+	bba_free(*sbs);
+}
