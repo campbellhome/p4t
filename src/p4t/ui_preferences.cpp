@@ -115,8 +115,37 @@ void Preferences_Update(config_t *config)
 				}
 				PopItemWidth();
 			}
-			PopID();
 			EndGroup();
+			PopID();
+		}
+		if(ImGui::CollapsingHeader("Diff", ImGuiTreeNodeFlags_DefaultOpen)) {
+			PushID("Diff");
+			Checkbox("External Program", &s_preferencesConfig->diff.enabled);
+			if(s_preferencesConfig->diff.enabled) {
+				Text("Path:");
+				SameLine();
+				PushItemWidth(600.0f * g_config.dpiScale);
+				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
+				char buffer[1024];
+				bb_strncpy(buffer, sb_get(&s_preferencesConfig->diff.path), sizeof(buffer));
+				InputText("##path", buffer, sizeof(buffer), flags);
+				if(strcmp(buffer, sb_get(&s_preferencesConfig->diff.path))) {
+					s_preferencesConfig->diff.path.count = 0;
+					sb_append(&s_preferencesConfig->diff.path, buffer);
+				}
+				PopItemWidth();
+				Text("Arguments:");
+				SameLine();
+				PushItemWidth(300.0f * g_config.dpiScale);
+				bb_strncpy(buffer, sb_get(&s_preferencesConfig->diff.args), sizeof(buffer));
+				InputText("##args", buffer, sizeof(buffer), flags);
+				if(strcmp(buffer, sb_get(&s_preferencesConfig->diff.args))) {
+					s_preferencesConfig->diff.args.count = 0;
+					sb_append(&s_preferencesConfig->diff.args, buffer);
+				}
+				PopItemWidth();
+			}
+			PopID();
 		}
 		if(ImGui::CollapsingHeader("Miscellaneous", ImGuiTreeNodeFlags_DefaultOpen)) {
 			int val = (int)s_preferencesConfig->autoDeleteAfterDays;

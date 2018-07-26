@@ -98,6 +98,24 @@ uiChangelistConfig json_deserialize_uiChangelistConfig(JSON_Value *src)
 	return dst;
 }
 
+diffConfig_t json_deserialize_diffConfig_t(JSON_Value *src)
+{
+	diffConfig_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.enabled = json_object_get_boolean(obj, "enabled");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
+			dst.path = json_deserialize_sb_t(json_object_get_value(obj, "path"));
+			dst.args = json_deserialize_sb_t(json_object_get_value(obj, "args"));
+		}
+	}
+	return dst;
+}
+
 config_t json_deserialize_config_t(JSON_Value *src)
 {
 	config_t dst;
@@ -109,6 +127,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.uiFontConfig = json_deserialize_fontConfig_t(json_object_get_value(obj, "uiFontConfig"));
 			dst.uiChangelist = json_deserialize_uiChangelistConfig(json_object_get_value(obj, "uiChangelist"));
 			dst.wp = json_deserialize_WINDOWPLACEMENT(json_object_get_value(obj, "wp"));
+			dst.diff = json_deserialize_diffConfig_t(json_object_get_value(obj, "diff"));
 			dst.autoTileViews = json_object_get_boolean(obj, "autoTileViews");
 			dst.alternateRowBackground = json_object_get_boolean(obj, "alternateRowBackground");
 			dst.recordingsOpen = json_object_get_boolean(obj, "recordingsOpen");
@@ -209,6 +228,21 @@ JSON_Value *json_serialize_uiChangelistConfig(const uiChangelistConfig *src)
 	return val;
 }
 
+JSON_Value *json_serialize_diffConfig_t(const diffConfig_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_boolean(obj, "enabled", src->enabled);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
+		json_object_set_value(obj, "path", json_serialize_sb_t(&src->path));
+		json_object_set_value(obj, "args", json_serialize_sb_t(&src->args));
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_config_t(const config_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -218,6 +252,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "uiFontConfig", json_serialize_fontConfig_t(&src->uiFontConfig));
 		json_object_set_value(obj, "uiChangelist", json_serialize_uiChangelistConfig(&src->uiChangelist));
 		json_object_set_value(obj, "wp", json_serialize_WINDOWPLACEMENT(&src->wp));
+		json_object_set_value(obj, "diff", json_serialize_diffConfig_t(&src->diff));
 		json_object_set_boolean(obj, "autoTileViews", src->autoTileViews);
 		json_object_set_boolean(obj, "alternateRowBackground", src->alternateRowBackground);
 		json_object_set_boolean(obj, "recordingsOpen", src->recordingsOpen);

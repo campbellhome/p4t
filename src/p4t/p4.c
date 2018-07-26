@@ -71,6 +71,7 @@ void p4_shutdown(void)
 {
 	sb_reset(&p4.exe);
 	sdict_reset(&p4.info);
+	sdict_reset(&p4.set);
 	for(u32 i = 0; i < p4.changelists.count; ++i) {
 		p4_reset_changelist(p4.changelists.data + i);
 	}
@@ -103,9 +104,39 @@ static void task_p4info_statechanged(task *_t)
 		}
 	}
 }
+static void task_p4set_statechanged(task *t)
+{
+	task_process_statechanged(t);
+	if(t->state == kTaskState_Succeeded) {
+		task_process *p = t->userdata;
+		const char *cursor = sb_get(&p->stdoutBuf);
+		while(*cursor) {
+			span_t key = tokenize(&cursor, "\r\n=");
+			if(!key.start)
+				break;
+			if(*cursor++ != '=')
+				break;
+			span_t value = tokenize(&cursor, "\r\n");
+			if(!value.end)
+				break;
+			while(value.end > value.start && *value.end != '(')
+				--value.end;
+			--value.end;
+
+			sdictEntry_t entry = { 0 };
+			sb_va(&entry.key, "%.*s", (key.end - key.start), key.start);
+			sb_va(&entry.value, "%.*s", (value.end - value.start), value.start);
+			BB_LOG("p4::set", "%s=%s", sb_get(&entry.key), sb_get(&entry.value));
+			sdict_add(&p4.set, &entry);
+		}
+	}
+}
 void p4_info(void)
 {
 	task_queue(p4_task_create(task_p4info_statechanged, p4_dir(), NULL, "\"%s\" -G info", p4_exe()));
+	task setTask = process_task_create(kProcessSpawn_Tracked, p4_dir(), "\"%s\" set", p4_exe());
+	setTask.stateChanged = task_p4set_statechanged;
+	task_queue(setTask);
 }
 
 void p4_changes(void)

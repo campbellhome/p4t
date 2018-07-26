@@ -53,11 +53,19 @@ AUTOJSON typedef struct tag_uiChangelistConfig {
 	u8 pad[4];
 } uiChangelistConfig;
 
+AUTOJSON typedef struct diffConfig_s {
+	b32 enabled;
+	u8 pad[4];
+	sb_t path;
+	sb_t args;
+} diffConfig_t;
+
 AUTOJSON typedef struct config_s {
 	fontConfig_t logFontConfig;
 	fontConfig_t uiFontConfig;
 	uiChangelistConfig uiChangelist;
 	WINDOWPLACEMENT wp;
+	diffConfig_t diff;
 	b32 autoTileViews;
 	b32 alternateRowBackground;
 	b32 recordingsOpen;
@@ -70,7 +78,7 @@ AUTOJSON typedef struct config_s {
 	u32 version;
 } config_t;
 
-enum { kConfigVersion = 1 };
+enum { kConfigVersion = 2 };
 extern config_t g_config;
 
 b32 config_read(config_t *config);

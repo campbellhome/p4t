@@ -34,6 +34,7 @@ typedef struct tag_p4 {
 	sb_t exe;
 
 	sdict_t info;
+	sdict_t set;
 	p4Changelists changelists;
 } p4_t;
 extern p4_t p4;

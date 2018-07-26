@@ -42,6 +42,10 @@ config_t *config_clone(config_t *config)
 	sb_append(&target->logFontConfig.path, sb_get(&config->logFontConfig.path));
 	sb_init(&target->uiFontConfig.path);
 	sb_append(&target->uiFontConfig.path, sb_get(&config->uiFontConfig.path));
+	sb_init(&target->diff.path);
+	sb_append(&target->diff.path, sb_get(&config->diff.path));
+	sb_init(&target->diff.args);
+	sb_append(&target->diff.args, sb_get(&config->diff.args));
 	return target;
 }
 
@@ -49,6 +53,8 @@ void config_reset(config_t *config)
 {
 	sb_reset(&config->logFontConfig.path);
 	sb_reset(&config->uiFontConfig.path);
+	sb_reset(&config->diff.path);
+	sb_reset(&config->diff.args);
 }
 
 void config_free(config_t *config)
@@ -82,8 +88,11 @@ b32 config_read(config_t *config)
 		sb_append(&config->uiFontConfig.path, "C:\\Windows\\Fonts\\verdana.ttf");
 		config->logFontConfig.size = 14;
 		sb_append(&config->logFontConfig.path, "C:\\Windows\\Fonts\\consola.ttf");
-		config->version = kConfigVersion;
 	}
+	if(config->version < 2) {
+		sb_append(&config->diff.args, "%1 %2");
+	}
+	config->version = kConfigVersion;
 	return ret;
 }
 

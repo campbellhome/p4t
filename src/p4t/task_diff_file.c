@@ -4,6 +4,7 @@
 #include "task_diff_file.h"
 
 #include "bb_array.h"
+#include "config.h"
 #include "env_utils.h"
 #include "file_utils.h"
 #include "p4.h"
@@ -16,6 +17,22 @@
 static sbs_t s_diffFiles;
 static sbs_t s_diffDirs;
 static u32 s_diffCount;
+
+const char *diff_exe(void)
+{
+	if(g_config.diff.enabled && g_config.diff.path.count) {
+		return g_config.diff.path.data;
+	}
+	const char *diffExe = sdict_find(&p4.set, "P4DIFF");
+	if(diffExe)
+		return diffExe;
+	diffExe = p4_exe();
+	const char *end = strrchr(diffExe, '\\');
+	if(end) {
+		return va("%.*s\\p4merge.exe", end - diffExe, diffExe);
+	}
+	return "";
+}
 
 void p4_diff_against_local(const char *depotPath, const char *rev, const char *localPath)
 {
@@ -36,7 +53,7 @@ void p4_diff_against_local(const char *depotPath, const char *rev, const char *l
 
 	const char *p4dir = p4_dir();
 	const char *p4exe = p4_exe();
-	const char *diffExe = "C:\\Program Files\\Beyond Compare 4\\BComp.exe";
+	const char *diffExe = diff_exe();
 
 	task t = { 0 };
 	t.tick = task_tick_subtasks;
@@ -73,7 +90,7 @@ void p4_diff_against_depot(const char *depotPathA, const char *revA, const char 
 
 	const char *p4dir = p4_dir();
 	const char *p4exe = p4_exe();
-	const char *diffExe = "C:\\Program Files\\Beyond Compare 4\\BComp.exe";
+	const char *diffExe = diff_exe();
 
 	task t = { 0 };
 	t.tick = task_tick_subtasks;
