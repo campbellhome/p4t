@@ -9,12 +9,13 @@
 #include "message_box.h"
 #include "output.h"
 #include "p4.h"
+#include "tasks.h"
 #include "tokenize.h"
 #include "ui_changelist.h"
+#include "ui_clientspec.h"
 #include "ui_config.h"
 #include "ui_message_box.h"
 #include "ui_output.h"
-#include "tasks.h"
 #include "va.h"
 #include "win32_resource.h"
 #include "wrap_shellscalingapi.h"
@@ -56,6 +57,7 @@ static bool App_CreateWindow(void)
 				info.cbSize = sizeof(WINDOWINFO);
 				if(!GetWindowInfo(hExisting, &info) || info.rcClient.left == info.rcClient.right) {
 					ShowWindow(hExisting, SW_RESTORE);
+					SendMessageA(hExisting, WM_USER + SW_RESTORE, 0, 0);
 				}
 				SetForegroundWindow(hExisting);
 				return false;
@@ -141,6 +143,11 @@ extern "C" bool App_GetAndClearRequestRender(void)
 	return ret;
 }
 
+void App_SingleInstanceRestored(void)
+{
+	UIChangelist_EnterChangelist();
+}
+
 void App_Update()
 {
 	BB_TICK();
@@ -166,6 +173,7 @@ void App_Update()
 			}
 			ImGui::EndMenu();
 		}
+		UIClientspec_MenuBar();
 		ImGui::EndMainMenuBar();
 	}
 

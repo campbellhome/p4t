@@ -35,12 +35,16 @@ typedef struct tag_p4 {
 
 	sdict_t info;
 	sdict_t set;
+	sdicts selfClients;
+	sdicts localClients;
 	p4Changelists changelists;
 } p4_t;
 extern p4_t p4;
 
 const char *p4_exe(void);
 const char *p4_dir(void);
+const char *p4_clientspec(void);
+const char *p4_clientspec_arg(void);
 
 //////////////////////////////////////////////////////////////////////////
 

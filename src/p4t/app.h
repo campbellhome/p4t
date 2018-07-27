@@ -9,6 +9,7 @@ extern bool App_Init(const char *commandLine);
 extern void App_Shutdown(void);
 extern void App_Update(void);
 extern bool App_IsShuttingDown(void);
+extern void App_SingleInstanceRestored(void);
 
 #if defined(__cplusplus)
 #include "wrap_imgui.h"

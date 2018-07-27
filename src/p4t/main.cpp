@@ -207,6 +207,9 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_CHAR:
 		App_RequestRender();
 		break;
+	case WM_USER + SW_RESTORE:
+		App_SingleInstanceRestored();
+		break;
 	default:
 		break;
 	}

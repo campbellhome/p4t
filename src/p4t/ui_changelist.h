@@ -41,3 +41,5 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, struct tag_p4Changelist *c
 // for standalone CL viewer
 void UIChangelist_Shutdown(void);
 void UIChangelist_Update(void);
+
+void UIChangelist_EnterChangelist(void);

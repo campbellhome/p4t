@@ -36,6 +36,19 @@ void sdict_move(sdict_t *target, sdict_t *src)
 	memset(src, 0, sizeof(*src));
 }
 
+void sdict_copy(sdict_t *target, sdict_t *src)
+{
+	sdict_reset(target);
+	for(u32 i = 0; i < src->count; ++i) {
+		const sdictEntry_t *e = src->data + i;
+		if(bba_add(*target, 1) != NULL) {
+			sdictEntry_t *te = &bba_last(*target);
+			sb_append(&te->key, sb_get(&e->key));
+			sb_append(&te->value, sb_get(&e->value));
+		}
+	}
+}
+
 u32 sdict_find_index(sdict_t *sd, const char *key)
 {
 	for(u32 i = 0; i < sd->count; ++i) {

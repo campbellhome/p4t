@@ -22,6 +22,8 @@ BB_WARNING_PUSH(4820)
 #include <time.h>
 BB_WARNING_POP
 
+static bool s_doneInit = false;
+
 //////////////////////////////////////////////////////////////////////////
 
 typedef struct tag_changelistField {
@@ -62,7 +64,8 @@ static void UIChangelist_DrawInformationColumn(sdict_t *cl, float fullWidth, cha
 		if(strcmp(changeFields[i].key, "time")) {
 			ImGui::SelectableTextUnformatted(changeFields[i].tag, sdict_find_safe(cl, changeFields[i].key));
 		} else {
-			ImGui::SelectableTextUnformatted(changeFields[i].tag, Time_StringFromEpochTime(strtou32(sdict_find_safe(cl, changeFields[i].key))));
+			u32 time = strtou32(sdict_find_safe(cl, changeFields[i].key));
+			ImGui::SelectableTextUnformatted(changeFields[i].tag, time ? Time_StringFromEpochTime(time) : "");
 		}
 		ImGui::PopItemWidth();
 		ImGui::EndGroup();
@@ -107,7 +110,7 @@ static void UIChangelist_CopySelectedFilesToClipboard(uiChangelistFiles *files, 
 
 static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files, p4Changelist *cl)
 {
-	const char *infoClientName = sdict_find_safe(&p4.info, "clientName");
+	const char *infoClientName = p4_clientspec();
 	const char *clientName = sdict_find_safe(&cl->normal, "client");
 	bool localClient = !strcmp(infoClientName, clientName);
 
@@ -482,6 +485,17 @@ static void UIChangelist_FilesHeader(const char *text, b32 shelved)
 	ImGui::PopStyleColor(4);
 }
 
+void UIChangelist_EnterChangelist(void)
+{
+	s_doneInit = true;
+	messageBox mb = {};
+	mb.callback = UIChangelist_MessageBoxCallback;
+	sdict_add_raw(&mb.data, "title", "View Changelist");
+	sdict_add_raw(&mb.data, "text", "Enter changelist to view:");
+	sdict_add_raw(&mb.data, "inputNumber", va("%u", s_requestedChangelist));
+	mb_queue(mb);
+}
+
 void UIChangelist_Update(void)
 {
 	float startY = ImGui::GetItemsLineHeightWithSpacing();
@@ -489,15 +503,8 @@ void UIChangelist_Update(void)
 	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiSetCond_Always);
 	ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
 
-	static bool doneInit = false;
-	if(!doneInit || ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
-		doneInit = true;
-		messageBox mb = {};
-		mb.callback = UIChangelist_MessageBoxCallback;
-		sdict_add_raw(&mb.data, "title", "View Changelist");
-		sdict_add_raw(&mb.data, "text", "Enter changelist to view:");
-		sdict_add_raw(&mb.data, "inputNumber", va("%u", s_requestedChangelist));
-		mb_queue(mb);
+	if(!s_doneInit || ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
+		UIChangelist_EnterChangelist();
 	}
 
 	bool open = true;

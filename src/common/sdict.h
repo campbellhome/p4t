@@ -31,6 +31,7 @@ typedef struct tag_sdicts {
 void sdict_init(sdict_t *sd);
 void sdict_reset(sdict_t *sd);
 void sdict_move(sdict_t *target, sdict_t *src);
+void sdict_copy(sdict_t *target, sdict_t *src);
 u32 sdict_find_index(sdict_t *sd, const char *key);
 u32 sdict_find_index_from(sdict_t *sd, const char *key, u32 startIndex);
 sdictEntry_t *sdict_find_entry(sdict_t *sd, const char *key);

@@ -4,6 +4,9 @@
 #include "p4.h"
 
 #include "app.h"
+#include "bb.h"
+#include "bb_array.h"
+#include "config.h"
 #include "env_utils.h"
 #include "file_utils.h"
 #include "output.h"
@@ -12,10 +15,6 @@
 #include "str.h"
 #include "tokenize.h"
 #include "va.h"
-
-#include "bb.h"
-#include "bb_array.h"
-
 #include <stdlib.h>
 
 p4_t p4;
@@ -27,7 +26,39 @@ const char *p4_exe(void)
 
 const char *p4_dir(void)
 {
-	return "C:\\";
+	const char *configClientspec = sb_get(&g_config.clientspec);
+	for(u32 i = 0; i < p4.localClients.count; ++i) {
+		if(!strcmp(configClientspec, sdict_find_safe(p4.localClients.data + i, "client"))) {
+			return sdict_find_safe(p4.localClients.data + i, "Root");
+		}
+	}
+	const char *root = sdict_find(&p4.info, "clientRoot");
+	if(root) {
+		return root;
+	} else {
+		return "C:\\";
+	}
+}
+
+const char *p4_clientspec(void)
+{
+	const char *configClientspec = sb_get(&g_config.clientspec);
+	for(u32 i = 0; i < p4.localClients.count; ++i) {
+		if(!strcmp(configClientspec, sdict_find_safe(p4.localClients.data + i, "client"))) {
+			return configClientspec;
+		}
+	}
+	return sdict_find(&p4.info, "clientName");
+}
+
+const char *p4_clientspec_arg(void)
+{
+	const char *clientspec = p4_clientspec();
+	if(clientspec) {
+		return va(" -c %s", clientspec);
+	} else {
+		return "";
+	}
 }
 
 b32 p4_init(void)
@@ -72,6 +103,8 @@ void p4_shutdown(void)
 	sb_reset(&p4.exe);
 	sdict_reset(&p4.info);
 	sdict_reset(&p4.set);
+	sdicts_reset(&p4.selfClients);
+	sdicts_reset(&p4.localClients);
 	for(u32 i = 0; i < p4.changelists.count; ++i) {
 		p4_reset_changelist(p4.changelists.data + i);
 	}
@@ -94,6 +127,26 @@ sdict_t *p4_get_info(void)
 	return &p4.info;
 }
 
+static void task_p4clients_statechanged(task *_t)
+{
+	task_process_statechanged(_t);
+	if(_t->state == kTaskState_Succeeded) {
+		task_p4 *t = (task_p4 *)_t->userdata;
+		sdicts_move(&p4.selfClients, &t->dicts);
+		sdicts_reset(&p4.localClients);
+		const char *clientHost = sdict_find_safe(&p4.info, "clientHost");
+		for(u32 i = 0; i < p4.selfClients.count; ++i) {
+			sdict_t *sd = p4.selfClients.data + i;
+			const char *host = sdict_find_safe(sd, "Host");
+			if(!strcmp(host, clientHost)) {
+				if(bba_add(p4.localClients, 1)) {
+					sdict_t *target = &bba_last(p4.localClients);
+					sdict_copy(target, sd);
+				}
+			}
+		}
+	}
+}
 static void task_p4info_statechanged(task *_t)
 {
 	task_process_statechanged(_t);
@@ -101,6 +154,11 @@ static void task_p4info_statechanged(task *_t)
 		task_p4 *t = (task_p4 *)_t->userdata;
 		if(t->dicts.count == 1) {
 			sdict_move(&p4.info, t->dicts.data);
+		}
+
+		const char *userName = sdict_find(&p4.info, "userName");
+		if(userName) {
+			task_queue(p4_task_create(task_p4clients_statechanged, p4_dir(), NULL, "\"%s\" -G clients -u %s", p4_exe(), userName));
 		}
 	}
 }

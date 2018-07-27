@@ -66,6 +66,7 @@ AUTOJSON typedef struct config_s {
 	uiChangelistConfig uiChangelist;
 	WINDOWPLACEMENT wp;
 	diffConfig_t diff;
+	sb_t clientspec;
 	b32 autoTileViews;
 	b32 alternateRowBackground;
 	b32 recordingsOpen;
