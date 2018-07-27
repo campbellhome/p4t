@@ -10,9 +10,6 @@
     <ClCompile Include="..\src\p4t\config.c">
       <Filter>Source\p4t</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\ui_preferences.cpp">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\p4t\imgui_utils.cpp">
       <Filter>Source\p4t</Filter>
     </ClCompile>
@@ -58,6 +55,9 @@
     <ClCompile Include="..\src\p4t\task_diff_file.c">
       <Filter>Source\p4t</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\p4t\ui_config.cpp">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\p4t\wrap_imgui.h">
@@ -67,9 +67,6 @@
       <Filter>Source\p4t</Filter>
     </ClInclude>
     <ClInclude Include="..\src\p4t\config.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\ui_preferences.h">
       <Filter>Source\p4t</Filter>
     </ClInclude>
     <ClInclude Include="..\src\p4t\imgui_utils.h">
@@ -112,6 +109,9 @@
       <Filter>Source\p4t</Filter>
     </ClInclude>
     <ClInclude Include="..\src\p4t\task_diff_file.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\ui_config.h">
       <Filter>Source\p4t</Filter>
     </ClInclude>
   </ItemGroup>

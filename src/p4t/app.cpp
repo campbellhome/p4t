@@ -11,9 +11,9 @@
 #include "p4.h"
 #include "tokenize.h"
 #include "ui_changelist.h"
+#include "ui_config.h"
 #include "ui_message_box.h"
 #include "ui_output.h"
-#include "ui_preferences.h"
 #include "tasks.h"
 #include "va.h"
 #include "win32_resource.h"
@@ -113,7 +113,7 @@ void App_Shutdown()
 	p4_shutdown();
 	tasks_shutdown();
 	mb_shutdown();
-	Preferences_Reset();
+	UIConfig_Reset();
 	config_write(&g_config);
 	config_reset(&g_config);
 	BB_SHUTDOWN();
@@ -155,7 +155,7 @@ void App_Update()
 		if(ImGui::BeginMenu("Edit")) {
 			if(ImGui::MenuItem("Preferences")) {
 				BB_LOG("UI::Menu::Preferences", "Preferences_Open");
-				Preferences_Open(&g_config);
+				UIConfig_Open(&g_config);
 			}
 			ImGui::EndMenu();
 		}
@@ -175,7 +175,7 @@ void App_Update()
 	ImGui::PushStyleColor(ImGuiCol_TitleBgActive, ImColor(63, 63, 70, 255)); // VS Dark Active Tab
 	ImGui::PushStyleColor(ImGuiCol_TitleBg, ImColor(45, 45, 48, 255));       // VS Dark Inactive Tab
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(42, 42, 44, 255));      // VS Dark Output Window
-	Preferences_Update(&g_config);
+	UIConfig_Update(&g_config);
 	ImGui::PopStyleColor();
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(30, 30, 30, 255)); // VS Dark Text Window
 	UIChangelist_Update();

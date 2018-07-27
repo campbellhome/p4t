@@ -11,5 +11,5 @@ vs/
 !vs/*.vcxproj.filters
 !vs/bbcommon*.props
 windows/
-!windows/bb.exe
-!windows/bb.pdb
+!windows/p4t.exe
+!windows/p4t.pdb

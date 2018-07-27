@@ -189,7 +189,9 @@ static void UIChangelist_HandleClick(uiChangelistFiles *files, u32 index)
 			}
 		}
 	} else {
-		UIChangelist_Logs_ClearSelection(files);
+		if(files->active) {
+			UIChangelist_Logs_ClearSelection(files);
+		}
 		UIChangelist_Logs_AddSelection(files, index);
 	}
 }
@@ -325,12 +327,21 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 	anyActive = UIChangelist_DrawFileColumnHeader(files, "Filetype", &g_config.uiChangelist, 3, columnOffsets + 4) || anyActive;
 	anyActive = UIChangelist_DrawFileColumnHeader(files, "In Folder", &g_config.uiChangelist, 4, columnOffsets + 5) || anyActive;
 	ImGui::NewLine();
-	ImGui::Separator();
 
 	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile &file = files->data[i];
+		if(file.selected && !files->active) {
+			ImVec4 col = ImGui::GetStyle().Colors[ImGuiCol_Header];
+			col.x *= 0.5f;
+			col.y *= 0.5f;
+			col.z *= 0.5f;
+			ImGui::PushStyleColor(ImGuiCol_Header, col);
+		}
 		ImGui::Selectable(va("###%s", file.field.filename), file.selected != 0);
+		if(file.selected && !files->active) {
+			ImGui::PopStyleColor();
+		}
 		if(ImGui::IsItemHovered()) {
 			if(ImGui::IsItemClicked()) {
 				UIChangelist_HandleClick(files, i);
@@ -438,6 +449,7 @@ static void UIChangelist_PopulateFiles(sdict_t *change, sdicts *sds, uiChangelis
 	}
 	qsort(files->data, files->count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
 	files->lastClickIndex = ~0u;
+	files->active = false;
 }
 
 static void UIChangelist_MessageBoxCallback(messageBox *mb, const char *action)
@@ -451,6 +463,23 @@ static void UIChangelist_MessageBoxCallback(messageBox *mb, const char *action)
 			p4_describe_changelist(s_requestedChangelist);
 		}
 	}
+}
+
+static void UIChangelist_FilesHeader(const char *text, b32 shelved)
+{
+	float r = 0.3f;
+	float g = 0.3f;
+	float b = (shelved && s_shelvedFiles.active || !shelved && s_normalFiles.active) ? 0.4f : 0.3f;
+	ImVec4 col(r, g, b, 1.0f);
+	ImGui::PushStyleColor(ImGuiCol_Header, col);
+	ImGui::PushStyleColor(ImGuiCol_HeaderActive, col);
+	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, col);
+	ImGui::PushStyleColor(ImGuiCol_SelectableBg, col);
+	if(ImGui::Selectable(text)) {
+		s_normalFiles.active = !shelved;
+		s_shelvedFiles.active = shelved;
+	}
+	ImGui::PopStyleColor(4);
 }
 
 void UIChangelist_Update(void)
@@ -472,7 +501,7 @@ void UIChangelist_Update(void)
 	}
 
 	bool open = true;
-	if(ImGui::Begin("ViewChangelist", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
+	if(ImGui::Begin("ViewChangelist", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
 		p4Changelist *cl = p4_find_changelist(s_requestedChangelist);
 		p4Changelist empty = {};
 		if(!cl) {
@@ -486,7 +515,9 @@ void UIChangelist_Update(void)
 				if(sdict_find(&cl->normal, "shelved")) {
 					s_shelvedFiles.shelved = true;
 					UIChangelist_PopulateFiles(&cl->shelved, &cl->shelvedFiles, &s_shelvedFiles);
+					s_shelvedFiles.active = true;
 				} else {
+					s_normalFiles.active = true;
 					UIChangelist_FreeFiles(&s_shelvedFiles);
 				}
 			}
@@ -494,18 +525,26 @@ void UIChangelist_Update(void)
 			const char *status = sdict_find_safe(&cl->normal, "status");
 			b32 pending = !strcmp(status, "pending");
 			if(pending) {
-				ImGui::Text("Pending File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count);
+				UIChangelist_FilesHeader(va("Pending File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count), false);
 			} else if(*status) {
-				ImGui::Text("Submitted File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count);
+				UIChangelist_FilesHeader(va("Submitted File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count), false);
 			} else {
-				ImGui::TextUnformatted("Files: 0");
+				UIChangelist_FilesHeader("Files: 0", false);
 			}
 			UIChangelist_DrawFiles(&s_normalFiles, cl, &s_shelvedFiles);
 			if(s_shelvedFiles.count) {
-				ImGui::Separator();
-				ImGui::Text("Shelved File%s: %u", s_shelvedFiles.count == 1 ? "" : "s", s_shelvedFiles.count);
+				UIChangelist_FilesHeader(va("Shelved File%s: %u", s_shelvedFiles.count == 1 ? "" : "s", s_shelvedFiles.count), true);
 				UIChangelist_DrawFiles(&s_shelvedFiles, cl, &s_normalFiles);
 			}
+
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+			if(ImGui::Button("###blank", ImGui::GetContentRegionAvail()) || ImGui::IsItemActive()) {
+				s_normalFiles.active = s_shelvedFiles.count == 0;
+				s_shelvedFiles.active = s_shelvedFiles.count != 0;
+			}
+			ImGui::PopStyleColor(3);
 		}
 	}
 	ImGui::End();
