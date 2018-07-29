@@ -53,6 +53,12 @@ AUTOJSON typedef struct tag_uiChangelistConfig {
 	u8 pad[4];
 } uiChangelistConfig;
 
+AUTOJSON typedef struct tag_uiChangelistListConfig {
+	float columnWidth[4];
+	b32 sortDescending;
+	u32 sortColumn;
+} uiChangelistListConfig;
+
 AUTOJSON typedef struct diffConfig_s {
 	b32 enabled;
 	u8 pad[4];
@@ -64,6 +70,7 @@ AUTOJSON typedef struct config_s {
 	fontConfig_t logFontConfig;
 	fontConfig_t uiFontConfig;
 	uiChangelistConfig uiChangelist;
+	uiChangelistListConfig uiChangelistList;
 	WINDOWPLACEMENT wp;
 	diffConfig_t diff;
 	sb_t clientspec;

@@ -30,6 +30,18 @@ typedef struct tag_p4Changelists {
 	p4Changelist *data;
 } p4Changelists;
 
+typedef struct tag_p4ChangelistShort {
+	sdict_t dict;
+	u32 number;
+	u8 pad[4];
+} p4ChangelistShort;
+
+typedef struct tag_p4ChangelistShorts {
+	u32 count;
+	u32 allocated;
+	p4ChangelistShort *data;
+} p4ChangelistShorts;
+
 typedef struct tag_p4 {
 	sb_t exe;
 
@@ -38,6 +50,8 @@ typedef struct tag_p4 {
 	sdicts selfClients;
 	sdicts localClients;
 	p4Changelists changelists;
+	p4ChangelistShorts pendingChangelistShorts;
+	p4ChangelistShorts submittedChangelistShorts;
 } p4_t;
 extern p4_t p4;
 
@@ -57,7 +71,7 @@ sdict_t *p4_get_info(void);
 //////////////////////////////////////////////////////////////////////////
 
 void p4_info(void);
-void p4_changes(void);
+void p4_changes(b32 pending);
 
 #include "task_describe_changelist.h"
 #include "task_diff_file.h"

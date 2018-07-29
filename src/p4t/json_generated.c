@@ -98,6 +98,23 @@ uiChangelistConfig json_deserialize_uiChangelistConfig(JSON_Value *src)
 	return dst;
 }
 
+uiChangelistListConfig json_deserialize_uiChangelistListConfig(JSON_Value *src)
+{
+	uiChangelistListConfig dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.columnWidth); ++i) {
+				dst.columnWidth[i] = (float)json_object_get_number(obj, va("columnWidth.%u", i));
+			}
+			dst.sortDescending = json_object_get_boolean(obj, "sortDescending");
+			dst.sortColumn = (u32)json_object_get_number(obj, "sortColumn");
+		}
+	}
+	return dst;
+}
+
 diffConfig_t json_deserialize_diffConfig_t(JSON_Value *src)
 {
 	diffConfig_t dst;
@@ -126,6 +143,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.logFontConfig = json_deserialize_fontConfig_t(json_object_get_value(obj, "logFontConfig"));
 			dst.uiFontConfig = json_deserialize_fontConfig_t(json_object_get_value(obj, "uiFontConfig"));
 			dst.uiChangelist = json_deserialize_uiChangelistConfig(json_object_get_value(obj, "uiChangelist"));
+			dst.uiChangelistList = json_deserialize_uiChangelistListConfig(json_object_get_value(obj, "uiChangelistList"));
 			dst.wp = json_deserialize_WINDOWPLACEMENT(json_object_get_value(obj, "wp"));
 			dst.diff = json_deserialize_diffConfig_t(json_object_get_value(obj, "diff"));
 			dst.clientspec = json_deserialize_sb_t(json_object_get_value(obj, "clientspec"));
@@ -229,6 +247,20 @@ JSON_Value *json_serialize_uiChangelistConfig(const uiChangelistConfig *src)
 	return val;
 }
 
+JSON_Value *json_serialize_uiChangelistListConfig(const uiChangelistListConfig *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->columnWidth); ++i) {
+			json_object_set_number(obj, va("columnWidth.%u", i), src->columnWidth[i]);
+		}
+		json_object_set_boolean(obj, "sortDescending", src->sortDescending);
+		json_object_set_number(obj, "sortColumn", src->sortColumn);
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_diffConfig_t(const diffConfig_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -252,6 +284,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "logFontConfig", json_serialize_fontConfig_t(&src->logFontConfig));
 		json_object_set_value(obj, "uiFontConfig", json_serialize_fontConfig_t(&src->uiFontConfig));
 		json_object_set_value(obj, "uiChangelist", json_serialize_uiChangelistConfig(&src->uiChangelist));
+		json_object_set_value(obj, "uiChangelistList", json_serialize_uiChangelistListConfig(&src->uiChangelistList));
 		json_object_set_value(obj, "wp", json_serialize_WINDOWPLACEMENT(&src->wp));
 		json_object_set_value(obj, "diff", json_serialize_diffConfig_t(&src->diff));
 		json_object_set_value(obj, "clientspec", json_serialize_sb_t(&src->clientspec));

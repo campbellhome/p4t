@@ -121,6 +121,7 @@
     <ClInclude Include="..\src\p4t\ui_changelist.h" />
     <ClInclude Include="..\src\p4t\ui_clientspec.h" />
     <ClInclude Include="..\src\p4t\ui_config.h" />
+    <ClInclude Include="..\src\p4t\ui_filtered_changelists.h" />
     <ClInclude Include="..\src\p4t\ui_message_box.h" />
     <ClInclude Include="..\src\p4t\ui_output.h" />
     <ClInclude Include="..\src\p4t\wrap_imgui.h" />
@@ -155,6 +156,7 @@
     <ClCompile Include="..\src\p4t\ui_changelist.cpp" />
     <ClCompile Include="..\src\p4t\ui_clientspec.cpp" />
     <ClCompile Include="..\src\p4t\ui_config.cpp" />
+    <ClCompile Include="..\src\p4t\ui_filtered_changelists.cpp" />
     <ClCompile Include="..\src\p4t\ui_message_box.cpp" />
     <ClCompile Include="..\src\p4t\ui_output.cpp" />
     <ClCompile Include="..\src\thirdparty\parson\parson.c">

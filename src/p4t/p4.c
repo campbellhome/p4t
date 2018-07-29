@@ -98,6 +98,14 @@ static void p4_reset_changelist(p4Changelist *cl)
 	sdicts_reset(&cl->shelvedFiles);
 }
 
+static void p4_reset_changelistshorts(p4ChangelistShorts *shorts)
+{
+	for(u32 i = 0; i < shorts->count; ++i) {
+		sdict_reset(&shorts->data[i].dict);
+	}
+	bba_free(*shorts);
+}
+
 void p4_shutdown(void)
 {
 	sb_reset(&p4.exe);
@@ -109,6 +117,8 @@ void p4_shutdown(void)
 		p4_reset_changelist(p4.changelists.data + i);
 	}
 	bba_free(p4.changelists);
+	p4_reset_changelistshorts(&p4.pendingChangelistShorts);
+	p4_reset_changelistshorts(&p4.submittedChangelistShorts);
 }
 
 p4Changelist *p4_find_changelist(u32 cl)
@@ -197,7 +207,43 @@ void p4_info(void)
 	task_queue(setTask);
 }
 
-void p4_changes(void)
+static void task_p4changes_statechanged(task *t)
 {
-	task_queue(p4_task_create(task_process_statechanged, p4_dir(), NULL, "\"%s\" -G changes", p4_exe()));
+	task_process_statechanged(t);
+	if(t->state == kTaskState_Succeeded) {
+		b32 pending = !strcmp(sdict_find_safe(&t->extraData, "type"), "pending");
+		p4ChangelistShorts *s = pending ? &p4.pendingChangelistShorts : &p4.submittedChangelistShorts;
+		p4_reset_changelistshorts(s);
+		task_p4 *p = (task_p4 *)t->userdata;
+		for(u32 i = 0; i < p->dicts.count; ++i) {
+			if(bba_add(*s, 1)) {
+				p4ChangelistShort *c = &bba_last(*s);
+				sdict_move(&c->dict, p->dicts.data + i);
+				c->number = strtou32(sdict_find_safe(&c->dict, "change"));
+				const char *desc = sdict_find(&c->dict, "desc");
+				if(desc) {
+					char ch;
+					sb_t sb = { 0 };
+					while((ch = *desc++) != '\0') {
+						if(ch == '\r') {
+							// do nothing
+						} else if(ch == '\n') {
+							sb_append_char(&sb, ' ');
+						} else {
+							sb_append_char(&sb, ch);
+						}
+					}
+					sdict_add_raw(&c->dict, "desc_oneline", sb_get(&sb));
+					sb_reset(&sb);
+				}
+			}
+		}
+	}
+}
+void p4_changes(b32 pending)
+{
+	task *t = task_queue(p4_task_create(task_p4changes_statechanged, p4_dir(), NULL, "\"%s\" -G changes -s %s -L", p4_exe(), pending ? "pending" : "submitted"));
+	if(t) {
+		sdict_add_raw(&t->extraData, "type", pending ? "pending" : "submitted");
+	}
 }

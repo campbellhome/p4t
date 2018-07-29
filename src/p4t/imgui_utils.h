@@ -6,6 +6,8 @@
 #include "common.h"
 #include "wrap_imgui.h"
 
+typedef struct sb_s sb_t;
+
 namespace ImGui
 {
 	const ImGuiTreeNodeFlags DefaultOpenTreeNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
@@ -36,5 +38,41 @@ namespace ImGui
 	void SelectableTextUnformattedMultiline(const char *label, const char *text, ImVec2 size = ImVec2(0.0f, 0.0f));
 	void SelectableTextUnformatted(const char *label, const char *text);
 	void SelectableText(const char *label, const char *fmt, ...);
+
+	enum buttonType_e {
+		kButton_Normal,
+		kButton_Disabled,
+		kButton_TabActive,
+		kButton_TabInactive,
+	};
+	void PushButtonColors(buttonType_e colors);
+	void PopButtonColors(void);
+	bool Button(const char *label, buttonType_e colors, const ImVec2 &size = ImVec2(0.0f, 0.0f));
+
+	void BeginTabButtons(void);
+	bool TabButton(const char *label, sb_t *active, const char *name, const ImVec2 &size = ImVec2(0.0f, 0.0f));
+	void EndTabButtons(void);
+
+	bool BeginTabChild(sb_t *active, const char *str_id, const ImVec2 &size = ImVec2(0, 0), bool border = true, ImGuiWindowFlags extra_flags = 0);
+	void EndTabChild();
+
+	struct columnDrawResult {
+		b32 sortChanged;
+		b32 active;
+	};
+
+	struct columnDrawData {
+		float *columnWidths;
+		float *columnScales;
+		float *columnOffsets;
+		const char **columnNames;
+		b32 *sortDescending;
+		u32 *sortColumn;
+		u32 numColumns;
+		u8 pad[4];
+	};
+	void DrawColumnText(columnDrawData h, u32 columnIndex, const char *text, const char *end = nullptr);
+	void DrawColumnHeaderText(float offset, float width, const char *text, const char *end = nullptr);
+	columnDrawResult DrawColumnHeader(columnDrawData h, u32 columnIndex);
 
 } // namespace ImGui

@@ -237,82 +237,17 @@ void UIChangelist_DrawInformation(sdict_t *cl)
 	}
 }
 
-static void UIChangelist_DrawFileColumn(float offset, float width, const char *text, const char *end = nullptr)
-{
-	float windowX = ImGui::GetWindowPos().x;
-	float x1 = floorf(0.5f + windowX + offset - 1.0f);
-	float x2 = floorf(0.5f + windowX + offset + width - 1.0f);
-	ImGui::SameLine(offset);
-	ImGui::PushClipRect(ImVec2(x1, -FLT_MAX), ImVec2(x2, +FLT_MAX), true);
-	ImGui::TextUnformatted(text, end);
-	ImGui::PopClipRect();
-}
+static float s_columnScales[] = { 1.5f, 1.0f, 1.0f, 1.0f, 1.0f };
+BB_CTASSERT(BB_ARRAYSIZE(s_columnScales) == BB_ARRAYSIZE(g_config.uiChangelist.columnWidth));
 
-static b32 UIChangelist_DrawFileColumnHeader(uiChangelistFiles *files, const char *text, uiChangelistConfig *config, u32 columnIndex, float *offset)
-{
-	b32 anyActive = false;
-
-	float *width = config->columnWidth + columnIndex;
-	bool last = columnIndex + 1 == BB_ARRAYSIZE(config->columnWidth);
-	if(last) {
-		*width = ImGui::GetContentRegionAvailWidth();
-	} else if(*width <= 0.0f) {
-		*width = ImGui::CalcTextSize(text).x + ImGui::CalcTextSize(" ^").x + ImGui::GetStyle().ItemSpacing.x * 2.0f;
-		if(!columnIndex) {
-			*width *= 1.5f;
-		}
-	}
-	float scale = (g_config.dpiScale <= 0.0f) ? 1.0f : g_config.dpiScale;
-	float startOffset = ImGui::GetCursorPosX();
-
-	{
-		const float normal = 0.4f;
-		const float hovered = 0.6f;
-		const float active = 0.6f;
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
-		if(ImGui::Button(va("###%s", text), ImVec2(*width * scale, 0.0f))) {
-			if(config->sortColumn == columnIndex) {
-				config->sortDescending = !config->sortDescending;
-			} else {
-				config->sortColumn = columnIndex;
-				config->sortDescending = false;
-			}
-		}
-		ImGui::PopStyleColor(3);
-	}
-
-	if(files->sortColumn != config->sortColumn || files->sortDescending != config->sortDescending) {
-		files->sortColumn = config->sortColumn;
-		files->sortDescending = config->sortDescending;
-		qsort(files->data, files->count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
-	}
-	anyActive = anyActive || ImGui::IsItemActive();
-	float endOffset = startOffset + *width * scale + ImGui::GetStyle().ItemSpacing.x;
-	const char *columnText = (config->sortColumn == columnIndex) ? va("%s %s", config->sortDescending ? "^" : "v", text) : text;
-	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
-	UIChangelist_DrawFileColumn(startOffset + ImGui::GetStyle().ItemInnerSpacing.x, *width * scale - itemPad, columnText);
-	ImGui::SameLine(endOffset);
-	if(!last) {
-		const float normal = 0.4f;
-		const float hovered = 0.8f;
-		const float active = 0.8f;
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
-		ImGui::Button(va("|###sep%s", text), ImVec2(2.0f * g_config.dpiScale, 0.0f));
-		ImGui::PopStyleColor(3);
-		if(ImGui::IsItemActive()) {
-			anyActive = true;
-			*width += ImGui::GetIO().MouseDelta.x / scale;
-		}
-		ImGui::SameLine();
-	}
-
-	*offset = ImGui::GetCursorPosX();
-	return anyActive;
-}
+static const char *s_columnNames[] = {
+	"File Name",
+	"Revision",
+	"Action",
+	"Filetype",
+	"In Folder",
+};
+BB_CTASSERT(BB_ARRAYSIZE(s_columnNames) == BB_ARRAYSIZE(g_config.uiChangelist.columnWidth));
 
 void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles)
 {
@@ -320,15 +255,25 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 
 	ImGui::PushID(files);
 
-	float columnOffsets[6] = {};
-
 	b32 anyActive = false;
 
-	anyActive = UIChangelist_DrawFileColumnHeader(files, "File Name", &g_config.uiChangelist, 0, columnOffsets + 1) || anyActive;
-	anyActive = UIChangelist_DrawFileColumnHeader(files, "Revision", &g_config.uiChangelist, 1, columnOffsets + 2) || anyActive;
-	anyActive = UIChangelist_DrawFileColumnHeader(files, "Action", &g_config.uiChangelist, 2, columnOffsets + 3) || anyActive;
-	anyActive = UIChangelist_DrawFileColumnHeader(files, "Filetype", &g_config.uiChangelist, 3, columnOffsets + 4) || anyActive;
-	anyActive = UIChangelist_DrawFileColumnHeader(files, "In Folder", &g_config.uiChangelist, 4, columnOffsets + 5) || anyActive;
+	float columnOffsets[6] = {};
+	BB_CTASSERT(BB_ARRAYSIZE(columnOffsets) == BB_ARRAYSIZE(g_config.uiChangelist.columnWidth) + 1);
+	ImGui::columnDrawData data = {};
+	data.columnWidths = g_config.uiChangelist.columnWidth;
+	data.columnScales = s_columnScales;
+	data.columnOffsets = columnOffsets;
+	data.columnNames = s_columnNames;
+	data.sortDescending = &g_config.uiChangelist.sortDescending;
+	data.sortColumn = &g_config.uiChangelist.sortColumn;
+	data.numColumns = BB_ARRAYSIZE(g_config.uiChangelist.columnWidth);
+	for(u32 i = 0; i < BB_ARRAYSIZE(g_config.uiChangelist.columnWidth); ++i) {
+		ImGui::columnDrawResult res = ImGui::DrawColumnHeader(data, i);
+		anyActive = anyActive || res.active;
+		if(res.sortChanged) {
+			qsort(files->data, files->count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
+		}
+	}
 	ImGui::NewLine();
 
 	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
@@ -357,11 +302,11 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 			anyActive = true;
 		}
 
-		UIChangelist_DrawFileColumn(columnOffsets[0], g_config.uiChangelist.columnWidth[0] + itemPad, file.str[0]);
-		UIChangelist_DrawFileColumn(columnOffsets[1], g_config.uiChangelist.columnWidth[1] + itemPad, file.str[1]);
-		UIChangelist_DrawFileColumn(columnOffsets[2], g_config.uiChangelist.columnWidth[2] + itemPad, file.str[2]);
-		UIChangelist_DrawFileColumn(columnOffsets[3], g_config.uiChangelist.columnWidth[3] + itemPad, file.str[3]);
-		UIChangelist_DrawFileColumn(columnOffsets[4], g_config.uiChangelist.columnWidth[4] + itemPad, file.str[4], strrchr(file.str[4], '/'));
+		ImGui::DrawColumnHeaderText(columnOffsets[0], g_config.uiChangelist.columnWidth[0] + itemPad, file.str[0]);
+		ImGui::DrawColumnHeaderText(columnOffsets[1], g_config.uiChangelist.columnWidth[1] + itemPad, file.str[1]);
+		ImGui::DrawColumnHeaderText(columnOffsets[2], g_config.uiChangelist.columnWidth[2] + itemPad, file.str[2]);
+		ImGui::DrawColumnHeaderText(columnOffsets[3], g_config.uiChangelist.columnWidth[3] + itemPad, file.str[3]);
+		ImGui::DrawColumnHeaderText(columnOffsets[4], g_config.uiChangelist.columnWidth[4] + itemPad, file.str[4], strrchr(file.str[4], '/'));
 	}
 
 	if(anyActive) {
@@ -498,61 +443,61 @@ void UIChangelist_EnterChangelist(void)
 
 void UIChangelist_Update(void)
 {
-	float startY = ImGui::GetItemsLineHeightWithSpacing();
-	ImGuiIO &io = ImGui::GetIO();
-	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiSetCond_Always);
-	ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
+	//float startY = ImGui::GetItemsLineHeightWithSpacing();
+	//ImGuiIO &io = ImGui::GetIO();
+	//ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiSetCond_Always);
+	//ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
 
 	if(!s_doneInit || ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
 		UIChangelist_EnterChangelist();
 	}
 
-	bool open = true;
-	if(ImGui::Begin("ViewChangelist", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
-		p4Changelist *cl = p4_find_changelist(s_requestedChangelist);
-		p4Changelist empty = {};
-		if(!cl) {
-			cl = &empty;
-		}
-		if(cl) {
-			if(!s_displayedChangelist || s_parity != cl->parity) {
-				s_displayedChangelist = s_requestedChangelist;
-				s_parity = cl->parity;
-				UIChangelist_PopulateFiles(&cl->normal, &cl->normalFiles, &s_normalFiles);
-				if(sdict_find(&cl->normal, "shelved")) {
-					s_shelvedFiles.shelved = true;
-					UIChangelist_PopulateFiles(&cl->shelved, &cl->shelvedFiles, &s_shelvedFiles);
-					s_shelvedFiles.active = true;
-				} else {
-					s_normalFiles.active = true;
-					UIChangelist_FreeFiles(&s_shelvedFiles);
-				}
-			}
-			UIChangelist_DrawInformation(&cl->normal);
-			const char *status = sdict_find_safe(&cl->normal, "status");
-			b32 pending = !strcmp(status, "pending");
-			if(pending) {
-				UIChangelist_FilesHeader(va("Pending File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count), false);
-			} else if(*status) {
-				UIChangelist_FilesHeader(va("Submitted File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count), false);
-			} else {
-				UIChangelist_FilesHeader("Files: 0", false);
-			}
-			UIChangelist_DrawFiles(&s_normalFiles, cl, &s_shelvedFiles);
-			if(s_shelvedFiles.count) {
-				UIChangelist_FilesHeader(va("Shelved File%s: %u", s_shelvedFiles.count == 1 ? "" : "s", s_shelvedFiles.count), true);
-				UIChangelist_DrawFiles(&s_shelvedFiles, cl, &s_normalFiles);
-			}
-
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-			if(ImGui::Button("###blank", ImGui::GetContentRegionAvail()) || ImGui::IsItemActive()) {
-				s_normalFiles.active = s_shelvedFiles.count == 0;
-				s_shelvedFiles.active = s_shelvedFiles.count != 0;
-			}
-			ImGui::PopStyleColor(3);
-		}
+	//bool open = true;
+	//if(ImGui::Begin("ViewChangelist", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
+	p4Changelist *cl = p4_find_changelist(s_requestedChangelist);
+	p4Changelist empty = {};
+	if(!cl) {
+		cl = &empty;
 	}
-	ImGui::End();
+	if(cl) {
+		if(!s_displayedChangelist || s_parity != cl->parity) {
+			s_displayedChangelist = s_requestedChangelist;
+			s_parity = cl->parity;
+			UIChangelist_PopulateFiles(&cl->normal, &cl->normalFiles, &s_normalFiles);
+			if(sdict_find(&cl->normal, "shelved")) {
+				s_shelvedFiles.shelved = true;
+				UIChangelist_PopulateFiles(&cl->shelved, &cl->shelvedFiles, &s_shelvedFiles);
+				s_shelvedFiles.active = true;
+			} else {
+				s_normalFiles.active = true;
+				UIChangelist_FreeFiles(&s_shelvedFiles);
+			}
+		}
+		UIChangelist_DrawInformation(&cl->normal);
+		const char *status = sdict_find_safe(&cl->normal, "status");
+		b32 pending = !strcmp(status, "pending");
+		if(pending) {
+			UIChangelist_FilesHeader(va("Pending File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count), false);
+		} else if(*status) {
+			UIChangelist_FilesHeader(va("Submitted File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count), false);
+		} else {
+			UIChangelist_FilesHeader("Files: 0", false);
+		}
+		UIChangelist_DrawFiles(&s_normalFiles, cl, &s_shelvedFiles);
+		if(s_shelvedFiles.count) {
+			UIChangelist_FilesHeader(va("Shelved File%s: %u", s_shelvedFiles.count == 1 ? "" : "s", s_shelvedFiles.count), true);
+			UIChangelist_DrawFiles(&s_shelvedFiles, cl, &s_normalFiles);
+		}
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		if(ImGui::Button("###blank", ImGui::GetContentRegionAvail()) || ImGui::IsItemActive()) {
+			s_normalFiles.active = s_shelvedFiles.count == 0;
+			s_shelvedFiles.active = s_shelvedFiles.count != 0;
+		}
+		ImGui::PopStyleColor(3);
+	}
+	//}
+	//ImGui::End();
 }

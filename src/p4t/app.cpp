@@ -14,6 +14,7 @@
 #include "ui_changelist.h"
 #include "ui_clientspec.h"
 #include "ui_config.h"
+#include "ui_filtered_changelists.h"
 #include "ui_message_box.h"
 #include "ui_output.h"
 #include "va.h"
@@ -27,6 +28,9 @@
 globals_t globals;
 bool g_shuttingDown;
 
+static filteredChangelists s_pendingFilter, s_submittedFilter;
+
+static sb_t s_activeTab;
 static bool s_showDemo;
 static sb_t s_imguiPath;
 static sb_t app_get_imgui_path()
@@ -105,11 +109,16 @@ bool App_Init(const char *cmdline)
 	process_init();
 	p4_init();
 
+	sb_append(&s_activeTab, "pendingChangelists");
+	s_pendingFilter.pending = true;
+
 	return App_CreateWindow();
 }
 
 void App_Shutdown()
 {
+	UIFilteredChangelists_Reset(&s_pendingFilter);
+	UIFilteredChangelists_Reset(&s_submittedFilter);
 	p4_diff_shutdown();
 	UIChangelist_Shutdown();
 	p4_shutdown();
@@ -129,6 +138,7 @@ void App_Shutdown()
 
 	output_shutdown();
 	sb_reset(&s_imguiPath);
+	sb_reset(&s_activeTab);
 }
 
 int g_appRequestRenderCount;
@@ -152,6 +162,7 @@ void App_Update()
 {
 	BB_TICK();
 	tasks_tick();
+
 	if(ImGui::BeginMainMenuBar()) {
 		if(ImGui::BeginMenu("File")) {
 			if(ImGui::MenuItem("Exit")) {
@@ -179,17 +190,45 @@ void App_Update()
 
 	if(s_showDemo) {
 		ImGui::ShowTestWindow();
+	} else {
+		ImGui::PushStyleColor(ImGuiCol_TitleBgActive, ImColor(63, 63, 70, 255)); // VS Dark Active Tab
+		ImGui::PushStyleColor(ImGuiCol_TitleBg, ImColor(45, 45, 48, 255));       // VS Dark Inactive Tab
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(42, 42, 44, 255));      // VS Dark Output Window
+
+		float startY = ImGui::GetItemsLineHeightWithSpacing();
+		ImGuiIO &io = ImGui::GetIO();
+		ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiSetCond_Always);
+		ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
+		bool open = true;
+		if(ImGui::Begin("mainwindow", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
+			ImGui::BeginTabButtons();
+			ImGui::TabButton(" Changelist ", &s_activeTab, "changelist");
+			ImGui::TabButton(" Pending Changelists ", &s_activeTab, "pendingChangelists");
+			ImGui::TabButton(" Submitted Changelists ", &s_activeTab, "submittedChangelists");
+			ImGui::EndTabButtons();
+
+			if(ImGui::BeginTabChild(&s_activeTab, "changelist")) {
+				UIChangelist_Update();
+				ImGui::EndTabChild();
+			} else if(ImGui::BeginTabChild(&s_activeTab, "pendingChangelists")) {
+				UIFilteredChangelists_Update(&s_pendingFilter);
+				ImGui::EndTabChild();
+			} else if(ImGui::BeginTabChild(&s_activeTab, "submittedChangelists")) {
+				UIFilteredChangelists_Update(&s_submittedFilter);
+				ImGui::EndTabChild();
+			}
+		}
+		ImGui::End();
+
+		UIOutput_Update();
+		UIMessageBox_Update();
+
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(42, 42, 44, 255)); // VS Dark Output Window
+		UIConfig_Update(&g_config);
+		ImGui::PopStyleColor();
+
+		ImGui::PopStyleColor(3);
 	}
-	ImGui::PushStyleColor(ImGuiCol_TitleBgActive, ImColor(63, 63, 70, 255)); // VS Dark Active Tab
-	ImGui::PushStyleColor(ImGuiCol_TitleBg, ImColor(45, 45, 48, 255));       // VS Dark Inactive Tab
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(42, 42, 44, 255));      // VS Dark Output Window
-	UIConfig_Update(&g_config);
-	ImGui::PopStyleColor();
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(30, 30, 30, 255)); // VS Dark Text Window
-	UIChangelist_Update();
-	UIOutput_Update();
-	UIMessageBox_Update();
-	ImGui::PopStyleColor(3);
 }
 
 bool App_IsShuttingDown()
