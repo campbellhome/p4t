@@ -196,9 +196,6 @@ namespace ImGui
 		float width = h.columnWidths[columnIndex];
 		float x1 = floorf(0.5f + windowX + offset - 1.0f);
 		float x2 = floorf(0.5f + windowX + offset + width - 1.0f);
-		if(!columnIndex) {
-			ImGui::TextUnformatted("");
-		}
 		ImGui::SameLine(offset);
 		ImGui::PushClipRect(ImVec2(x1, -FLT_MAX), ImVec2(x2, +FLT_MAX), true);
 		ImGui::TextUnformatted(text, end);
@@ -273,6 +270,24 @@ namespace ImGui
 
 		h.columnOffsets[columnIndex + 1] = ImGui::GetCursorPosX();
 		return res;
+	}
+
+	void PushSelectableColors(b32 selected, b32 viewActive)
+	{
+		if(selected && !viewActive) {
+			ImVec4 col = ImGui::GetStyle().Colors[ImGuiCol_Header];
+			col.x *= 0.5f;
+			col.y *= 0.5f;
+			col.z *= 0.5f;
+			ImGui::PushStyleColor(ImGuiCol_Header, col);
+		}
+	}
+
+	void PopSelectableColors(b32 selected, b32 viewActive)
+	{
+		if(selected && !viewActive) {
+			ImGui::PopStyleColor();
+		}
 	}
 
 } // namespace ImGui

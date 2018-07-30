@@ -75,4 +75,7 @@ namespace ImGui
 	void DrawColumnHeaderText(float offset, float width, const char *text, const char *end = nullptr);
 	columnDrawResult DrawColumnHeader(columnDrawData h, u32 columnIndex);
 
+	void PushSelectableColors(b32 selected, b32 viewActive);
+	void PopSelectableColors(b32 selected, b32 viewActive);
+
 } // namespace ImGui

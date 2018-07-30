@@ -108,8 +108,8 @@ bool App_Init(const char *cmdline)
 	p4_init();
 
 	//sb_append(&s_activeTab, "changelist");
-	p4_add_changeset(true);
-	p4_add_changeset(false);
+	p4_add_uichangeset(true);
+	p4_add_uichangeset(false);
 
 	return App_CreateWindow();
 }
@@ -200,8 +200,8 @@ void App_Update()
 		if(ImGui::Begin("mainwindow", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
 			ImGui::BeginTabButtons();
 			ImGui::TabButton(" Changelist ", &s_activeTab, "changelist");
-			for(u32 i = 0; i < p4.changesets.count; ++i) {
-				p4Changeset *cs = p4.changesets.data + i;
+			for(u32 i = 0; i < p4.uiChangesets.count; ++i) {
+				p4UIChangeset *cs = p4.uiChangesets.data + i;
 				const char *title = cs->pending ? " Pending Changelists " : " Submitted Changelists ";
 				ImGui::TabButton(title, &s_activeTab, va("changeset%u", cs->id));
 			}
@@ -211,8 +211,8 @@ void App_Update()
 				UIChangelist_Update();
 				ImGui::EndTabChild();
 			} else {
-				for(u32 i = 0; i < p4.changesets.count; ++i) {
-					p4Changeset *cs = p4.changesets.data + i;
+				for(u32 i = 0; i < p4.uiChangesets.count; ++i) {
+					p4UIChangeset *cs = p4.uiChangesets.data + i;
 					if(ImGui::BeginTabChild(&s_activeTab, va("changeset%u", cs->id))) {
 						UIChangeset_Update(cs);
 						ImGui::EndTabChild();

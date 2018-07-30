@@ -6,4 +6,4 @@
 #include "common.h"
 #include "p4.h"
 
-void UIChangeset_Update(p4Changeset *cs);
+void UIChangeset_Update(p4UIChangeset *cs);

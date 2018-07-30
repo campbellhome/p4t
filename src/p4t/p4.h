@@ -31,23 +31,44 @@ typedef struct tag_p4Changelists {
 } p4Changelists;
 
 typedef struct tag_p4Changeset {
-	sb_t user;
-	sb_t clientspec;
-	sb_t filter;
-	b32 filterEnabled;
 	b32 pending;
+	u32 parity;
 	sdicts changelists;
-	u32 id;
-	b8 pad[4];
 } p4Changeset;
 
 typedef struct tag_p4Changesets {
 	u32 count;
 	u32 allocated;
 	p4Changeset *data;
+} p4Changesets;
+
+typedef struct tag_p4UIChangesetEntry {
+	u32 changelist;
+	b32 selected;
+} p4UIChangesetEntry;
+
+typedef struct tag_p4UIChangeset {
+	b32 pending;
+	u32 parity;
+	u32 count;
+	u32 allocated;
+	p4UIChangesetEntry *data;
+	sb_t user;
+	sb_t clientspec;
+	sb_t filter;
+	b32 filterEnabled;
+	u32 id;
+	u32 lastClickIndex;
+	u8 pad[4];
+} p4UIChangeset;
+
+typedef struct tag_p4UIChangesets {
+	u32 count;
+	u32 allocated;
+	p4UIChangeset *data;
 	u32 lastId;
 	u8 pad[4];
-} p4Changesets;
+} p4UIChangesets;
 
 typedef struct tag_changesetColumnField {
 	const char *key;
@@ -64,6 +85,7 @@ typedef struct tag_p4 {
 	sdicts localClients;
 	p4Changelists changelists;
 	p4Changesets changesets;
+	p4UIChangesets uiChangesets;
 	const changesetColumnField *changesetColumnFields;
 } p4_t;
 extern p4_t p4;
@@ -85,8 +107,12 @@ sdict_t *p4_get_info(void);
 
 void p4_info(void);
 
-p4Changeset *p4_add_changeset(b32 pending);
-void p4_sort_changeset(p4Changeset *cs);
+p4Changeset *p4_find_changeset(b32 pending);
+void p4_refresh_changeset(p4Changeset *cs);
+sdict_t *p4_find_changelist_in_changeset(p4Changeset *cs, u32 number);
+
+p4UIChangeset *p4_add_uichangeset(b32 pending);
+void p4_sort_uichangeset(p4UIChangeset *cs);
 
 #include "task_describe_changelist.h"
 #include "task_diff_file.h"

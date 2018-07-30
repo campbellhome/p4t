@@ -279,17 +279,9 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile &file = files->data[i];
-		if(file.selected && !files->active) {
-			ImVec4 col = ImGui::GetStyle().Colors[ImGuiCol_Header];
-			col.x *= 0.5f;
-			col.y *= 0.5f;
-			col.z *= 0.5f;
-			ImGui::PushStyleColor(ImGuiCol_Header, col);
-		}
+		ImGui::PushSelectableColors(file.selected, files->active);
 		ImGui::Selectable(va("###%s", file.field.filename), file.selected != 0);
-		if(file.selected && !files->active) {
-			ImGui::PopStyleColor();
-		}
+		ImGui::PopSelectableColors(file.selected, files->active);
 		if(ImGui::IsItemHovered()) {
 			if(ImGui::IsItemClicked()) {
 				UIChangelist_HandleClick(files, i);
