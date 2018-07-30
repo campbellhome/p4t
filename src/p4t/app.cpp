@@ -12,9 +12,9 @@
 #include "tasks.h"
 #include "tokenize.h"
 #include "ui_changelist.h"
+#include "ui_changeset.h"
 #include "ui_clientspec.h"
 #include "ui_config.h"
-#include "ui_filtered_changelists.h"
 #include "ui_message_box.h"
 #include "ui_output.h"
 #include "va.h"
@@ -27,8 +27,6 @@
 
 globals_t globals;
 bool g_shuttingDown;
-
-static filteredChangelists s_pendingFilter, s_submittedFilter;
 
 static sb_t s_activeTab;
 static bool s_showDemo;
@@ -109,16 +107,15 @@ bool App_Init(const char *cmdline)
 	process_init();
 	p4_init();
 
-	sb_append(&s_activeTab, "pendingChangelists");
-	s_pendingFilter.pending = true;
+	//sb_append(&s_activeTab, "changelist");
+	p4_add_changeset(true);
+	p4_add_changeset(false);
 
 	return App_CreateWindow();
 }
 
 void App_Shutdown()
 {
-	UIFilteredChangelists_Reset(&s_pendingFilter);
-	UIFilteredChangelists_Reset(&s_submittedFilter);
 	p4_diff_shutdown();
 	UIChangelist_Shutdown();
 	p4_shutdown();
@@ -203,19 +200,24 @@ void App_Update()
 		if(ImGui::Begin("mainwindow", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
 			ImGui::BeginTabButtons();
 			ImGui::TabButton(" Changelist ", &s_activeTab, "changelist");
-			ImGui::TabButton(" Pending Changelists ", &s_activeTab, "pendingChangelists");
-			ImGui::TabButton(" Submitted Changelists ", &s_activeTab, "submittedChangelists");
+			for(u32 i = 0; i < p4.changesets.count; ++i) {
+				p4Changeset *cs = p4.changesets.data + i;
+				const char *title = cs->pending ? " Pending Changelists " : " Submitted Changelists ";
+				ImGui::TabButton(title, &s_activeTab, va("changeset%u", cs->id));
+			}
 			ImGui::EndTabButtons();
 
 			if(ImGui::BeginTabChild(&s_activeTab, "changelist")) {
 				UIChangelist_Update();
 				ImGui::EndTabChild();
-			} else if(ImGui::BeginTabChild(&s_activeTab, "pendingChangelists")) {
-				UIFilteredChangelists_Update(&s_pendingFilter);
-				ImGui::EndTabChild();
-			} else if(ImGui::BeginTabChild(&s_activeTab, "submittedChangelists")) {
-				UIFilteredChangelists_Update(&s_submittedFilter);
-				ImGui::EndTabChild();
+			} else {
+				for(u32 i = 0; i < p4.changesets.count; ++i) {
+					p4Changeset *cs = p4.changesets.data + i;
+					if(ImGui::BeginTabChild(&s_activeTab, va("changeset%u", cs->id))) {
+						UIChangeset_Update(cs);
+						ImGui::EndTabChild();
+					}
+				}
 			}
 		}
 		ImGui::End();

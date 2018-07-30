@@ -19,6 +19,14 @@
 
 p4_t p4;
 
+const changesetColumnField s_changesetColumnFields[] = {
+	{ "change", false, true },
+	{ "time", true, false },
+	{ "user", false, false },
+	{ "desc_oneline", false, false },
+};
+BB_CTASSERT(BB_ARRAYSIZE(s_changesetColumnFields) == BB_ARRAYSIZE(g_config.uiPendingChangesets.columnWidth));
+
 const char *p4_exe(void)
 {
 	return sb_get(&p4.exe);
@@ -63,6 +71,7 @@ const char *p4_clientspec_arg(void)
 
 b32 p4_init(void)
 {
+	p4.changesetColumnFields = s_changesetColumnFields;
 	sb_t temp = env_get("PATH");
 	const char *cursor = sb_get(&temp);
 	span_t token = tokenize(&cursor, ";");
@@ -98,12 +107,12 @@ static void p4_reset_changelist(p4Changelist *cl)
 	sdicts_reset(&cl->shelvedFiles);
 }
 
-static void p4_reset_changelistshorts(p4ChangelistShorts *shorts)
+static void p4_reset_changeset(p4Changeset *cs)
 {
-	for(u32 i = 0; i < shorts->count; ++i) {
-		sdict_reset(&shorts->data[i].dict);
-	}
-	bba_free(*shorts);
+	sb_reset(&cs->user);
+	sb_reset(&cs->clientspec);
+	sb_reset(&cs->filter);
+	sdicts_reset(&cs->changelists);
 }
 
 void p4_shutdown(void)
@@ -117,8 +126,10 @@ void p4_shutdown(void)
 		p4_reset_changelist(p4.changelists.data + i);
 	}
 	bba_free(p4.changelists);
-	p4_reset_changelistshorts(&p4.pendingChangelistShorts);
-	p4_reset_changelistshorts(&p4.submittedChangelistShorts);
+	for(u32 i = 0; i < p4.changesets.count; ++i) {
+		p4_reset_changeset(p4.changesets.data + i);
+	}
+	bba_free(p4.changesets);
 }
 
 p4Changelist *p4_find_changelist(u32 cl)
@@ -207,20 +218,68 @@ void p4_info(void)
 	task_queue(setTask);
 }
 
+static p4Changeset *s_sortChangeset;
+static uiChangesetConfig *s_sortConfig;
+static int p4_changeset_compare(const void *_a, const void *_b)
+{
+	sdict_t *a = (sdict_t *)_a;
+	sdict_t *b = (sdict_t *)_b;
+
+	int mult = s_sortConfig->sortDescending ? -1 : 1;
+	u32 columnIndex = s_sortConfig->sortColumn;
+	const changesetColumnField *field = s_changesetColumnFields + columnIndex;
+	const char *astr = sdict_find_safe(a, field->key);
+	const char *bstr = sdict_find_safe(b, field->key);
+	int val;
+	if(field->numeric) {
+		int aint = atoi(astr);
+		int bint = atoi(bstr);
+		if(aint < bint) {
+			val = -1;
+		} else if(aint > bint) {
+			val = 1;
+		} else {
+			val = 0;
+		}
+	} else {
+		val = strcmp(astr, bstr);
+	}
+	if(val) {
+		return val * mult;
+	} else {
+		return s_sortConfig->sortDescending ? (a > b) : (a < b);
+	}
+}
+void p4_sort_changeset(p4Changeset *cs)
+{
+	s_sortChangeset = cs;
+	s_sortConfig = s_sortChangeset->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
+	qsort(cs->changelists.data, cs->changelists.count, sizeof(sdict_t), &p4_changeset_compare);
+	s_sortConfig = NULL;
+	s_sortChangeset = NULL;
+}
+static p4Changeset *p4_find_changeset(u32 id)
+{
+	for(u32 i = 0; i < p4.changesets.count; ++i) {
+		p4Changeset *cs = p4.changesets.data + i;
+		if(cs->id == id)
+			return cs;
+	}
+	return NULL;
+}
 static void task_p4changes_statechanged(task *t)
 {
 	task_process_statechanged(t);
 	if(t->state == kTaskState_Succeeded) {
-		b32 pending = !strcmp(sdict_find_safe(&t->extraData, "type"), "pending");
-		p4ChangelistShorts *s = pending ? &p4.pendingChangelistShorts : &p4.submittedChangelistShorts;
-		p4_reset_changelistshorts(s);
-		task_p4 *p = (task_p4 *)t->userdata;
-		for(u32 i = 0; i < p->dicts.count; ++i) {
-			if(bba_add(*s, 1)) {
-				p4ChangelistShort *c = &bba_last(*s);
-				sdict_move(&c->dict, p->dicts.data + i);
-				c->number = strtou32(sdict_find_safe(&c->dict, "change"));
-				const char *desc = sdict_find(&c->dict, "desc");
+		u32 id = strtou32(sdict_find_safe(&t->extraData, "id"));
+		p4Changeset *cs = p4_find_changeset(id);
+		if(cs) {
+			p4_reset_changeset(cs);
+			task_p4 *p = (task_p4 *)t->userdata;
+			sdicts_move(&cs->changelists, &p->dicts);
+			for(u32 i = 0; i < cs->changelists.count; ++i) {
+				sdict_t *sd = cs->changelists.data + i;
+				const char *desc = sdict_find(sd, "desc");
 				if(desc) {
 					char ch;
 					sb_t sb = { 0 };
@@ -233,17 +292,25 @@ static void task_p4changes_statechanged(task *t)
 							sb_append_char(&sb, ch);
 						}
 					}
-					sdict_add_raw(&c->dict, "desc_oneline", sb_get(&sb));
+					sdict_add_raw(sd, "desc_oneline", sb_get(&sb));
 					sb_reset(&sb);
 				}
 			}
+			p4_sort_changeset(cs);
 		}
 	}
 }
-void p4_changes(b32 pending)
+p4Changeset *p4_add_changeset(b32 pending)
 {
-	task *t = task_queue(p4_task_create(task_p4changes_statechanged, p4_dir(), NULL, "\"%s\" -G changes -s %s -L", p4_exe(), pending ? "pending" : "submitted"));
-	if(t) {
-		sdict_add_raw(&t->extraData, "type", pending ? "pending" : "submitted");
+	if(bba_add(p4.changesets, 1)) {
+		p4Changeset *cs = &bba_last(p4.changesets);
+		cs->id = ++p4.changesets.lastId;
+		cs->pending = pending;
+		task *t = task_queue(p4_task_create(task_p4changes_statechanged, p4_dir(), NULL, "\"%s\" -G changes -s %s -L", p4_exe(), pending ? "pending" : "submitted"));
+		if(t) {
+			sdict_add_raw(&t->extraData, "id", va("%u", cs->id));
+		}
+		return cs;
 	}
+	return NULL;
 }

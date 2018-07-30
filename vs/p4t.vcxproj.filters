@@ -61,7 +61,7 @@
     <ClCompile Include="..\src\p4t\ui_clientspec.cpp">
       <Filter>Source\p4t</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\ui_filtered_changelists.cpp">
+    <ClCompile Include="..\src\p4t\ui_changeset.cpp">
       <Filter>Source\p4t</Filter>
     </ClCompile>
   </ItemGroup>
@@ -123,7 +123,7 @@
     <ClInclude Include="..\src\p4t\ui_clientspec.h">
       <Filter>Source\p4t</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\ui_filtered_changelists.h">
+    <ClInclude Include="..\src\p4t\ui_changeset.h">
       <Filter>Source\p4t</Filter>
     </ClInclude>
   </ItemGroup>
