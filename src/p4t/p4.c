@@ -424,17 +424,23 @@ static void p4_build_changelist_files_internal(sdict_t *change, sdicts *sds, uiC
 			const char *lastSlash = strrchr(depotFile, '/');
 			const char *filename = (lastSlash) ? lastSlash + 1 : NULL;
 			const char *localPath = "";
+			const char *headRev = NULL;
 			for(u32 i = 0; i < sds->count; ++i) {
 				sdict_t *sd = sds->data + i;
 				const char *detailedDepotFile = sdict_find_safe(sd, "depotFile");
 				if(!strcmp(detailedDepotFile, depotFile)) {
 					localPath = sdict_find_safe(sd, "path");
+					headRev = sdict_find(sd, "headRev");
 				}
 			}
 			if(filename && bba_add(*files, 1)) {
 				uiChangelistFile *file = &bba_last(*files);
 				file->fields.field.filename = _strdup(filename);
-				file->fields.field.rev = _strdup(rev);
+				if(headRev && strcmp(headRev, rev)) {
+					file->fields.field.rev = _strdup(va("%s/%s", rev, headRev));
+				} else {
+					file->fields.field.rev = _strdup(rev);
+				}
 				file->fields.field.action = _strdup(action);
 				file->fields.field.filetype = _strdup(type);
 				file->fields.field.depotPath = _strdup(depotFile);
