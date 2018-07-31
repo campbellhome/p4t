@@ -94,8 +94,6 @@ b32 p4_init(void)
 	if(p4.exe.count) {
 		output_log("Using %s\n", p4_exe());
 		p4_info();
-		p4_add_changeset(true);
-		p4_add_changeset(false);
 		return true;
 	} else {
 		output_error("Failed to find p4.exe\n");
@@ -188,6 +186,8 @@ static void task_p4clients_statechanged(task *_t)
 				}
 			}
 		}
+		p4_add_changeset(true);
+		p4_add_changeset(false);
 	}
 }
 static void task_p4info_statechanged(task *_t)
@@ -278,6 +278,27 @@ static void task_p4changes_statechanged(task *t)
 					}
 					sdict_add_raw(sd, "desc_oneline", sb_get(&sb));
 					sb_reset(&sb);
+				}
+			}
+			if(pending) {
+				for(u32 clientIdx = 0; clientIdx < p4.selfClients.count; ++clientIdx) {
+					sdict_t *clientDict = p4.selfClients.data + clientIdx;
+					const char *client = sdict_find(clientDict, "client");
+					const char *owner = sdict_find(clientDict, "Owner");
+					if(client && owner) {
+						if(bba_add(cs->changelists, 1)) {
+							sdict_t *sd = &bba_last(cs->changelists);
+							sdict_add_raw(sd, "code", "stat");
+							sdict_add_raw(sd, "change", "default");
+							sdict_add_raw(sd, "time", "0");
+							sdict_add_raw(sd, "user", owner);
+							sdict_add_raw(sd, "client", client);
+							sdict_add_raw(sd, "status", "peinding");
+							sdict_add_raw(sd, "changeType", "public");
+							sdict_add_raw(sd, "desc", "");
+							sdict_add_raw(sd, "desc_oneline", "");
+						}
+					}
 				}
 			}
 		}
