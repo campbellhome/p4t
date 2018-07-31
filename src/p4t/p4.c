@@ -116,11 +116,20 @@ static void p4_reset_changeset(p4Changeset *cs)
 	sdicts_reset(&cs->changelists);
 }
 
+static void p4_reset_uichangesetentry(p4UIChangesetEntry *e)
+{
+	p4_free_changelist_files(&e->normalFiles);
+	p4_free_changelist_files(&e->shelvedFiles);
+}
+
 static void p4_reset_uichangeset(p4UIChangeset *cs)
 {
 	sb_reset(&cs->user);
 	sb_reset(&cs->clientspec);
 	sb_reset(&cs->filter);
+	for(u32 i = 0; i < cs->count; ++i) {
+		p4_reset_uichangesetentry(cs->data + i);
+	}
 	bba_free(*cs);
 }
 
@@ -371,4 +380,81 @@ p4UIChangeset *p4_add_uichangeset(b32 pending)
 		return cs;
 	}
 	return NULL;
+}
+
+int p4_changelist_files_compare(const void *_a, const void *_b)
+{
+	uiChangelistFile *a = (uiChangelistFile *)_a;
+	uiChangelistFile *b = (uiChangelistFile *)_b;
+
+	int mult = g_config.uiChangelist.sortDescending ? -1 : 1;
+	u32 columnIndex = g_config.uiChangelist.sortColumn;
+	int val = strcmp(a->fields.str[columnIndex], b->fields.str[columnIndex]);
+	if(val) {
+		return val * mult;
+	} else {
+		return g_config.uiChangelist.sortDescending ? (a > b) : (a < b);
+	}
+}
+void p4_free_changelist_files(uiChangelistFiles *files)
+{
+	for(u32 i = 0; i < files->count; ++i) {
+		for(u32 col = 0; col < BB_ARRAYSIZE(files->data[i].fields.str); ++col) {
+			free(files->data[i].fields.str[col]);
+		}
+	}
+	bba_free(*files);
+}
+static void p4_build_changelist_files_internal(sdict_t *change, sdicts *sds, uiChangelistFiles *files)
+{
+	p4_free_changelist_files(files);
+	u32 sdictIndex = 0;
+	while(1) {
+		u32 fileIndex = files->count;
+		u32 depotFileIndex = sdict_find_index_from(change, va("depotFile%u", fileIndex), sdictIndex);
+		u32 actionIndex = sdict_find_index_from(change, va("action%u", fileIndex), depotFileIndex);
+		u32 typeIndex = sdict_find_index_from(change, va("type%u", fileIndex), actionIndex);
+		u32 revIndex = sdict_find_index_from(change, va("rev%u", fileIndex), typeIndex);
+		sdictIndex = revIndex;
+		if(revIndex < change->count) {
+			const char *depotFile = sb_get(&change->data[depotFileIndex].value);
+			const char *action = sb_get(&change->data[actionIndex].value);
+			const char *type = sb_get(&change->data[typeIndex].value);
+			const char *rev = sb_get(&change->data[revIndex].value);
+			const char *lastSlash = strrchr(depotFile, '/');
+			const char *filename = (lastSlash) ? lastSlash + 1 : NULL;
+			const char *localPath = "";
+			for(u32 i = 0; i < sds->count; ++i) {
+				sdict_t *sd = sds->data + i;
+				const char *detailedDepotFile = sdict_find_safe(sd, "depotFile");
+				if(!strcmp(detailedDepotFile, depotFile)) {
+					localPath = sdict_find_safe(sd, "path");
+				}
+			}
+			if(filename && bba_add(*files, 1)) {
+				uiChangelistFile *file = &bba_last(*files);
+				file->fields.field.filename = _strdup(filename);
+				file->fields.field.rev = _strdup(rev);
+				file->fields.field.action = _strdup(action);
+				file->fields.field.filetype = _strdup(type);
+				file->fields.field.depotPath = _strdup(depotFile);
+				file->fields.field.localPath = _strdup(localPath);
+			}
+		} else {
+			break;
+		}
+	}
+	qsort(files->data, files->count, sizeof(uiChangelistFile), &p4_changelist_files_compare);
+	files->lastClickIndex = ~0u;
+	files->active = false;
+}
+void p4_build_changelist_files(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles)
+{
+	p4_build_changelist_files_internal(&cl->normal, &cl->normalFiles, normalFiles);
+	if(shelvedFiles && sdict_find(&cl->normal, "shelved")) {
+		shelvedFiles->shelved = true;
+		p4_build_changelist_files_internal(&cl->shelved, &cl->shelvedFiles, shelvedFiles);
+	} else {
+		p4_free_changelist_files(shelvedFiles);
+	}
 }

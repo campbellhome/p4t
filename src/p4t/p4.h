@@ -30,6 +30,34 @@ typedef struct tag_p4Changelists {
 	p4Changelist *data;
 } p4Changelists;
 
+typedef struct tag_uiChangelistFile {
+	union {
+		char *str[6];
+		struct {
+			char *filename;
+			char *rev;
+			char *action;
+			char *filetype;
+			char *depotPath;
+			char *localPath;
+		} field;
+	} fields;
+	b32 selected;
+	u8 pad[4];
+} uiChangelistFile;
+
+typedef struct tag_uiChangelistFiles {
+	u32 count;
+	u32 allocated;
+	uiChangelistFile *data;
+	u32 lastClickIndex;
+	b32 active;
+	b32 shelved;
+	u32 sortColumn;
+	b32 sortDescending;
+	u8 pad[4];
+} uiChangelistFiles;
+
 typedef struct tag_p4Changeset {
 	b32 pending;
 	u32 parity;
@@ -45,6 +73,10 @@ typedef struct tag_p4Changesets {
 typedef struct tag_p4UIChangesetEntry {
 	u32 changelist;
 	b32 selected;
+	b32 described;
+	u32 parity;
+	uiChangelistFiles normalFiles;
+	uiChangelistFiles shelvedFiles;
 } p4UIChangesetEntry;
 
 typedef struct tag_p4UIChangeset {
@@ -59,7 +91,7 @@ typedef struct tag_p4UIChangeset {
 	b32 filterEnabled;
 	u32 id;
 	u32 lastClickIndex;
-	u8 pad[4];
+	b32 active;
 } p4UIChangeset;
 
 typedef struct tag_p4UIChangesets {
@@ -113,6 +145,10 @@ sdict_t *p4_find_changelist_in_changeset(p4Changeset *cs, u32 number);
 
 p4UIChangeset *p4_add_uichangeset(b32 pending);
 void p4_sort_uichangeset(p4UIChangeset *cs);
+
+void p4_build_changelist_files(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles);
+void p4_free_changelist_files(uiChangelistFiles *files);
+int p4_changelist_files_compare(const void *_a, const void *_b);
 
 #include "task_describe_changelist.h"
 #include "task_diff_file.h"

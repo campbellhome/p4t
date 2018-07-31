@@ -9,6 +9,13 @@
 #include "str.h"
 #include "va.h"
 
+static u32 s_taskDescribeChangelistCount;
+
+b32 p4_describe_task_count(void)
+{
+	return s_taskDescribeChangelistCount;
+}
+
 static void task_describe_changelist_statechanged_fstat_shelved(task *t)
 {
 	task_process_statechanged(t);
@@ -119,10 +126,16 @@ static void task_describe_changelist_statechanged_desc(task *t)
 			}
 		}
 	}
+	if(task_done(t)) {
+		--s_taskDescribeChangelistCount;
+	}
 }
 void p4_describe_changelist(u32 cl)
 {
-	task_queue(p4_task_create(
+	task *t = task_queue(p4_task_create(
 	    task_describe_changelist_statechanged_desc, p4_dir(), NULL,
 	    "\"%s\" -G describe -s %u", p4_exe(), cl));
+	if(t) {
+		++s_taskDescribeChangelistCount;
+	}
 }

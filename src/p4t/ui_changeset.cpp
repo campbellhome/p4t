@@ -10,6 +10,7 @@
 #include "sdict.h"
 #include "str.h"
 #include "time_utils.h"
+#include "ui_changelist.h"
 #include "va.h"
 
 const char *s_submittedColumnNames[] = {
@@ -142,7 +143,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		uics->count = 0;
 		for(u32 i = 0; i < cs->changelists.count; ++i) {
 			sdict_t *sd = cs->changelists.data + i;
-			p4UIChangesetEntry e;
+			p4UIChangesetEntry e = {};
 			e.changelist = strtou32(sdict_find_safe(sd, "change"));
 			e.selected = false;
 			bba_push(*uics, e);
@@ -183,9 +184,17 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		p4UIChangesetEntry *e = uics->data + i;
 		sdict_t *c = p4_find_changelist_in_changeset(cs, e->changelist);
 		if(c) {
-			ImGui::PushSelectableColors(e->selected, true);
+			b32 expanded = ImGui::TreeNode(va("###node%u", e->changelist));
+			if(expanded) {
+				ImGui::TreePop();
+			}
+			ImGui::SameLine();
+			ImGui::PushSelectableColors(e->selected, uics->active);
 			ImGui::Selectable(va("###%u", e->changelist), e->selected != 0);
-			ImGui::PopSelectableColors(e->selected, true);
+			ImGui::PopSelectableColors(e->selected, uics->active);
+			if(ImGui::IsItemActive()) {
+				anyActive = true;
+			}
 			if(ImGui::IsItemHovered()) {
 				if(ImGui::IsItemClicked()) {
 					UIChangeset_HandleClick(uics, i);
@@ -202,20 +211,43 @@ void UIChangeset_Update(p4UIChangeset *uics)
 					ImGui::DrawColumnText(data, col, value);
 				}
 			}
+			if(expanded) {
+				p4Changelist *cl = p4_find_changelist(e->changelist);
+				if(cl) {
+					if(e->parity != cl->parity) {
+						e->parity = cl->parity;
+						p4_build_changelist_files(cl, &e->normalFiles, &e->shelvedFiles);
+					}
+					UIChangelist_DrawFilesAndHeaders(cl, &e->normalFiles, &e->shelvedFiles, 60.0f * g_config.dpiScale);
+				} else {
+					if(!e->described) {
+						e->described = true;
+						p4_describe_changelist(e->changelist);
+					}
+				}
+			}
 		}
 	}
 
-	ImGuiIO &io = ImGui::GetIO();
-	if(ImGui::IsKeyPressed('A') && io.KeyCtrl) {
-		UIChangeset_SelectAll(uics);
-	} else if(ImGui::IsKeyPressed('C') && io.KeyCtrl) {
-		UIChangeset_CopySelectedToClipboard(uics, cs, &data, io.KeyShift);
-	} else if(ImGui::IsKeyPressed('D') && io.KeyCtrl) {
-		//UIChangeset_DiffSelectedFiles(files, cl);
-	} else if(ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_Escape])) {
-		UIChangeset_ClearSelection(uics);
-	} else if(key_is_pressed_this_frame(Key_F5) && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt) {
-		p4_refresh_changeset(cs);
+	if(anyActive) {
+		uics->active = true;
+	} else if(ImGui::IsAnyItemActive()) {
+		uics->active = false;
+	}
+
+	if(uics->active) {
+		ImGuiIO &io = ImGui::GetIO();
+		if(ImGui::IsKeyPressed('A') && io.KeyCtrl) {
+			UIChangeset_SelectAll(uics);
+		} else if(ImGui::IsKeyPressed('C') && io.KeyCtrl) {
+			UIChangeset_CopySelectedToClipboard(uics, cs, &data, io.KeyShift);
+		} else if(ImGui::IsKeyPressed('D') && io.KeyCtrl) {
+			//UIChangeset_DiffSelectedFiles(files, cl);
+		} else if(ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_Escape])) {
+			UIChangeset_ClearSelection(uics);
+		} else if(key_is_pressed_this_frame(Key_F5) && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt) {
+			p4_refresh_changeset(cs);
+		}
 	}
 
 	ImGui::PopID();

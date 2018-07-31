@@ -5,38 +5,14 @@
 
 #include "sdict.h"
 
-typedef struct tag_uiChangelistFile {
-	union {
-		char *str[6];
-		struct {
-			char *filename;
-			char *rev;
-			char *action;
-			char *filetype;
-			char *depotPath;
-			char *localPath;
-		} field;
-	};
-	bool selected;
-	u8 pad[7];
-} uiChangelistFile;
-
-typedef struct tag_uiChangelistFiles {
-	u32 count;
-	u32 allocated;
-	uiChangelistFile *data;
-	u32 lastClickIndex;
-	b32 active;
-	b32 shelved;
-	u32 sortColumn;
-	b32 sortDescending;
-	u8 pad[4];
-} uiChangelistFiles;
+typedef struct tag_p4Changelist p4Changelist;
+typedef struct tag_uiChangelistFiles uiChangelistFiles;
 
 // for use in other UIs
 void UIChangelist_DrawSingleLine(sdict_t *cl);
 void UIChangelist_DrawInformation(sdict_t *cl);
-void UIChangelist_DrawFiles(uiChangelistFiles *files, struct tag_p4Changelist *cl, uiChangelistFiles *otherFiles = nullptr);
+void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles = nullptr, float indent = 0.0f);
+void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles, float indent = 0.0f);
 
 // for standalone CL viewer
 void UIChangelist_Shutdown(void);

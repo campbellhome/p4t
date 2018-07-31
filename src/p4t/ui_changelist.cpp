@@ -73,21 +73,6 @@ static void UIChangelist_DrawInformationColumn(sdict_t *cl, float fullWidth, cha
 	ImGui::EndGroup();
 }
 
-static int uiChangelistFile_compare(const void *_a, const void *_b)
-{
-	uiChangelistFile *a = (uiChangelistFile *)_a;
-	uiChangelistFile *b = (uiChangelistFile *)_b;
-
-	int mult = g_config.uiChangelist.sortDescending ? -1 : 1;
-	u32 columnIndex = g_config.uiChangelist.sortColumn;
-	int val = strcmp(a->str[columnIndex], b->str[columnIndex]);
-	if(val) {
-		return val * mult;
-	} else {
-		return g_config.uiChangelist.sortDescending ? (a > b) : (a < b);
-	}
-}
-
 static void UIChangelist_CopySelectedFilesToClipboard(uiChangelistFiles *files, bool extraInfo)
 {
 	u32 i;
@@ -97,9 +82,9 @@ static void UIChangelist_CopySelectedFilesToClipboard(uiChangelistFiles *files, 
 		uiChangelistFile *file = files->data + i;
 		if(file->selected) {
 			if(extraInfo) {
-				sb_va(&sb, "%s#%s\n", file->field.depotPath, file->field.rev);
+				sb_va(&sb, "%s#%s\n", file->fields.field.depotPath, file->fields.field.rev);
 			} else {
-				sb_va(&sb, "%s\n", file->field.depotPath);
+				sb_va(&sb, "%s\n", file->fields.field.depotPath);
 			}
 		}
 	}
@@ -121,18 +106,18 @@ static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files, p4Changelis
 	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile *file = files->data + i;
 		if(file->selected) {
-			u32 rev = strtou32(file->field.rev);
+			u32 rev = strtou32(file->fields.field.rev);
 			if(pending) {
 				if(shelved) {
-					p4_diff_against_depot(file->field.depotPath, va("#%u", rev), file->field.depotPath, va("@=%u", cl->number));
+					p4_diff_against_depot(file->fields.field.depotPath, va("#%u", rev), file->fields.field.depotPath, va("@=%u", cl->number));
 				} else if(localClient) {
-					if(*file->field.localPath) {
-						p4_diff_against_local(file->field.depotPath, va("#%u", rev), file->field.localPath);
+					if(*file->fields.field.localPath) {
+						p4_diff_against_local(file->fields.field.depotPath, va("#%u", rev), file->fields.field.localPath);
 					}
 				}
 			} else {
 				if(rev) {
-					p4_diff_against_depot(file->field.depotPath, va("#%u", rev - 1), file->field.depotPath, va("#%u", rev));
+					p4_diff_against_depot(file->fields.field.depotPath, va("#%u", rev - 1), file->fields.field.depotPath, va("#%u", rev));
 				}
 			}
 		}
@@ -192,9 +177,7 @@ static void UIChangelist_HandleClick(uiChangelistFiles *files, u32 index)
 			}
 		}
 	} else {
-		if(files->active) {
-			UIChangelist_Logs_ClearSelection(files);
-		}
+		UIChangelist_Logs_ClearSelection(files);
 		UIChangelist_Logs_AddSelection(files, index);
 	}
 }
@@ -249,7 +232,7 @@ static const char *s_columnNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_columnNames) == BB_ARRAYSIZE(g_config.uiChangelist.columnWidth));
 
-void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles)
+void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles, float indent)
 {
 	// Columns: File Name, Revision, Action, Filetype, In Folder
 
@@ -267,11 +250,14 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 	data.sortDescending = &g_config.uiChangelist.sortDescending;
 	data.sortColumn = &g_config.uiChangelist.sortColumn;
 	data.numColumns = BB_ARRAYSIZE(g_config.uiChangelist.columnWidth);
+	ImGui::TextUnformatted("");
+	ImGui::SameLine(0.0f, indent);
+	columnOffsets[0] = ImGui::GetCursorPosX();
 	for(u32 i = 0; i < BB_ARRAYSIZE(g_config.uiChangelist.columnWidth); ++i) {
 		ImGui::columnDrawResult res = ImGui::DrawColumnHeader(data, i);
 		anyActive = anyActive || res.active;
 		if(res.sortChanged) {
-			qsort(files->data, files->count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
+			qsort(files->data, files->count, sizeof(uiChangelistFile), &p4_changelist_files_compare);
 		}
 	}
 	ImGui::NewLine();
@@ -280,7 +266,7 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile &file = files->data[i];
 		ImGui::PushSelectableColors(file.selected, files->active);
-		ImGui::Selectable(va("###%s", file.field.filename), file.selected != 0);
+		ImGui::Selectable(va("###%s", file.fields.field.filename), file.selected != 0);
 		ImGui::PopSelectableColors(file.selected, files->active);
 		if(ImGui::IsItemHovered()) {
 			if(ImGui::IsItemClicked()) {
@@ -294,11 +280,11 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 			anyActive = true;
 		}
 
-		ImGui::DrawColumnHeaderText(columnOffsets[0], g_config.uiChangelist.columnWidth[0] + itemPad, file.str[0]);
-		ImGui::DrawColumnHeaderText(columnOffsets[1], g_config.uiChangelist.columnWidth[1] + itemPad, file.str[1]);
-		ImGui::DrawColumnHeaderText(columnOffsets[2], g_config.uiChangelist.columnWidth[2] + itemPad, file.str[2]);
-		ImGui::DrawColumnHeaderText(columnOffsets[3], g_config.uiChangelist.columnWidth[3] + itemPad, file.str[3]);
-		ImGui::DrawColumnHeaderText(columnOffsets[4], g_config.uiChangelist.columnWidth[4] + itemPad, file.str[4], strrchr(file.str[4], '/'));
+		ImGui::DrawColumnHeaderText(columnOffsets[0], g_config.uiChangelist.columnWidth[0] + itemPad, file.fields.str[0]);
+		ImGui::DrawColumnHeaderText(columnOffsets[1], g_config.uiChangelist.columnWidth[1] + itemPad, file.fields.str[1]);
+		ImGui::DrawColumnHeaderText(columnOffsets[2], g_config.uiChangelist.columnWidth[2] + itemPad, file.fields.str[2]);
+		ImGui::DrawColumnHeaderText(columnOffsets[3], g_config.uiChangelist.columnWidth[3] + itemPad, file.fields.str[3]);
+		ImGui::DrawColumnHeaderText(columnOffsets[4], g_config.uiChangelist.columnWidth[4] + itemPad, file.fields.str[4], strrchr(file.fields.str[4], '/'));
 	}
 
 	if(anyActive) {
@@ -332,64 +318,10 @@ static u32 s_parity;
 static uiChangelistFiles s_normalFiles;
 static uiChangelistFiles s_shelvedFiles;
 
-static void UIChangelist_FreeFiles(uiChangelistFiles *files)
-{
-	for(u32 i = 0; i < files->count; ++i) {
-		for(u32 col = 0; col < BB_ARRAYSIZE(files->data[i].str); ++col) {
-			free(files->data[i].str[col]);
-		}
-	}
-	bba_free(*files);
-}
-
 void UIChangelist_Shutdown(void)
 {
-	UIChangelist_FreeFiles(&s_normalFiles);
-	UIChangelist_FreeFiles(&s_shelvedFiles);
-}
-
-static void UIChangelist_PopulateFiles(sdict_t *change, sdicts *sds, uiChangelistFiles *files)
-{
-	UIChangelist_FreeFiles(files);
-	u32 sdictIndex = 0;
-	while(1) {
-		u32 fileIndex = files->count;
-		u32 depotFileIndex = sdict_find_index_from(change, va("depotFile%u", fileIndex), sdictIndex);
-		u32 actionIndex = sdict_find_index_from(change, va("action%u", fileIndex), depotFileIndex);
-		u32 typeIndex = sdict_find_index_from(change, va("type%u", fileIndex), actionIndex);
-		u32 revIndex = sdict_find_index_from(change, va("rev%u", fileIndex), typeIndex);
-		sdictIndex = revIndex;
-		if(revIndex < change->count) {
-			const char *depotFile = sb_get(&change->data[depotFileIndex].value);
-			const char *action = sb_get(&change->data[actionIndex].value);
-			const char *type = sb_get(&change->data[typeIndex].value);
-			const char *rev = sb_get(&change->data[revIndex].value);
-			const char *lastSlash = strrchr(depotFile, '/');
-			const char *filename = (lastSlash) ? lastSlash + 1 : nullptr;
-			const char *localPath = "";
-			for(u32 i = 0; i < sds->count; ++i) {
-				sdict_t *sd = sds->data + i;
-				const char *detailedDepotFile = sdict_find_safe(sd, "depotFile");
-				if(!strcmp(detailedDepotFile, depotFile)) {
-					localPath = sdict_find_safe(sd, "path");
-				}
-			}
-			if(filename && bba_add(*files, 1)) {
-				uiChangelistFile &file = bba_last(*files);
-				file.field.filename = _strdup(filename);
-				file.field.rev = _strdup(rev);
-				file.field.action = _strdup(action);
-				file.field.filetype = _strdup(type);
-				file.field.depotPath = _strdup(depotFile);
-				file.field.localPath = _strdup(localPath);
-			}
-		} else {
-			break;
-		}
-	}
-	qsort(files->data, files->count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
-	files->lastClickIndex = ~0u;
-	files->active = false;
+	p4_free_changelist_files(&s_normalFiles);
+	p4_free_changelist_files(&s_shelvedFiles);
 }
 
 static void UIChangelist_MessageBoxCallback(messageBox *mb, const char *action)
@@ -405,7 +337,7 @@ static void UIChangelist_MessageBoxCallback(messageBox *mb, const char *action)
 	}
 }
 
-static void UIChangelist_FilesHeader(const char *text, b32 shelved)
+static void UIChangelist_FilesHeader(const char *text, b32 shelved, float indent)
 {
 	float r = 0.3f;
 	float g = 0.3f;
@@ -415,6 +347,8 @@ static void UIChangelist_FilesHeader(const char *text, b32 shelved)
 	ImGui::PushStyleColor(ImGuiCol_HeaderActive, col);
 	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, col);
 	ImGui::PushStyleColor(ImGuiCol_SelectableBg, col);
+	ImGui::TextUnformatted("");
+	ImGui::SameLine(0.0f, indent);
 	if(ImGui::Selectable(text)) {
 		s_normalFiles.active = !shelved;
 		s_shelvedFiles.active = shelved;
@@ -431,6 +365,24 @@ void UIChangelist_EnterChangelist(void)
 	sdict_add_raw(&mb.data, "text", "Enter changelist to view:");
 	sdict_add_raw(&mb.data, "inputNumber", va("%u", s_requestedChangelist));
 	mb_queue(mb);
+}
+
+void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles, float indent)
+{
+	const char *status = sdict_find_safe(&cl->normal, "status");
+	b32 pending = !strcmp(status, "pending");
+	if(pending) {
+		UIChangelist_FilesHeader(va("Pending File%s: %u", normalFiles->count == 1 ? "" : "s", normalFiles->count), false, indent);
+	} else if(*status) {
+		UIChangelist_FilesHeader(va("Submitted File%s: %u", normalFiles->count == 1 ? "" : "s", normalFiles->count), false, indent);
+	} else {
+		UIChangelist_FilesHeader("Files: 0", false, indent);
+	}
+	UIChangelist_DrawFiles(normalFiles, cl, shelvedFiles, indent);
+	if(shelvedFiles->count) {
+		UIChangelist_FilesHeader(va("Shelved File%s: %u", shelvedFiles->count == 1 ? "" : "s", shelvedFiles->count), true, indent);
+		UIChangelist_DrawFiles(shelvedFiles, cl, normalFiles, indent);
+	}
 }
 
 void UIChangelist_Update(void)
@@ -455,31 +407,14 @@ void UIChangelist_Update(void)
 		if(!s_displayedChangelist || s_parity != cl->parity) {
 			s_displayedChangelist = s_requestedChangelist;
 			s_parity = cl->parity;
-			UIChangelist_PopulateFiles(&cl->normal, &cl->normalFiles, &s_normalFiles);
-			if(sdict_find(&cl->normal, "shelved")) {
-				s_shelvedFiles.shelved = true;
-				UIChangelist_PopulateFiles(&cl->shelved, &cl->shelvedFiles, &s_shelvedFiles);
-				s_shelvedFiles.active = true;
-			} else {
-				s_normalFiles.active = true;
-				UIChangelist_FreeFiles(&s_shelvedFiles);
-			}
+			p4_build_changelist_files(cl, &s_normalFiles, &s_shelvedFiles);
+			//qsort(s_normalFiles.data, s_normalFiles.count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
+			//qsort(s_shelvedFiles.data, s_shelvedFiles.count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
+			s_normalFiles.active = s_shelvedFiles.count == 0;
+			s_shelvedFiles.active = s_shelvedFiles.count != 0;
 		}
 		UIChangelist_DrawInformation(&cl->normal);
-		const char *status = sdict_find_safe(&cl->normal, "status");
-		b32 pending = !strcmp(status, "pending");
-		if(pending) {
-			UIChangelist_FilesHeader(va("Pending File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count), false);
-		} else if(*status) {
-			UIChangelist_FilesHeader(va("Submitted File%s: %u", s_normalFiles.count == 1 ? "" : "s", s_normalFiles.count), false);
-		} else {
-			UIChangelist_FilesHeader("Files: 0", false);
-		}
-		UIChangelist_DrawFiles(&s_normalFiles, cl, &s_shelvedFiles);
-		if(s_shelvedFiles.count) {
-			UIChangelist_FilesHeader(va("Shelved File%s: %u", s_shelvedFiles.count == 1 ? "" : "s", s_shelvedFiles.count), true);
-			UIChangelist_DrawFiles(&s_shelvedFiles, cl, &s_normalFiles);
-		}
+		UIChangelist_DrawFilesAndHeaders(cl, &s_normalFiles, &s_shelvedFiles);
 
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
