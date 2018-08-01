@@ -24,6 +24,7 @@ typedef struct sbs_s {
 void sb_init(sb_t *sb);
 void sb_reset(sb_t *sb);
 u32 sb_len(sb_t *sb);
+b32 sb_reserve(sb_t *sb, u32 len);
 b32 sb_grow(sb_t *sb, u32 len);
 void sb_append(sb_t *sb, const char *text);
 void sb_append_range(sb_t *sb, const char *start, const char *end);

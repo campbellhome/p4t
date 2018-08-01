@@ -73,6 +73,26 @@ namespace ImGui
 		return IsKeyPressed(GetKeyIndex(key), repeat);
 	}
 
+	bool InputText(const char *label, sb_t *sb, u32 buf_size, ImGuiInputTextFlags flags, ImGuiTextEditCallback callback, void *user_data)
+	{
+		if(sb->allocated < buf_size) {
+			sb_reserve(sb, buf_size);
+		}
+		bool ret = InputText(label, (char *)sb->data, sb->allocated, flags, callback, user_data);
+		sb->count = sb->data ? (u32)strlen(sb->data) + 1 : 0;
+		return ret;
+	}
+
+	bool InputTextMultiline(const char *label, sb_t *sb, u32 buf_size, const ImVec2 &size, ImGuiInputTextFlags flags, ImGuiTextEditCallback callback, void *user_data)
+	{
+		if(sb->allocated < buf_size) {
+			sb_reserve(sb, buf_size);
+		}
+		bool ret = InputTextMultiline(label, (char *)sb->data, sb->allocated, size, flags, callback, user_data);
+		sb->count = sb->data ? (u32)strlen(sb->data) + 1 : 0;
+		return ret;
+	}
+
 	verticalScrollDir_e GetVerticalScrollDir()
 	{
 		if(ImGui::IsKeyPressed(ImGuiKey_PageUp)) {
@@ -228,10 +248,10 @@ namespace ImGui
 		float startOffset = ImGui::GetCursorPosX();
 
 		{
-			const float normal = 0.4f;
+			const float normal = 0.3f;
 			const float hovered = 0.6f;
 			const float active = 0.6f;
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 0.2f));
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
 			if(ImGui::Button(va("###%s", text), ImVec2(*width * scale, 0.0f))) {

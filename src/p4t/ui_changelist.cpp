@@ -337,25 +337,6 @@ static void UIChangelist_MessageBoxCallback(messageBox *mb, const char *action)
 	}
 }
 
-static void UIChangelist_FilesHeader(const char *text, b32 shelved, float indent)
-{
-	float r = 0.3f;
-	float g = 0.3f;
-	float b = (shelved && s_shelvedFiles.active || !shelved && s_normalFiles.active) ? 0.4f : 0.3f;
-	ImVec4 col(r, g, b, 1.0f);
-	ImGui::PushStyleColor(ImGuiCol_Header, col);
-	ImGui::PushStyleColor(ImGuiCol_HeaderActive, col);
-	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, col);
-	ImGui::PushStyleColor(ImGuiCol_SelectableBg, col);
-	ImGui::TextUnformatted("");
-	ImGui::SameLine(0.0f, indent);
-	if(ImGui::Selectable(text)) {
-		s_normalFiles.active = !shelved;
-		s_shelvedFiles.active = shelved;
-	}
-	ImGui::PopStyleColor(4);
-}
-
 void UIChangelist_EnterChangelist(void)
 {
 	s_doneInit = true;
@@ -367,37 +348,44 @@ void UIChangelist_EnterChangelist(void)
 	mb_queue(mb);
 }
 
-void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles, float indent)
+void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles, b32 shelvedOpenByDefault, float indent)
 {
 	const char *status = sdict_find_safe(&cl->normal, "status");
 	b32 pending = !strcmp(status, "pending");
+	const char *title;
 	if(pending) {
-		UIChangelist_FilesHeader(va("Pending File%s: %u", normalFiles->count == 1 ? "" : "s", normalFiles->count), false, indent);
+		title = va("Pending File%s: %u", normalFiles->count == 1 ? "" : "s", normalFiles->count);
 	} else if(*status) {
-		UIChangelist_FilesHeader(va("Submitted File%s: %u", normalFiles->count == 1 ? "" : "s", normalFiles->count), false, indent);
+		title = va("Submitted File%s: %u", normalFiles->count == 1 ? "" : "s", normalFiles->count);
 	} else {
-		UIChangelist_FilesHeader("Files: 0", false, indent);
+		title = "Files: 0";
 	}
-	UIChangelist_DrawFiles(normalFiles, cl, shelvedFiles, indent);
+
+	ImGui::TextUnformatted("");
+	ImGui::SameLine(0.0f, indent);
+	b32 expanded = ImGui::TreeNodeEx(va("%s###files%u%s", title, cl->number, sdict_find_safe(&cl->normal, "client")), ImGuiTreeNodeFlags_DefaultOpen);
+	if(expanded) {
+		UIChangelist_DrawFiles(normalFiles, cl, shelvedFiles, indent);
+		ImGui::TreePop();
+	}
 	if(shelvedFiles->count) {
-		UIChangelist_FilesHeader(va("Shelved File%s: %u", shelvedFiles->count == 1 ? "" : "s", shelvedFiles->count), true, indent);
-		UIChangelist_DrawFiles(shelvedFiles, cl, normalFiles, indent);
+		ImGui::TextUnformatted("");
+		ImGui::SameLine(0.0f, indent);
+		title = va("Shelved File%s: %u", shelvedFiles->count == 1 ? "" : "s", shelvedFiles->count);
+		expanded = ImGui::TreeNodeEx(va("%s###shelved%u%s", title, cl->number, sdict_find_safe(&cl->normal, "client")), shelvedOpenByDefault ? ImGuiTreeNodeFlags_DefaultOpen : 0);
+		if(expanded) {
+			UIChangelist_DrawFiles(shelvedFiles, cl, normalFiles, indent);
+			ImGui::TreePop();
+		}
 	}
 }
 
 void UIChangelist_Update(void)
 {
-	//float startY = ImGui::GetItemsLineHeightWithSpacing();
-	//ImGuiIO &io = ImGui::GetIO();
-	//ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiSetCond_Always);
-	//ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
-
 	if(!s_doneInit || ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
 		UIChangelist_EnterChangelist();
 	}
 
-	//bool open = true;
-	//if(ImGui::Begin("ViewChangelist", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
 	p4Changelist *cl = p4_find_changelist(s_requestedChangelist);
 	p4Changelist empty = {};
 	if(!cl) {
@@ -408,13 +396,11 @@ void UIChangelist_Update(void)
 			s_displayedChangelist = s_requestedChangelist;
 			s_parity = cl->parity;
 			p4_build_changelist_files(cl, &s_normalFiles, &s_shelvedFiles);
-			//qsort(s_normalFiles.data, s_normalFiles.count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
-			//qsort(s_shelvedFiles.data, s_shelvedFiles.count, sizeof(uiChangelistFile), &uiChangelistFile_compare);
 			s_normalFiles.active = s_shelvedFiles.count == 0;
 			s_shelvedFiles.active = s_shelvedFiles.count != 0;
 		}
 		UIChangelist_DrawInformation(&cl->normal);
-		UIChangelist_DrawFilesAndHeaders(cl, &s_normalFiles, &s_shelvedFiles);
+		UIChangelist_DrawFilesAndHeaders(cl, &s_normalFiles, &s_shelvedFiles, true);
 
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
@@ -425,6 +411,4 @@ void UIChangelist_Update(void)
 		}
 		ImGui::PopStyleColor(3);
 	}
-	//}
-	//ImGui::End();
 }

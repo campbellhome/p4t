@@ -80,13 +80,7 @@ void UIConfig_Update(config_t *config)
 				SameLine();
 				PushItemWidth(300.0f * g_config.dpiScale);
 				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
-				char buffer[1024];
-				bb_strncpy(buffer, sb_get(&s_uiConfig->uiFontConfig.path), sizeof(buffer));
-				InputText("##path", buffer, sizeof(buffer), flags);
-				if(strcmp(buffer, sb_get(&s_uiConfig->uiFontConfig.path))) {
-					s_uiConfig->uiFontConfig.path.count = 0;
-					sb_append(&s_uiConfig->uiFontConfig.path, buffer);
-				}
+				InputText("##path", &s_uiConfig->uiFontConfig.path, 1024, flags);
 				PopItemWidth();
 			}
 			PopID();
@@ -106,13 +100,7 @@ void UIConfig_Update(config_t *config)
 				SameLine();
 				PushItemWidth(300.0f * g_config.dpiScale);
 				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
-				char buffer[1024];
-				bb_strncpy(buffer, sb_get(&s_uiConfig->logFontConfig.path), sizeof(buffer));
-				InputText("##path", buffer, sizeof(buffer), flags);
-				if(strcmp(buffer, sb_get(&s_uiConfig->logFontConfig.path))) {
-					s_uiConfig->logFontConfig.path.count = 0;
-					sb_append(&s_uiConfig->logFontConfig.path, buffer);
-				}
+				InputText("##path", &s_uiConfig->logFontConfig.path, 1024, flags);
 				PopItemWidth();
 			}
 			EndGroup();
@@ -126,23 +114,12 @@ void UIConfig_Update(config_t *config)
 				SameLine();
 				PushItemWidth(600.0f * g_config.dpiScale);
 				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
-				char buffer[1024];
-				bb_strncpy(buffer, sb_get(&s_uiConfig->diff.path), sizeof(buffer));
-				InputText("##path", buffer, sizeof(buffer), flags);
-				if(strcmp(buffer, sb_get(&s_uiConfig->diff.path))) {
-					s_uiConfig->diff.path.count = 0;
-					sb_append(&s_uiConfig->diff.path, buffer);
-				}
+				InputText("##path", &s_uiConfig->diff.path, 1024, flags);
 				PopItemWidth();
 				Text("Arguments:");
 				SameLine();
 				PushItemWidth(300.0f * g_config.dpiScale);
-				bb_strncpy(buffer, sb_get(&s_uiConfig->diff.args), sizeof(buffer));
-				InputText("##args", buffer, sizeof(buffer), flags);
-				if(strcmp(buffer, sb_get(&s_uiConfig->diff.args))) {
-					s_uiConfig->diff.args.count = 0;
-					sb_append(&s_uiConfig->diff.args, buffer);
-				}
+				InputText("##args", &s_uiConfig->diff.args, 1024, flags);
 				PopItemWidth();
 			}
 			PopID();

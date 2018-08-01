@@ -222,7 +222,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 						e->parity = cl->parity;
 						p4_build_changelist_files(cl, &e->normalFiles, &e->shelvedFiles);
 					}
-					UIChangelist_DrawFilesAndHeaders(cl, &e->normalFiles, &e->shelvedFiles, 60.0f * g_config.dpiScale);
+					UIChangelist_DrawFilesAndHeaders(cl, &e->normalFiles, &e->shelvedFiles, false, 20.0f * g_config.dpiScale);
 				} else {
 					if(!e->described) {
 						e->described = true;

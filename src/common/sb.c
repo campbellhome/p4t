@@ -22,6 +22,24 @@ u32 sb_len(sb_t *sb)
 	return sb->count ? sb->count - 1 : 0;
 }
 
+b32 sb_reserve(sb_t *sb, u32 len)
+{
+	if(sb->allocated < len) {
+		sb_t tmp = { 0 };
+		if(bba_add_noclear(tmp, len)) {
+			if(sb->count) {
+				memcpy(tmp.data, sb->data, sb->count + 1);
+			}
+			tmp.count = sb->count;
+			sb_reset(sb);
+			*sb = tmp;
+			return true;
+		}
+		return false;
+	}
+	return true;
+}
+
 b32 sb_grow(sb_t *sb, u32 len)
 {
 	u32 originalCount = sb->count;

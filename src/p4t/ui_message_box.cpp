@@ -29,16 +29,10 @@ bool UIMessageBox_Draw(messageBox *mb)
 			ImGui::SetKeyboardFocusHere();
 		}
 		ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
-		char buffer[1024];
-		bb_strncpy(buffer, sb_get(&inputNumber->value), sizeof(buffer));
-		bool entered = ImGui::InputText("##path", buffer, sizeof(buffer), flags);
-		if(strcmp(buffer, sb_get(&inputNumber->value))) {
-			inputNumber->value.count = 0;
-			sb_append(&inputNumber->value, buffer);
-		}
+		bool entered = ImGui::InputText("##path", &inputNumber->value, 1024, flags);
 		if(entered) {
 			if(mb->callback) {
-				mb->callback(mb, buffer);
+				mb->callback(mb, sb_get(&inputNumber->value));
 			}
 			return false;
 		}
