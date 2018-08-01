@@ -17,19 +17,13 @@
 #include <stdlib.h>
 
 config_t g_config;
-
-static sb_t config_get_path(void)
-{
-	sb_t s = appdata_get();
-	sb_va(&s, "\\%s_config.json", globals.appSpecific.configName);
-	return s;
-}
+appTypeConfig g_apptypeConfig;
 
 void config_getwindowplacement(HWND hwnd)
 {
-	memset(&g_config.wp, 0, sizeof(g_config.wp));
-	g_config.wp.length = sizeof(g_config.wp);
-	GetWindowPlacement(hwnd, &g_config.wp);
+	memset(&g_apptypeConfig.wp, 0, sizeof(g_apptypeConfig.wp));
+	g_apptypeConfig.wp.length = sizeof(g_apptypeConfig.wp);
+	GetWindowPlacement(hwnd, &g_apptypeConfig.wp);
 }
 
 config_t *config_clone(config_t *config)
@@ -65,6 +59,13 @@ void config_free(config_t *config)
 {
 	config_reset(config);
 	free(config);
+}
+
+static sb_t config_get_path(void)
+{
+	sb_t s = appdata_get();
+	sb_append(&s, "\\p4t_common_config.json");
+	return s;
 }
 
 b32 config_read(config_t *config)
@@ -105,6 +106,48 @@ b32 config_write(config_t *config)
 	JSON_Value *val = json_serialize_config_t(config);
 	if(val) {
 		sb_t path = config_get_path();
+		FILE *fp = fopen(sb_get(&path), "wb");
+		if(fp) {
+			char *serialized_string = json_serialize_to_string_pretty(val);
+			fputs(serialized_string, fp);
+			fclose(fp);
+			json_free_serialized_string(serialized_string);
+			result = true;
+		}
+		sb_reset(&path);
+	}
+	json_value_free(val);
+	return result;
+}
+
+static sb_t config_get_apptype_path(void)
+{
+	sb_t s = appdata_get();
+	sb_va(&s, "\\%s_config.json", globals.appSpecific.configName);
+	return s;
+}
+
+b32 config_read_apptype(appTypeConfig *config)
+{
+	b32 ret = false;
+	sb_t path = config_get_apptype_path();
+	JSON_Value *val = json_parse_file(sb_get(&path));
+	if(val) {
+		*config = json_deserialize_appTypeConfig(val);
+		json_value_free(val);
+		ret = true;
+	}
+	sb_reset(&path);
+	config->version = kConfigAppTypeVersion;
+	return ret;
+}
+
+b32 config_write_apptype(appTypeConfig *config)
+{
+	b32 result = false;
+	JSON_Value *val = json_serialize_appTypeConfig(config);
+	if(val) {
+		sb_t path = config_get_apptype_path();
 		FILE *fp = fopen(sb_get(&path), "wb");
 		if(fp) {
 			char *serialized_string = json_serialize_to_string_pretty(val);

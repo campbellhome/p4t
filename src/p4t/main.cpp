@@ -301,7 +301,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	// Main loop
 	MSG msg;
 	ZeroMemory(&msg, sizeof(msg));
-	ShowWindow(globals.hwnd, g_config.wp.showCmd ? (int)g_config.wp.showCmd : SW_SHOWDEFAULT);
+	ShowWindow(globals.hwnd, g_apptypeConfig.wp.showCmd ? (int)g_apptypeConfig.wp.showCmd : SW_SHOWDEFAULT);
 	UpdateWindow(globals.hwnd);
 	Time_StartNewFrame();
 	while(msg.message != WM_QUIT && !App_IsShuttingDown()) {

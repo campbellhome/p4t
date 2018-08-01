@@ -126,10 +126,8 @@ void UIConfig_Update(config_t *config)
 		}
 		Separator();
 		if(Button("Ok")) {
-			WINDOWPLACEMENT wp = config->wp;
 			config_t tmp = *config;
 			*config = *s_uiConfig;
-			config->wp = wp;
 			*s_uiConfig = tmp;
 			s_configOpen = false;
 			GetIO().MouseDoubleClickTime = config->doubleClickSeconds;

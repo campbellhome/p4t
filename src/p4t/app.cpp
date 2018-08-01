@@ -74,7 +74,7 @@ static bool App_CreateWindow(void)
 	globals.wc = wc;
 	RegisterClassEx(&globals.wc);
 
-	WINDOWPLACEMENT wp = g_config.wp;
+	WINDOWPLACEMENT wp = g_apptypeConfig.wp;
 	const char *title = globals.appSpecific.title;
 	globals.hwnd = CreateWindow(classname, title, WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, globals.wc.hInstance, NULL);
 	if(wp.rcNormalPosition.right > wp.rcNormalPosition.left) {
@@ -115,6 +115,7 @@ bool App_Init(const char *cmdline)
 	output_init();
 
 	config_read(&g_config);
+	config_read_apptype(&g_apptypeConfig);
 
 	tasks_startup();
 	process_init();
@@ -147,6 +148,7 @@ void App_Shutdown()
 	UIConfig_Reset();
 	config_write(&g_config);
 	config_reset(&g_config);
+	config_write_apptype(&g_apptypeConfig);
 	BB_SHUTDOWN();
 
 	if(globals.hwnd) {

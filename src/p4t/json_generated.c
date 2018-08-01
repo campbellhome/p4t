@@ -133,6 +133,20 @@ diffConfig_t json_deserialize_diffConfig_t(JSON_Value *src)
 	return dst;
 }
 
+appTypeConfig json_deserialize_appTypeConfig(JSON_Value *src)
+{
+	appTypeConfig dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.wp = json_deserialize_WINDOWPLACEMENT(json_object_get_value(obj, "wp"));
+			dst.version = (u32)json_object_get_number(obj, "version");
+		}
+	}
+	return dst;
+}
+
 config_t json_deserialize_config_t(JSON_Value *src)
 {
 	config_t dst;
@@ -145,7 +159,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.uiChangelist = json_deserialize_uiChangelistConfig(json_object_get_value(obj, "uiChangelist"));
 			dst.uiPendingChangesets = json_deserialize_uiChangesetConfig(json_object_get_value(obj, "uiPendingChangesets"));
 			dst.uiSubmittedChangesets = json_deserialize_uiChangesetConfig(json_object_get_value(obj, "uiSubmittedChangesets"));
-			dst.wp = json_deserialize_WINDOWPLACEMENT(json_object_get_value(obj, "wp"));
+			dst.version = (u32)json_object_get_number(obj, "version");
 			dst.diff = json_deserialize_diffConfig_t(json_object_get_value(obj, "diff"));
 			dst.clientspec = json_deserialize_sb_t(json_object_get_value(obj, "clientspec"));
 			dst.singleInstanceCheck = json_object_get_boolean(obj, "singleInstanceCheck");
@@ -153,7 +167,9 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.dpiAware = json_object_get_boolean(obj, "dpiAware");
 			dst.doubleClickSeconds = (float)json_object_get_number(obj, "doubleClickSeconds");
 			dst.dpiScale = (float)json_object_get_number(obj, "dpiScale");
-			dst.version = (u32)json_object_get_number(obj, "version");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
 		}
 	}
 	return dst;
@@ -273,6 +289,17 @@ JSON_Value *json_serialize_diffConfig_t(const diffConfig_t *src)
 	return val;
 }
 
+JSON_Value *json_serialize_appTypeConfig(const appTypeConfig *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "wp", json_serialize_WINDOWPLACEMENT(&src->wp));
+		json_object_set_number(obj, "version", src->version);
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_config_t(const config_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -283,7 +310,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "uiChangelist", json_serialize_uiChangelistConfig(&src->uiChangelist));
 		json_object_set_value(obj, "uiPendingChangesets", json_serialize_uiChangesetConfig(&src->uiPendingChangesets));
 		json_object_set_value(obj, "uiSubmittedChangesets", json_serialize_uiChangesetConfig(&src->uiSubmittedChangesets));
-		json_object_set_value(obj, "wp", json_serialize_WINDOWPLACEMENT(&src->wp));
+		json_object_set_number(obj, "version", src->version);
 		json_object_set_value(obj, "diff", json_serialize_diffConfig_t(&src->diff));
 		json_object_set_value(obj, "clientspec", json_serialize_sb_t(&src->clientspec));
 		json_object_set_boolean(obj, "singleInstanceCheck", src->singleInstanceCheck);
@@ -291,7 +318,9 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "dpiAware", src->dpiAware);
 		json_object_set_number(obj, "doubleClickSeconds", src->doubleClickSeconds);
 		json_object_set_number(obj, "dpiScale", src->dpiScale);
-		json_object_set_number(obj, "version", src->version);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
 	}
 	return val;
 }

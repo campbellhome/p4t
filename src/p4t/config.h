@@ -66,13 +66,18 @@ AUTOJSON typedef struct diffConfig_s {
 	sb_t args;
 } diffConfig_t;
 
+AUTOJSON typedef struct tag_appTypeConfig {
+	WINDOWPLACEMENT wp;
+	u32 version;
+} appTypeConfig;
+
 AUTOJSON typedef struct config_s {
 	fontConfig_t logFontConfig;
 	fontConfig_t uiFontConfig;
 	uiChangelistConfig uiChangelist;
 	uiChangesetConfig uiPendingChangesets;
 	uiChangesetConfig uiSubmittedChangesets;
-	WINDOWPLACEMENT wp;
+	u32 version;
 	diffConfig_t diff;
 	sb_t clientspec;
 	b32 singleInstanceCheck;
@@ -80,11 +85,12 @@ AUTOJSON typedef struct config_s {
 	b32 dpiAware;
 	float doubleClickSeconds;
 	float dpiScale;
-	u32 version;
+	u8 pad[4];
 } config_t;
 
-enum { kConfigVersion = 2 };
+enum { kConfigVersion = 2, kConfigAppTypeVersion = 1 };
 extern config_t g_config;
+extern appTypeConfig g_apptypeConfig;
 
 b32 config_read(config_t *config);
 b32 config_write(config_t *config);
@@ -92,6 +98,9 @@ config_t *config_clone(config_t *config);
 void config_reset(config_t *config);
 void config_free(config_t *config);
 void config_getwindowplacement(HWND hwnd);
+
+b32 config_read_apptype(appTypeConfig *config);
+b32 config_write_apptype(appTypeConfig *config);
 
 #if defined(__cplusplus)
 }
