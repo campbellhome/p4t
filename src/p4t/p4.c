@@ -317,8 +317,8 @@ static void task_p4changes_statechanged(task *t)
 				}
 			}
 			if(pending) {
-				for(u32 clientIdx = 0; clientIdx < p4.selfClients.count; ++clientIdx) {
-					sdict_t *clientDict = p4.selfClients.data + clientIdx;
+				for(u32 clientIdx = 0; clientIdx < p4.allClients.count; ++clientIdx) {
+					sdict_t *clientDict = p4.allClients.data + clientIdx;
 					const char *client = sdict_find(clientDict, "client");
 					const char *owner = sdict_find(clientDict, "Owner");
 					if(client && owner) {
