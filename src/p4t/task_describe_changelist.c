@@ -178,31 +178,30 @@ static void task_describe_default_changelist_statechanged(task *t)
 }
 void p4_describe_default_changelist(const char *client)
 {
-	for(u32 clientIdx = 0; clientIdx < p4.localClients.count; ++clientIdx) {
-		sdict_t *sd = p4.localClients.data + clientIdx;
-		const char *localClient = sdict_find_safe(sd, "client");
-		if(!strcmp(localClient, client)) {
-			// default changelist for a local clientspec
-			// p4 -c matt_remote fstat -Olhp -Rco -e default //matt_remote/...
-			task *t = task_queue(p4_task_create(
-			    task_describe_default_changelist_statechanged, p4_dir(), NULL,
-			    "\"%s\" -G -c %s fstat -Olhp -Rco -e default //%s/...", p4_exe(), client, client));
+	const char *localHost = sdict_find_safe(&p4.info, "clientHost");
+	const char *localUser = sdict_find(&p4.info, "userName");
+	for(u32 clientIdx = 0; clientIdx < p4.allClients.count; ++clientIdx) {
+		sdict_t *sd = p4.allClients.data + clientIdx;
+		if(!strcmp(sdict_find_safe(sd, "client"), client)) {
+			const char *user = sdict_find_safe(sd, "Owner");
+			const char *host = sdict_find_safe(sd, "Host");
+			task *t;
+			if(!_stricmp(user, localUser) && !_stricmp(host, localHost)) {
+				// default changelist for a local clientspec
+				t = task_queue(p4_task_create(
+				    task_describe_default_changelist_statechanged, p4_dir(), NULL,
+				    "\"%s\" -G -c %s fstat -Olhp -Rco -e default //%s/...", p4_exe(), client, client));
+			} else {
+				t = task_queue(p4_task_create(
+				    task_describe_default_changelist_statechanged, p4_dir(), NULL,
+				    "\"%s\" -G opened -C %s -c default", p4_exe(), client));
+			}
 			if(t) {
 				sdict_add_raw(&t->extraData, "client", client);
-				sdict_add_raw(&t->extraData, "user", sdict_find_safe(sd, "user"));
+				sdict_add_raw(&t->extraData, "user", user);
 				++s_taskDescribeChangelistCount;
 			}
-			return;
+			break;
 		}
-	}
-
-	// default changelist for clientspec other than the active clientspec
-	task *t = task_queue(p4_task_create(
-	    task_describe_default_changelist_statechanged, p4_dir(), NULL,
-	    "\"%s\" -G opened -C %s -c default", p4_exe(), client));
-	if(t) {
-		sdict_add_raw(&t->extraData, "client", client);
-		sdict_add_raw(&t->extraData, "user", client);
-		++s_taskDescribeChangelistCount;
 	}
 }

@@ -114,6 +114,7 @@ typedef struct tag_p4 {
 
 	sdict_t info;
 	sdict_t set;
+	sdicts allClients;
 	sdicts selfClients;
 	sdicts localClients;
 	p4Changelists changelists;
