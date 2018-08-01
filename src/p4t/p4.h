@@ -75,6 +75,7 @@ typedef struct tag_p4UIChangesetEntry {
 	b32 selected;
 	b32 described;
 	u32 parity;
+	sb_t client;
 	uiChangelistFiles normalFiles;
 	uiChangelistFiles shelvedFiles;
 } p4UIChangesetEntry;
@@ -132,6 +133,7 @@ const char *p4_clientspec_arg(void);
 // general: code(stat), change, user, client, time, desc, status, changeType, path, shelved
 // per-file: depotFile0, action0, type0, rev0, fileSize0, digest0
 p4Changelist *p4_find_changelist(u32 cl);
+p4Changelist *p4_find_default_changelist(const char *client);
 
 sdict_t *p4_get_info(void);
 
@@ -141,7 +143,7 @@ void p4_info(void);
 
 p4Changeset *p4_find_changeset(b32 pending);
 void p4_refresh_changeset(p4Changeset *cs);
-sdict_t *p4_find_changelist_in_changeset(p4Changeset *cs, u32 number);
+sdict_t *p4_find_changelist_in_changeset(p4Changeset *cs, u32 number, const char *client);
 
 p4UIChangeset *p4_add_uichangeset(b32 pending);
 void p4_sort_uichangeset(p4UIChangeset *cs);
@@ -149,6 +151,11 @@ void p4_sort_uichangeset(p4UIChangeset *cs);
 void p4_build_changelist_files(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles);
 void p4_free_changelist_files(uiChangelistFiles *files);
 int p4_changelist_files_compare(const void *_a, const void *_b);
+
+//////////////////////////////////////////////////////////////////////////
+// internal:
+void p4_build_default_changelist(sdict_t *sd, const char *owner, const char *client);
+void p4_reset_changelist(p4Changelist *cl);
 
 #include "task_describe_changelist.h"
 #include "task_diff_file.h"

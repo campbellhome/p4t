@@ -24,6 +24,7 @@ p4Changeset *p4_add_changeset(b32 pending);
 const changesetColumnField s_changesetColumnFields[] = {
 	{ "change", false, true },
 	{ "time", true, false },
+	{ "client", false, false },
 	{ "user", false, false },
 	{ "desc_oneline", false, false },
 };
@@ -101,7 +102,7 @@ b32 p4_init(void)
 	}
 }
 
-static void p4_reset_changelist(p4Changelist *cl)
+void p4_reset_changelist(p4Changelist *cl)
 {
 	sdict_reset(&cl->normal);
 	sdict_reset(&cl->shelved);
@@ -118,6 +119,7 @@ static void p4_reset_uichangesetentry(p4UIChangesetEntry *e)
 {
 	p4_free_changelist_files(&e->normalFiles);
 	p4_free_changelist_files(&e->shelvedFiles);
+	sb_reset(&e->client);
 }
 
 static void p4_reset_uichangeset(p4UIChangeset *cs)
@@ -158,6 +160,20 @@ p4Changelist *p4_find_changelist(u32 cl)
 		p4Changelist *change = p4.changelists.data + i;
 		if(change->number == cl) {
 			return change;
+		}
+	}
+	return NULL;
+}
+
+p4Changelist *p4_find_default_changelist(const char *client)
+{
+	for(u32 i = 0; i < p4.changelists.count; ++i) {
+		p4Changelist *change = p4.changelists.data + i;
+		if(change->number == 0) {
+			const char *changeClient = sdict_find_safe(&change->normal, "client");
+			if(!strcmp(changeClient, client)) {
+				return change;
+			}
 		}
 	}
 	return NULL;
@@ -250,6 +266,19 @@ p4Changeset *p4_find_changeset(b32 pending)
 	return NULL;
 }
 
+void p4_build_default_changelist(sdict_t *sd, const char *owner, const char *client)
+{
+	sdict_add_raw(sd, "code", "stat");
+	sdict_add_raw(sd, "change", "default");
+	sdict_add_raw(sd, "time", "0");
+	sdict_add_raw(sd, "user", owner);
+	sdict_add_raw(sd, "client", client);
+	sdict_add_raw(sd, "status", "pending");
+	sdict_add_raw(sd, "changeType", "public");
+	sdict_add_raw(sd, "desc", "");
+	sdict_add_raw(sd, "desc_oneline", "");
+}
+
 static void task_p4changes_statechanged(task *t)
 {
 	task_process_statechanged(t);
@@ -288,15 +317,7 @@ static void task_p4changes_statechanged(task *t)
 					if(client && owner) {
 						if(bba_add(cs->changelists, 1)) {
 							sdict_t *sd = &bba_last(cs->changelists);
-							sdict_add_raw(sd, "code", "stat");
-							sdict_add_raw(sd, "change", "default");
-							sdict_add_raw(sd, "time", "0");
-							sdict_add_raw(sd, "user", owner);
-							sdict_add_raw(sd, "client", client);
-							sdict_add_raw(sd, "status", "peinding");
-							sdict_add_raw(sd, "changeType", "public");
-							sdict_add_raw(sd, "desc", "");
-							sdict_add_raw(sd, "desc_oneline", "");
+							p4_build_default_changelist(sd, owner, client);
 						}
 					}
 				}
@@ -328,12 +349,14 @@ void p4_refresh_changeset(p4Changeset *cs)
 static p4Changeset *s_sortChangeset;
 static p4UIChangeset *s_sortUIChangeset;
 static uiChangesetConfig *s_sortConfig;
-sdict_t *p4_find_changelist_in_changeset(p4Changeset *cs, u32 number)
+sdict_t *p4_find_changelist_in_changeset(p4Changeset *cs, u32 number, const char *client)
 {
 	for(u32 i = 0; i < cs->changelists.count; ++i) {
 		sdict_t *sd = cs->changelists.data + i;
 		if(strtou32(sdict_find_safe(sd, "change")) == number) {
-			return sd;
+			if(number || !strcmp(sdict_find_safe(sd, "client"), client)) {
+				return sd;
+			}
 		}
 	}
 	return NULL;
@@ -343,8 +366,8 @@ static int p4_changeset_compare(const void *_a, const void *_b)
 	const p4UIChangesetEntry *aEntry = _a;
 	const p4UIChangesetEntry *bEntry = _b;
 
-	sdict_t *a = p4_find_changelist_in_changeset(s_sortChangeset, aEntry->changelist);
-	sdict_t *b = p4_find_changelist_in_changeset(s_sortChangeset, bEntry->changelist);
+	sdict_t *a = p4_find_changelist_in_changeset(s_sortChangeset, aEntry->changelist, sb_get(&aEntry->client));
+	sdict_t *b = p4_find_changelist_in_changeset(s_sortChangeset, bEntry->changelist, sb_get(&bEntry->client));
 
 	int mult = s_sortConfig->sortDescending ? -1 : 1;
 	u32 columnIndex = s_sortConfig->sortColumn;

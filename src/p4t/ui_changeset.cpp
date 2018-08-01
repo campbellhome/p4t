@@ -16,6 +16,7 @@
 const char *s_submittedColumnNames[] = {
 	"Change",
 	"Date",
+	NULL,
 	"User",
 	"Description",
 };
@@ -24,12 +25,14 @@ BB_CTASSERT(BB_ARRAYSIZE(s_submittedColumnNames) == BB_ARRAYSIZE(g_config.uiPend
 const char *s_pendingColumnNames[] = {
 	"Change",
 	NULL,
+	"Clientspec",
 	"User",
 	"Description",
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_pendingColumnNames) == BB_ARRAYSIZE(g_config.uiPendingChangesets.columnWidth));
 
 float s_columnScales[] = {
+	1.0f,
 	1.0f,
 	1.0f,
 	1.0f,
@@ -45,7 +48,7 @@ static void UIChangeset_CopySelectedToClipboard(p4UIChangeset *uics, p4Changeset
 	for(i = 0; i < uics->count; ++i) {
 		p4UIChangesetEntry *e = uics->data + i;
 		if(e->selected) {
-			sdict_t *c = p4_find_changelist_in_changeset(cs, e->changelist);
+			sdict_t *c = p4_find_changelist_in_changeset(cs, e->changelist, sb_get(&e->client));
 			if(c) {
 				for(u32 col = 0; col < data->numColumns; ++col) {
 					if(data->columnNames[col]) {
@@ -146,6 +149,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			p4UIChangesetEntry e = {};
 			e.changelist = strtou32(sdict_find_safe(sd, "change"));
 			e.selected = false;
+			sb_append(&e.client, sdict_find_safe(sd, "client"));
 			bba_push(*uics, e);
 		}
 		p4_sort_uichangeset(uics);
@@ -156,7 +160,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 
 	uiChangesetConfig *config = uics->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
 
-	float columnOffsets[5] = {};
+	float columnOffsets[6] = {};
 	BB_CTASSERT(BB_ARRAYSIZE(columnOffsets) == BB_ARRAYSIZE(config->columnWidth) + 1);
 	ImGui::columnDrawData data = {};
 	data.columnWidths = config->columnWidth;
@@ -182,15 +186,15 @@ void UIChangeset_Update(p4UIChangeset *uics)
 
 	for(u32 i = 0; i < uics->count; ++i) {
 		p4UIChangesetEntry *e = uics->data + i;
-		sdict_t *c = p4_find_changelist_in_changeset(cs, e->changelist);
+		sdict_t *c = p4_find_changelist_in_changeset(cs, e->changelist, sb_get(&e->client));
 		if(c) {
-			b32 expanded = ImGui::TreeNode(va("###node%u", e->changelist));
+			b32 expanded = ImGui::TreeNode(va("###node%u%s", e->changelist, sb_get(&e->client)));
 			if(expanded) {
 				ImGui::TreePop();
 			}
 			ImGui::SameLine();
 			ImGui::PushSelectableColors(e->selected, uics->active);
-			ImGui::Selectable(va("###%u", e->changelist), e->selected != 0);
+			ImGui::Selectable(va("###%u%s", e->changelist, sb_get(&e->client)), e->selected != 0);
 			ImGui::PopSelectableColors(e->selected, uics->active);
 			if(ImGui::IsItemActive()) {
 				anyActive = true;
@@ -212,7 +216,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 				}
 			}
 			if(expanded) {
-				p4Changelist *cl = p4_find_changelist(e->changelist);
+				p4Changelist *cl = e->changelist ? p4_find_changelist(e->changelist) : p4_find_default_changelist(sb_get(&e->client));
 				if(cl) {
 					if(e->parity != cl->parity) {
 						e->parity = cl->parity;
@@ -222,7 +226,11 @@ void UIChangeset_Update(p4UIChangeset *uics)
 				} else {
 					if(!e->described) {
 						e->described = true;
-						p4_describe_changelist(e->changelist);
+						if(e->changelist) {
+							p4_describe_changelist(e->changelist);
+						} else {
+							p4_describe_default_changelist(sb_get(&e->client));
+						}
 					}
 				}
 			}

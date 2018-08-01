@@ -54,7 +54,7 @@ AUTOJSON typedef struct tag_uiChangelistConfig {
 } uiChangelistConfig;
 
 AUTOJSON typedef struct tag_uiChangesetConfig {
-	float columnWidth[4];
+	float columnWidth[5];
 	b32 sortDescending;
 	u32 sortColumn;
 } uiChangesetConfig;
