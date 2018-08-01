@@ -89,6 +89,7 @@ typedef struct tag_p4UIChangeset {
 	sb_t user;
 	sb_t clientspec;
 	sb_t filter;
+	sb_t filterInput;
 	b32 filterEnabled;
 	u32 id;
 	u32 lastClickIndex;
@@ -157,6 +158,7 @@ int p4_changelist_files_compare(const void *_a, const void *_b);
 // internal:
 void p4_build_default_changelist(sdict_t *sd, const char *owner, const char *client);
 void p4_reset_changelist(p4Changelist *cl);
+void p4_reset_uichangesetentry(p4UIChangesetEntry *e);
 
 #include "task_describe_changelist.h"
 #include "task_diff_file.h"

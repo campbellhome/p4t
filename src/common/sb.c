@@ -29,6 +29,8 @@ b32 sb_reserve(sb_t *sb, u32 len)
 		if(bba_add_noclear(tmp, len)) {
 			if(sb->count) {
 				memcpy(tmp.data, sb->data, sb->count + 1);
+			} else {
+				*tmp.data = '\0';
 			}
 			tmp.count = sb->count;
 			sb_reset(sb);
@@ -51,6 +53,13 @@ b32 sb_grow(sb_t *sb, u32 len)
 		return true;
 	}
 	return false;
+}
+
+void sb_move(sb_t *target, sb_t *src)
+{
+	sb_reset(target);
+	*target = *src;
+	memset(src, 0, sizeof(*src));
 }
 
 void sb_append(sb_t *sb, const char *text)

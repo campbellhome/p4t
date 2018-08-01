@@ -91,6 +91,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\common\appdata.c" />
     <ClCompile Include="..\src\common\env_utils.c" />
+    <ClCompile Include="..\src\common\filter.c" />
     <ClCompile Include="..\src\common\output.c" />
     <ClCompile Include="..\src\common\path_utils.c" />
     <ClCompile Include="..\src\common\process.c" />
@@ -111,6 +112,7 @@
     <ClInclude Include="..\src\common\dlist.h" />
     <ClInclude Include="..\src\common\env_utils.h" />
     <ClInclude Include="..\src\common\file_utils.h" />
+    <ClInclude Include="..\src\common\filter.h" />
     <ClInclude Include="..\src\common\output.h" />
     <ClInclude Include="..\src\common\path_utils.h" />
     <ClInclude Include="..\src\common\process.h" />

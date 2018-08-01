@@ -4,6 +4,7 @@
 #include "ui_changeset.h"
 #include "bb_array.h"
 #include "config.h"
+#include "filter.h"
 #include "imgui_utils.h"
 #include "keys.h"
 #include "p4.h"
@@ -131,32 +132,108 @@ static void UIChangeset_HandleClick(p4UIChangeset *uics, u32 index)
 	}
 }
 
+// change, time, user, client, status, changeType (public), path (submitted only?), desc, desc_oneline
+static const char *s_filterKeys[] = {
+	"user",
+	"client",
+	"desc",
+};
+static bool UIChangeset_PassesFilter(filterTokens *tokens, sdict_t *sd)
+{
+	return passes_filter_tokens(tokens, sd, s_filterKeys, BB_ARRAYSIZE(s_filterKeys)) != 0;
+}
+
 void UIChangeset_Update(p4UIChangeset *uics)
 {
-	p4Changeset *cs = p4_find_changeset(uics->pending);
-	if(!cs) {
-		return;
+	ImGui::PushID(uics);
+
+	b32 anyActive = false;
+
+	ImGui::TextUnformatted("Pending:");
+	ImGui::SameLine();
+	if(ImGui::Checkbox("###pending", &uics->pending)) {
+		uics->parity = 0;
 	}
 
-	ImGui::PushID(uics);
+	ImGui::SameLine();
+	ImGui::TextUnformatted("  User:");
+	ImGui::SameLine();
+	ImGui::PushItemWidth(96.0f * g_config.dpiScale);
+	if(ImGui::InputText("###user", &uics->user, 1024, ImGuiInputTextFlags_EnterReturnsTrue)) {
+		uics->parity = 0;
+	}
+	ImGui::PopItemWidth();
+
+	ImGui::SameLine();
+	ImGui::TextUnformatted("  Client:");
+	ImGui::SameLine();
+	ImGui::PushItemWidth(96.0f * g_config.dpiScale);
+	if(ImGui::InputText("###clientspec", &uics->clientspec, 1024, ImGuiInputTextFlags_EnterReturnsTrue)) {
+		uics->parity = 0;
+	}
+	ImGui::PopItemWidth();
+
+	ImGui::TextUnformatted("Filter:");
+	ImGui::SameLine();
+	if(ImGui::Checkbox("###filter", &uics->filterEnabled)) {
+		uics->parity = 0;
+	}
+	ImGui::SameLine();
+	if(ImGui::InputText("###filterInput", &uics->filterInput, 1024, ImGuiInputTextFlags_EnterReturnsTrue)) {
+		sb_reset(&uics->filter);
+		sb_append(&uics->filter, sb_get(&uics->filterInput));
+		uics->filterEnabled = true;
+		uics->parity = 0;
+	}
+	if(ImGui::IsItemHovered()) {
+		ImGui::BeginTooltip();
+		ImGui::TextUnformatted("Filter: +<Category:>RequireThis -<Category:>WithoutThis <Category:>AtLeast <Category:>OneOfTheseOrRequireThis");
+		ImGui::Separator();
+		ImGui::TextUnformatted("Categories: user, client, desc");
+		ImGui::TextUnformatted("Category can be omitted, and the filter component will be applied to all categories.");
+		ImGui::Separator();
+		ImGui::TextUnformatted("Examples:");
+		ImGui::TextUnformatted("-user:autointegrator");
+		ImGui::TextUnformatted("user:matt user:nickj user:zach");
+		ImGui::TextUnformatted("desc:matchmaking desc:online desc:network");
+		ImGui::EndTooltip();
+	}
+
+	p4Changeset *cs = p4_find_changeset(uics->pending);
+	if(!cs) {
+		ImGui::PopID();
+		return;
+	}
 
 	if(uics->parity != cs->parity) {
 		uics->parity = cs->parity;
 		//p4UIChangeset old = *uics; // TODO: retain selection when refreshing changelists
+
+		filterTokens tokens = {};
+		if(uics->filterEnabled) {
+			build_filter_tokens(&tokens, sb_get(&uics->filter));
+		}
+		add_filter_token(&tokens, "user", sb_get(&uics->user));
+		add_filter_token(&tokens, "client", sb_get(&uics->clientspec));
+
+		for(u32 i = 0; i < uics->count; ++i) {
+			p4_reset_uichangesetentry(uics->data + i);
+		}
 		uics->count = 0;
 		for(u32 i = 0; i < cs->changelists.count; ++i) {
 			sdict_t *sd = cs->changelists.data + i;
-			p4UIChangesetEntry e = {};
-			e.changelist = strtou32(sdict_find_safe(sd, "change"));
-			e.selected = false;
-			sb_append(&e.client, sdict_find_safe(sd, "client"));
-			bba_push(*uics, e);
+			if(UIChangeset_PassesFilter(&tokens, sd)) {
+				p4UIChangesetEntry e = {};
+				e.changelist = strtou32(sdict_find_safe(sd, "change"));
+				e.selected = false;
+				sb_append(&e.client, sdict_find_safe(sd, "client"));
+				bba_push(*uics, e);
+			}
 		}
 		p4_sort_uichangeset(uics);
 		uics->lastClickIndex = ~0u;
+		reset_filter_tokens(&tokens);
 	}
-
-	b32 anyActive = false;
 
 	uiChangesetConfig *config = uics->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
 

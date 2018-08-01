@@ -9,7 +9,6 @@
 #include "process.h"
 #include "sdict.h"
 #include "span.h"
-#include "tokenize.h"
 #include "va.h"
 
 #include "bb.h"

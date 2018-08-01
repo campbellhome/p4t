@@ -115,22 +115,23 @@ static void p4_reset_changeset(p4Changeset *cs)
 	sdicts_reset(&cs->changelists);
 }
 
-static void p4_reset_uichangesetentry(p4UIChangesetEntry *e)
+void p4_reset_uichangesetentry(p4UIChangesetEntry *e)
 {
 	p4_free_changelist_files(&e->normalFiles);
 	p4_free_changelist_files(&e->shelvedFiles);
 	sb_reset(&e->client);
 }
 
-static void p4_reset_uichangeset(p4UIChangeset *cs)
+static void p4_reset_uichangeset(p4UIChangeset *uics)
 {
-	sb_reset(&cs->user);
-	sb_reset(&cs->clientspec);
-	sb_reset(&cs->filter);
-	for(u32 i = 0; i < cs->count; ++i) {
-		p4_reset_uichangesetentry(cs->data + i);
+	sb_reset(&uics->user);
+	sb_reset(&uics->clientspec);
+	sb_reset(&uics->filter);
+	sb_reset(&uics->filterInput);
+	for(u32 i = 0; i < uics->count; ++i) {
+		p4_reset_uichangesetentry(uics->data + i);
 	}
-	bba_free(*cs);
+	bba_free(*uics);
 }
 
 void p4_shutdown(void)
