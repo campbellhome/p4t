@@ -3,6 +3,7 @@
 
 #include "config.h"
 
+#include "app.h"
 #include "appdata.h"
 #include "file_utils.h"
 #include "json_generated.h"
@@ -20,7 +21,7 @@ config_t g_config;
 static sb_t config_get_path(void)
 {
 	sb_t s = appdata_get();
-	sb_append(&s, "\\p4t_preferences.json");
+	sb_va(&s, "\\%s_config.json", globals.appSpecific.configName);
 	return s;
 }
 
@@ -96,6 +97,9 @@ b32 config_read(config_t *config)
 		sb_append(&config->diff.args, "%1 %2");
 	}
 	config->version = kConfigVersion;
+	if(!globals.appSpecific.allowSingleInstance) {
+		config->singleInstanceCheck = false;
+	}
 	return ret;
 }
 

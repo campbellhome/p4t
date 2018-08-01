@@ -19,3 +19,4 @@ void UIChangelist_Shutdown(void);
 void UIChangelist_Update(void);
 
 void UIChangelist_EnterChangelist(void);
+void UIChangelist_InitChangelist(u32 id);

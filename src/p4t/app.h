@@ -17,19 +17,30 @@ extern "C" {
 #endif
 extern void App_RequestRender(void);
 extern bool App_GetAndClearRequestRender(void);
-//#include "bb_connection.h"
-//#include "bb_discovery_client.h"
-//#include "bb_discovery_server.h"
-//#include "bb_log.h"
-//#include "bb_packet.h"
-//#include "bb_sockets.h"
-//#include "bb_string.h"
-//#include "bb_thread.h"
+extern void App_SetWindowTitle(const char *title);
+extern void App_RequestShutdown(void);
 #include "bb_time.h"
+
+typedef enum tag_appType
+{
+	kAppType_Normal,
+	kAppType_ChangelistViewer,
+	kAppType_Count
+} appType;
+
+typedef struct tag_appSpecificData
+{
+	const char *windowClass;
+	const char *configName;
+	const char *title;
+	b32 allowSingleInstance;
+	appType type;
+} appSpecificData;
 
 typedef struct globals_s {
 	WNDCLASSEX wc;
 	HWND hwnd;
+	appSpecificData appSpecific;
 } globals_t;
 
 extern globals_t globals;

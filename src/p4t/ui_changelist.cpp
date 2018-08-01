@@ -2,7 +2,8 @@
 // MIT license (see License.txt)
 
 #include "ui_changelist.h"
-
+#include "app.h"
+#include "bb_array.h"
 #include "config.h"
 #include "imgui_utils.h"
 #include "message_box.h"
@@ -12,9 +13,6 @@
 #include "str.h"
 #include "time_utils.h"
 #include "va.h"
-
-#include "bb_array.h"
-
 #include <math.h>
 
 // warning C4820 : 'StructName' : '4' bytes padding added after data member 'MemberName'
@@ -327,6 +325,12 @@ void UIChangelist_Shutdown(void)
 static void UIChangelist_MessageBoxCallback(messageBox *mb, const char *action)
 {
 	if(action) {
+		if(!strcmp(action, "escape")) {
+			if(globals.appSpecific.type == kAppType_ChangelistViewer && s_requestedChangelist == 0) {
+				App_RequestShutdown();
+			}
+			return;
+		}
 		const char *inputNumber = sdict_find_safe(&mb->data, "inputNumber");
 		s32 testChangelist = strtos32(inputNumber);
 		if(testChangelist > 0) {
@@ -346,6 +350,14 @@ void UIChangelist_EnterChangelist(void)
 	sdict_add_raw(&mb.data, "text", "Enter changelist to view:");
 	sdict_add_raw(&mb.data, "inputNumber", va("%u", s_requestedChangelist));
 	mb_queue(mb);
+}
+
+void UIChangelist_InitChangelist(u32 id)
+{
+	s_doneInit = true;
+	s_requestedChangelist = id;
+	s_displayedChangelist = 0;
+	p4_describe_changelist(s_requestedChangelist);
 }
 
 void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles, b32 shelvedOpenByDefault, float indent)
@@ -398,6 +410,9 @@ void UIChangelist_Update(void)
 			p4_build_changelist_files(cl, &s_normalFiles, &s_shelvedFiles);
 			s_normalFiles.active = s_shelvedFiles.count == 0;
 			s_shelvedFiles.active = s_shelvedFiles.count != 0;
+			if(globals.appSpecific.type == kAppType_ChangelistViewer && s_requestedChangelist) {
+				App_SetWindowTitle(va("CL %u - p4t", s_requestedChangelist));
+			}
 		}
 		UIChangelist_DrawInformation(&cl->normal);
 		UIChangelist_DrawFilesAndHeaders(cl, &s_normalFiles, &s_shelvedFiles, true);
