@@ -75,13 +75,9 @@ AUTOJSON typedef struct config_s {
 	WINDOWPLACEMENT wp;
 	diffConfig_t diff;
 	sb_t clientspec;
-	b32 autoTileViews;
-	b32 alternateRowBackground;
-	b32 recordingsOpen;
 	b32 singleInstanceCheck;
 	b32 singleInstancePrompt;
 	b32 dpiAware;
-	u32 autoDeleteAfterDays;
 	float doubleClickSeconds;
 	float dpiScale;
 	u32 version;

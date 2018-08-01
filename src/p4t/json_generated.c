@@ -148,13 +148,9 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.wp = json_deserialize_WINDOWPLACEMENT(json_object_get_value(obj, "wp"));
 			dst.diff = json_deserialize_diffConfig_t(json_object_get_value(obj, "diff"));
 			dst.clientspec = json_deserialize_sb_t(json_object_get_value(obj, "clientspec"));
-			dst.autoTileViews = json_object_get_boolean(obj, "autoTileViews");
-			dst.alternateRowBackground = json_object_get_boolean(obj, "alternateRowBackground");
-			dst.recordingsOpen = json_object_get_boolean(obj, "recordingsOpen");
 			dst.singleInstanceCheck = json_object_get_boolean(obj, "singleInstanceCheck");
 			dst.singleInstancePrompt = json_object_get_boolean(obj, "singleInstancePrompt");
 			dst.dpiAware = json_object_get_boolean(obj, "dpiAware");
-			dst.autoDeleteAfterDays = (u32)json_object_get_number(obj, "autoDeleteAfterDays");
 			dst.doubleClickSeconds = (float)json_object_get_number(obj, "doubleClickSeconds");
 			dst.dpiScale = (float)json_object_get_number(obj, "dpiScale");
 			dst.version = (u32)json_object_get_number(obj, "version");
@@ -290,13 +286,9 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "wp", json_serialize_WINDOWPLACEMENT(&src->wp));
 		json_object_set_value(obj, "diff", json_serialize_diffConfig_t(&src->diff));
 		json_object_set_value(obj, "clientspec", json_serialize_sb_t(&src->clientspec));
-		json_object_set_boolean(obj, "autoTileViews", src->autoTileViews);
-		json_object_set_boolean(obj, "alternateRowBackground", src->alternateRowBackground);
-		json_object_set_boolean(obj, "recordingsOpen", src->recordingsOpen);
 		json_object_set_boolean(obj, "singleInstanceCheck", src->singleInstanceCheck);
 		json_object_set_boolean(obj, "singleInstancePrompt", src->singleInstancePrompt);
 		json_object_set_boolean(obj, "dpiAware", src->dpiAware);
-		json_object_set_number(obj, "autoDeleteAfterDays", src->autoDeleteAfterDays);
 		json_object_set_number(obj, "doubleClickSeconds", src->doubleClickSeconds);
 		json_object_set_number(obj, "dpiScale", src->dpiScale);
 		json_object_set_number(obj, "version", src->version);

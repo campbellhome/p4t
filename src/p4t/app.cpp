@@ -115,9 +115,6 @@ bool App_Init(const char *cmdline)
 	output_init();
 
 	config_read(&g_config);
-	g_config.recordingsOpen = false;
-	g_config.autoTileViews = 1;
-	g_config.autoDeleteAfterDays = 0;
 
 	tasks_startup();
 	process_init();

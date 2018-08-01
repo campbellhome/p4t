@@ -80,12 +80,8 @@ b32 config_read(config_t *config)
 	sb_reset(&path);
 
 	if(config->version == 0) {
-		config->autoTileViews = true;
 		config->singleInstanceCheck = true;
-		config->alternateRowBackground = true;
-		config->recordingsOpen = true;
 		config->doubleClickSeconds = 0.3f;
-		config->autoDeleteAfterDays = 14;
 		config->dpiAware = true;
 		config->dpiScale = 1.0f;
 		config->uiFontConfig.size = 16;

@@ -56,9 +56,9 @@ void UIConfig_Update(config_t *config)
 
 	if(Begin("Configuration", &s_configOpen, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
 		if(ImGui::CollapsingHeader("Interface", ImGuiTreeNodeFlags_DefaultOpen)) {
-			Checkbox("Auto-tile views", &s_uiConfig->autoTileViews);
-			Checkbox("Alternate row background colors", &s_uiConfig->alternateRowBackground);
 			InputFloat("Double-click seconds", &s_uiConfig->doubleClickSeconds);
+			Checkbox("Single instance check", &s_uiConfig->singleInstanceCheck);
+			Checkbox("Single instance prompt", &s_uiConfig->singleInstancePrompt);
 		}
 		if(ImGui::CollapsingHeader("Font", ImGuiTreeNodeFlags_DefaultOpen)) {
 			Checkbox("DPI Aware", &s_uiConfig->dpiAware);
@@ -123,16 +123,6 @@ void UIConfig_Update(config_t *config)
 				PopItemWidth();
 			}
 			PopID();
-		}
-		if(ImGui::CollapsingHeader("Miscellaneous", ImGuiTreeNodeFlags_DefaultOpen)) {
-			int val = (int)s_uiConfig->autoDeleteAfterDays;
-			ImGui::Text("Auto-delete old sessions after");
-			SameLine();
-			InputInt("days (0 disables)", &val, 1, 10);
-			val = BB_CLAMP(val, 0, 9999);
-			s_uiConfig->autoDeleteAfterDays = (u32)val;
-			Checkbox("Single instance check", &s_uiConfig->singleInstanceCheck);
-			Checkbox("Single instance prompt", &s_uiConfig->singleInstancePrompt);
 		}
 		Separator();
 		if(Button("Ok")) {
