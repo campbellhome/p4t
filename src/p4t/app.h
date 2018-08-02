@@ -15,6 +15,7 @@ extern void App_SingleInstanceRestored(void);
 #include "wrap_imgui.h"
 extern "C" {
 #endif
+extern b32 App_HasFocus(void);
 extern void App_RequestRender(void);
 extern bool App_GetAndClearRequestRender(void);
 extern void App_SetWindowTitle(const char *title);

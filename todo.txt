@@ -1,7 +1,20 @@
 in progress:
 
 short list:
+* unified tab list
+* right click tabs for close menu
+* user/client changeset input should be combo boxes with defaults
+* input text with app focus should request render (for bb also)
 
 todo:
+* drag and drop tabs
+* save/restore open tabs
+* status bar showing # processes?
+* taskkill processes on quit
+* upgrade imgui
+* imgui theme support
+* icons
+* right click menus for different diff options, other commands
+* remove p4cl.exe?  dunno
 
 done:

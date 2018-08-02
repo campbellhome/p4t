@@ -30,6 +30,11 @@ static bool g_trackingMouse;
 static int g_dpi = USER_DEFAULT_SCREEN_DPI;
 static ImGuiStyle g_defaultStyle;
 
+extern "C" b32 App_HasFocus(void)
+{
+	return g_hasFocus;
+}
+
 static void ResetD3D()
 {
 	if(!g_pd3dDevice)

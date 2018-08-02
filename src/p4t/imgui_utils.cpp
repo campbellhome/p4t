@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "imgui_utils.h"
+#include "app.h"
 #include "config.h"
 #include "sb.h"
 #include "va.h"
@@ -80,6 +81,9 @@ namespace ImGui
 		}
 		bool ret = InputText(label, (char *)sb->data, sb->allocated, flags, callback, user_data);
 		sb->count = sb->data ? (u32)strlen(sb->data) + 1 : 0;
+		if(IsItemActive() && App_HasFocus()) {
+			App_RequestRender();
+		}
 		return ret;
 	}
 
@@ -90,6 +94,9 @@ namespace ImGui
 		}
 		bool ret = InputTextMultiline(label, (char *)sb->data, sb->allocated, size, flags, callback, user_data);
 		sb->count = sb->data ? (u32)strlen(sb->data) + 1 : 0;
+		if(IsItemActive() && App_HasFocus()) {
+			App_RequestRender();
+		}
 		return ret;
 	}
 
@@ -115,11 +122,17 @@ namespace ImGui
 	void SelectableTextUnformattedMultiline(const char *label, const char *text, ImVec2 size)
 	{
 		InputTextMultiline(label, const_cast< char * >(text), strlen(text) + 1, size, ImGuiInputTextFlags_ReadOnly);
+		if(IsItemActive() && App_HasFocus()) {
+			App_RequestRender();
+		}
 	}
 
 	void SelectableTextUnformatted(const char *label, const char *text)
 	{
 		InputText(label, const_cast< char * >(text), strlen(text) + 1, ImGuiInputTextFlags_ReadOnly);
+		if(IsItemActive() && App_HasFocus()) {
+			App_RequestRender();
+		}
 	}
 
 	void SelectableText(const char *label, const char *fmt, ...)
