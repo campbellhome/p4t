@@ -16,6 +16,7 @@
     <ClInclude Include="..\src\thirdparty\imgui\imconfig.h" />
     <ClInclude Include="..\src\thirdparty\imgui\imgui.h" />
     <ClInclude Include="..\src\thirdparty\imgui\imgui_internal.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\misc\fonts\forkawesome-webfont.h" />
     <ClInclude Include="..\src\thirdparty\imgui\stb_rect_pack.h" />
     <ClInclude Include="..\src\thirdparty\imgui\stb_textedit.h" />
     <ClInclude Include="..\src\thirdparty\imgui\stb_truetype.h" />
@@ -26,6 +27,7 @@
     <ClCompile Include="..\src\thirdparty\imgui\imgui.cpp" />
     <ClCompile Include="..\src\thirdparty\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\src\thirdparty\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\src\thirdparty\imgui\misc\fonts\forkawesome-webfont.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\src\thirdparty\imgui\CHANGELOG.txt" />

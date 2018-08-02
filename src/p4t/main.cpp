@@ -1,9 +1,12 @@
 // Copyright (c) 2012-2018 Matt Campbell
 // MIT license (see License.txt)
 
+#define FONT_COMPRESSED_DATA
+
 #include "app.h"
 #include "config.h"
 #include "keys.h"
+#include "thirdparty/imgui/misc/fonts/forkawesome-webfont.h"
 #include "time_utils.h"
 #include "va.h"
 
@@ -82,19 +85,37 @@ static void UpdateDpiDependentStyle()
 	s.DisplaySafeAreaPadding.y *= g_config.dpiScale;
 }
 
+static void MergeIconFont(float fontSize)
+{
+	// merge in icons from Fork Awesome
+	ImGuiIO &io = ImGui::GetIO();
+	static const ImWchar ranges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };
+	ImFontConfig config;
+	config.MergeMode = true;
+	config.PixelSnapH = true;
+	io.Fonts->AddFontFromMemoryCompressedTTF(ForkAwesome_compressed_data, ForkAwesome_compressed_size,
+	                                         fontSize, &config, ranges);
+	//io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FA, 16.0f, &icons_config, icons_ranges);
+}
+
 static void InitFonts()
 {
 	ImGuiIO &io = ImGui::GetIO();
 	io.Fonts->Clear();
 	if(g_config.uiFontConfig.enabled && g_config.uiFontConfig.size > 0 && *sb_get(&g_config.uiFontConfig.path)) {
 		io.Fonts->AddFontFromFileTTF(sb_get(&g_config.uiFontConfig.path), g_config.uiFontConfig.size * g_config.dpiScale);
+		MergeIconFont(g_config.uiFontConfig.size * g_config.dpiScale);
 	} else {
 		io.Fonts->AddFontDefault();
+		MergeIconFont(12.0f);
 	}
+
 	if(g_config.logFontConfig.enabled && g_config.logFontConfig.size > 0 && *sb_get(&g_config.logFontConfig.path)) {
 		io.Fonts->AddFontFromFileTTF(sb_get(&g_config.logFontConfig.path), g_config.logFontConfig.size * g_config.dpiScale);
+		MergeIconFont(g_config.logFontConfig.size * g_config.dpiScale);
 	} else {
 		io.Fonts->AddFontDefault();
+		MergeIconFont(12.0f);
 	}
 }
 
