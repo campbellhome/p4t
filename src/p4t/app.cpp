@@ -218,6 +218,30 @@ void App_Update()
 				BB_LOG("UI::Menu::Preferences", "Preferences_Open");
 				UIConfig_Open(&g_config);
 			}
+			if(ImGui::BeginMenu("DPI Scale Override")) {
+				void QueueUpdateDpiDependentResources();
+				if(ImGui::MenuItem("1")) {
+					g_config.dpiScale = 1.0f;
+					QueueUpdateDpiDependentResources();
+				}
+				if(ImGui::MenuItem("1.25")) {
+					g_config.dpiScale = 1.25f;
+					QueueUpdateDpiDependentResources();
+				}
+				if(ImGui::MenuItem("1.5")) {
+					g_config.dpiScale = 1.5f;
+					QueueUpdateDpiDependentResources();
+				}
+				if(ImGui::MenuItem("1.75")) {
+					g_config.dpiScale = 1.75f;
+					QueueUpdateDpiDependentResources();
+				}
+				if(ImGui::MenuItem("2")) {
+					g_config.dpiScale = 2.0f;
+					QueueUpdateDpiDependentResources();
+				}
+				ImGui::EndMenu();
+			}
 			ImGui::EndMenu();
 		}
 		if(ImGui::BeginMenu("Help")) {
