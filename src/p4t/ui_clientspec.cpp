@@ -38,7 +38,7 @@ const char *UIClientspec_ActiveClientspecName()
 void UIClientspec_MenuBar()
 {
 	ImGui::SameLine(0.0f, 20.0f * g_config.dpiScale);
-	ImGui::Text("User: %s Clientspec:", sdict_find_safe(&p4.info, "userName"));
+	ImGui::Text("User: %s   Clientspec:", sdict_find_safe(&p4.info, "userName"));
 	ImGui::SameLine();
 
 	if(ImGui::BeginMenu(UIClientspec_ActiveClientspecName())) {

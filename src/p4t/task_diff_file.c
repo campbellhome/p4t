@@ -40,6 +40,8 @@ void p4_diff_against_local(const char *depotPath, const char *rev, const char *l
 	if(!filename++)
 		return;
 
+	const char *ext = strrchr(filename, '.');
+
 	sb_t temp = env_get("TEMP");
 	if(!temp.data)
 		return;
@@ -47,7 +49,11 @@ void p4_diff_against_local(const char *depotPath, const char *rev, const char *l
 	DWORD procId = GetCurrentProcessId();
 	sb_t diffDir = { 0 }, target = { 0 };
 	sb_va(&diffDir, "%s\\p4t\\%u\\%u", sb_get(&temp), procId, s_diffCount);
-	sb_va(&target, "%s\\%s%s", sb_get(&diffDir), filename, rev);
+	if(ext > filename) {
+		sb_va(&target, "%s\\%.*s%s%s", sb_get(&diffDir), ext - filename, filename, rev, ext);
+	} else {
+		sb_va(&target, "%s\\%s%s", sb_get(&diffDir), filename, rev);
+	}
 	sb_reset(&temp);
 	++s_diffCount;
 
@@ -80,11 +86,22 @@ void p4_diff_against_depot(const char *depotPathA, const char *revA, const char 
 	if(!temp.data)
 		return;
 
+	const char *extA = strrchr(filenameA, '.');
+	const char *extB = strrchr(filenameB, '.');
+
 	DWORD procId = GetCurrentProcessId();
 	sb_t diffDir = { 0 }, targetA = { 0 }, targetB = { 0 };
 	sb_va(&diffDir, "%s\\p4t\\%u\\%u", sb_get(&temp), procId, s_diffCount);
-	sb_va(&targetA, "%s\\%s%s", sb_get(&diffDir), filenameA, revA);
-	sb_va(&targetB, "%s\\%s%s", sb_get(&diffDir), filenameB, revB);
+	if(extA > filenameA) {
+		sb_va(&targetA, "%s\\%.*s%s%s", sb_get(&diffDir), extA - filenameA, filenameA, revA, extA);
+	} else {
+		sb_va(&targetA, "%s\\%s%s", sb_get(&diffDir), filenameA, revA);
+	}
+	if(extB > filenameB) {
+		sb_va(&targetB, "%s\\%.*s%s%s", sb_get(&diffDir), extB - filenameB, filenameB, revB, extB);
+	} else {
+		sb_va(&targetB, "%s\\%s%s", sb_get(&diffDir), filenameB, revB);
+	}
 	sb_reset(&temp);
 	++s_diffCount;
 
