@@ -247,7 +247,7 @@ namespace ImGui
 	{
 		float windowX = ImGui::GetWindowPos().x;
 		float offset = h.columnOffsets[columnIndex];
-		float width = h.columnWidths[columnIndex];
+		float width = h.columnWidths[columnIndex] * g_config.dpiScale;
 		float x1 = floorf(0.5f + windowX + offset - 1.0f);
 		float x2 = floorf(0.5f + windowX + offset + width - 1.0f);
 		ImGui::SameLine(offset);
