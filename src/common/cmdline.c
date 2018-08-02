@@ -9,12 +9,23 @@
 int argc;
 const char **argv;
 
-char *s_argBuffer;
-char **s_argvBuffer;
+static char *s_argBuffer;
+static char **s_argvBuffer;
 static char s_argv0[_MAX_PATH];
+static char s_exeDir[_MAX_PATH];
+static const char *s_exeFilename;
+
+void cmdline_init_exe(void)
+{
+	GetModuleFileNameA(0, s_exeDir, sizeof(s_exeDir));
+	char *exeSep = strrchr(s_exeDir, '\\');
+	s_exeFilename = exeSep + 1;
+	*exeSep = 0;
+}
 
 void cmdline_init_composite(const char *src)
 {
+	cmdline_init_exe();
 	s_argBuffer = _strdup(src);
 	if(s_argBuffer) {
 		++argc;
@@ -45,6 +56,7 @@ void cmdline_init_composite(const char *src)
 
 void cmdline_init(int _argc, const char **_argv)
 {
+	cmdline_init_exe();
 	argc = _argc;
 	argv = _argv;
 }
@@ -67,4 +79,14 @@ int cmdline_find(const char *arg)
 		}
 	}
 	return -1;
+}
+
+const char *cmdline_get_exe_dir(void)
+{
+	return s_exeDir;
+}
+
+const char *cmdline_get_exe_filename(void)
+{
+	return s_exeFilename;
 }

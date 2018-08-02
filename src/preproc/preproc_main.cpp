@@ -424,7 +424,8 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 #endif // #ifdef LEAK_CHECK
 
-	BB_INIT_WITH_FLAGS("p4t_preproc", kBBInitFlag_NoOpenView);
+	// uncomment to debug preprocessing
+	//BB_INIT_WITH_FLAGS("p4t_preproc", kBBInitFlag_NoOpenView);
 	BB_THREAD_SET_NAME("main");
 
 	char exeDir[_MAX_PATH];

@@ -4,6 +4,8 @@
 #pragma once
 
 #include "common.h"
-#include "p4.h"
 
-void UIChangeset_Update(p4UIChangeset *cs);
+typedef struct tag_p4UIChangeset p4UIChangeset;
+
+void UIChangeset_Update(p4UIChangeset *uics);
+void UIChangeset_SetWindowTitle(p4UIChangeset *uics);

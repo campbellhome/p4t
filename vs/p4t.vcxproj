@@ -190,5 +190,13 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(BBCommonPropsDir)..\src\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <PostBuildEvent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy $(OutDir)$(TargetName).exe $(OutDir)p4cl_d.exe
+copy $(OutDir)$(TargetName).pdb $(OutDir)p4cl_d.pdb</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy $(OutDir)$(TargetName).exe $(OutDir)p4cl.exe
+copy $(OutDir)$(TargetName).pdb $(OutDir)p4cl.pdb</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
 </Project>

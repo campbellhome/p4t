@@ -15,6 +15,8 @@ extern int argc;
 extern const char **argv;
 
 int cmdline_find(const char *arg);
+const char *cmdline_get_exe_dir(void);
+const char *cmdline_get_exe_filename(void);
 
 #if defined(__cplusplus)
 }

@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "ui_changeset.h"
+#include "app.h"
 #include "bb_array.h"
 #include "config.h"
 #include "filter.h"
@@ -143,6 +144,15 @@ static bool UIChangeset_PassesFilter(filterTokens *tokens, sdict_t *sd)
 	return passes_filter_tokens(tokens, sd, s_filterKeys, BB_ARRAYSIZE(s_filterKeys)) != 0;
 }
 
+void UIChangeset_SetWindowTitle(p4UIChangeset *uics)
+{
+	if(uics->pending) {
+		App_SetWindowTitle("Pending Changelists - p4t");
+	} else {
+		App_SetWindowTitle("Submitted Changelists - p4t");
+	}
+}
+
 void UIChangeset_Update(p4UIChangeset *uics)
 {
 	ImGui::PushID(uics);
@@ -233,6 +243,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		p4_sort_uichangeset(uics);
 		uics->lastClickIndex = ~0u;
 		reset_filter_tokens(&tokens);
+		UIChangeset_SetWindowTitle(uics);
 	}
 
 	uiChangesetConfig *config = uics->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;

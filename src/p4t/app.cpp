@@ -32,7 +32,7 @@ bool g_shuttingDown;
 
 static appSpecificData s_appSpecific[] = {
 	{ "p4t", "p4t", "p4t", true, kAppType_Normal },
-	{ "p4cl", "p4cl", "CL - p4t", false, kAppType_ChangelistViewer },
+	{ "p4cl", "p4cl", "Changelist - p4t", false, kAppType_ChangelistViewer },
 };
 
 static sb_t s_activeTab;
@@ -91,7 +91,9 @@ extern "C" void App_SetWindowTitle(const char *title)
 bool App_Init(const char *cmdline)
 {
 	cmdline_init_composite(cmdline);
-	if(cmdline_find("-change") >= 0) {
+	if(!_stricmp(cmdline_get_exe_filename(), "p4cl.exe") ||
+	   !_stricmp(cmdline_get_exe_filename(), "p4cl_d.exe") ||
+	   cmdline_find("-change") >= 0) {
 		globals.appSpecific = s_appSpecific[kAppType_ChangelistViewer];
 	} else {
 		globals.appSpecific = s_appSpecific[kAppType_Normal];
@@ -121,17 +123,31 @@ bool App_Init(const char *cmdline)
 	process_init();
 	p4_init();
 
-	//sb_append(&s_activeTab, "changelist");
-	p4_add_uichangeset(true);
-	p4_add_uichangeset(false);
-
 	if(globals.appSpecific.type == kAppType_ChangelistViewer) {
-		int index = cmdline_find("-change");
-		if(index + 1 < argc) {
-			u32 cl = strtou32(argv[index + 1]);
-			if(cl) {
-				UIChangelist_InitChangelist(cl);
+		p4UIChangelist *uicl = p4_add_uichangelist();
+		if(uicl) {
+			sb_reset(&s_activeTab);
+			sb_append(&s_activeTab, va("changelist%u", uicl->id));
+			int index = cmdline_find("-change");
+			if(index + 1 < argc) {
+				u32 cl = strtou32(argv[index + 1]);
+				if(cl) {
+					uicl->requested = cl;
+					p4_describe_changelist(cl);
+				} else {
+					UIChangelist_EnterChangelist(uicl);
+				}
+			} else {
+				UIChangelist_EnterChangelist(uicl);
 			}
+		} else {
+			return false;
+		}
+	} else {
+		p4UIChangeset *pendingChanges = p4_add_uichangeset(true);
+		p4_add_uichangeset(false);
+		if(pendingChanges) {
+			sb_append(&s_activeTab, va("changeset%u", pendingChanges->id));
 		}
 	}
 
@@ -178,13 +194,13 @@ extern "C" bool App_GetAndClearRequestRender(void)
 
 void App_SingleInstanceRestored(void)
 {
-	UIChangelist_EnterChangelist();
 }
 
 void App_Update()
 {
 	BB_TICK();
 	tasks_tick();
+	p4_update();
 
 	if(ImGui::BeginMainMenuBar()) {
 		if(ImGui::BeginMenu("File")) {
@@ -225,30 +241,45 @@ void App_Update()
 		bool open = true;
 		if(ImGui::Begin("mainwindow", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
 
-			if(globals.appSpecific.type == kAppType_Normal) {
-				ImGui::BeginTabButtons();
-				ImGui::TabButton(" Changelist ", &s_activeTab, "changelist");
-				for(u32 i = 0; i < p4.uiChangesets.count; ++i) {
-					p4UIChangeset *cs = p4.uiChangesets.data + i;
-					const char *title = cs->pending ? " Pending Changelists " : " Submitted Changelists ";
-					ImGui::TabButton(title, &s_activeTab, va("changeset%u", cs->id));
+			ImGui::BeginTabButtons();
+			for(u32 i = 0; i < p4.uiChangesets.count; ++i) {
+				p4UIChangeset *uics = p4.uiChangesets.data + i;
+				const char *title = uics->pending ? "Pending Changelists" : "Submitted Changelists";
+				if(ImGui::TabButton(va(" %s ###changeset%u", title, uics->id), &s_activeTab, va("changeset%u", uics->id))) {
+					UIChangeset_SetWindowTitle(uics);
 				}
-				ImGui::EndTabButtons();
+			}
+			for(u32 i = 0; i < p4.uiChangelists.count; ++i) {
+				p4UIChangelist *uicl = p4.uiChangelists.data + i;
+				const char *title = uicl->requested ? va("Changelist %u", uicl->requested) : "Changelist";
+				if(ImGui::TabButton(va(" %s ###changelist%u", title, uicl->id), &s_activeTab, va("changelist%u", uicl->id))) {
+					UIChangelist_SetWindowTitle(uicl);
+				}
+			}
+			ImGui::EndTabButtons();
 
-				if(ImGui::BeginTabChild(&s_activeTab, "changelist")) {
-					UIChangelist_Update();
+			for(u32 i = 0; i < p4.uiChangesets.count; ++i) {
+				p4UIChangeset *cs = p4.uiChangesets.data + i;
+				if(ImGui::BeginTabChild(&s_activeTab, va("changeset%u", cs->id))) {
+					UIChangeset_Update(cs);
 					ImGui::EndTabChild();
-				} else {
-					for(u32 i = 0; i < p4.uiChangesets.count; ++i) {
-						p4UIChangeset *cs = p4.uiChangesets.data + i;
-						if(ImGui::BeginTabChild(&s_activeTab, va("changeset%u", cs->id))) {
-							UIChangeset_Update(cs);
-							ImGui::EndTabChild();
-						}
-					}
 				}
-			} else if(globals.appSpecific.type == kAppType_ChangelistViewer) {
-				UIChangelist_Update();
+			}
+			for(u32 i = 0; i < p4.uiChangelists.count; ++i) {
+				p4UIChangelist *uicl = p4.uiChangelists.data + i;
+				if(ImGui::BeginTabChild(&s_activeTab, va("changelist%u", uicl->id))) {
+					UIChangelist_Update(uicl);
+					ImGui::EndTabChild();
+				}
+			}
+
+			if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
+				p4UIChangelist *uicl = p4_add_uichangelist();
+				if(uicl) {
+					UIChangelist_EnterChangelist(uicl);
+					sb_reset(&s_activeTab);
+					sb_append(&s_activeTab, va("changelist%u", uicl->id));
+				}
 			}
 		}
 		ImGui::End();
@@ -261,6 +292,10 @@ void App_Update()
 		ImGui::PopStyleColor();
 
 		ImGui::PopStyleColor(3);
+
+		if(globals.appSpecific.type == kAppType_ChangelistViewer && !p4.uiChangelists.count) {
+			App_RequestShutdown();
+		}
 	}
 }
 

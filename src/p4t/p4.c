@@ -134,6 +134,12 @@ static void p4_reset_uichangeset(p4UIChangeset *uics)
 	bba_free(*uics);
 }
 
+void p4_reset_uichangelist(p4UIChangelist *uicl)
+{
+	p4_free_changelist_files(&uicl->normalFiles);
+	p4_free_changelist_files(&uicl->shelvedFiles);
+}
+
 void p4_shutdown(void)
 {
 	sb_reset(&p4.exe);
@@ -154,6 +160,21 @@ void p4_shutdown(void)
 		p4_reset_uichangeset(p4.uiChangesets.data + i);
 	}
 	bba_free(p4.uiChangesets);
+	for(u32 i = 0; i < p4.uiChangelists.count; ++i) {
+		p4_reset_uichangelist(p4.uiChangelists.data + i);
+	}
+	bba_free(p4.uiChangelists);
+}
+
+void p4_update(void)
+{
+	for(u32 i = p4.uiChangelists.count - 1; i < p4.uiChangelists.count; --i) {
+		p4UIChangelist *uicl = p4.uiChangelists.data + i;
+		if(uicl->id == 0) {
+			p4_reset_uichangelist(uicl);
+			bba_erase(p4.uiChangelists, i);
+		}
+	}
 }
 
 p4Changelist *p4_find_changelist(u32 cl)
@@ -213,8 +234,11 @@ static void task_p4clients_statechanged(task *_t)
 				}
 			}
 		}
-		p4_add_changeset(true);
-		p4_add_changeset(false);
+
+		if(globals.appSpecific.type == kAppType_Normal) {
+			p4_add_changeset(true);
+			p4_add_changeset(false);
+		}
 	}
 }
 static void task_p4info_statechanged(task *_t)
@@ -432,6 +456,32 @@ p4UIChangeset *p4_add_uichangeset(b32 pending)
 		return cs;
 	}
 	return NULL;
+}
+
+p4UIChangelist *p4_add_uichangelist(void)
+{
+	if(bba_add(p4.uiChangelists, 1)) {
+		p4UIChangelist *uicl = &bba_last(p4.uiChangelists);
+		uicl->id = ++p4.uiChangelists.lastId;
+		return uicl;
+	}
+	return NULL;
+}
+
+p4UIChangelist *p4_find_uichangelist(u32 id)
+{
+	for(u32 i = 0; i < p4.uiChangelists.count; ++i) {
+		p4UIChangelist *uicl = p4.uiChangelists.data + i;
+		if(uicl->id == id) {
+			return uicl;
+		}
+	}
+	return NULL;
+}
+
+void p4_mark_uichangelist_for_removal(p4UIChangelist *uicl)
+{
+	uicl->id = 0;
 }
 
 int p4_changelist_files_compare(const void *_a, const void *_b)

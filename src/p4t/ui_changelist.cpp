@@ -20,8 +20,6 @@ BB_WARNING_PUSH(4820)
 #include <time.h>
 BB_WARNING_POP
 
-static bool s_doneInit = false;
-
 //////////////////////////////////////////////////////////////////////////
 
 typedef struct tag_changelistField {
@@ -310,54 +308,41 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 //////////////////////////////////////////////////////////////////////////
 // for standalone CL viewer
 
-static u32 s_requestedChangelist;
-static u32 s_displayedChangelist;
-static u32 s_parity;
-static uiChangelistFiles s_normalFiles;
-static uiChangelistFiles s_shelvedFiles;
-
 void UIChangelist_Shutdown(void)
 {
-	p4_free_changelist_files(&s_normalFiles);
-	p4_free_changelist_files(&s_shelvedFiles);
 }
 
 static void UIChangelist_MessageBoxCallback(messageBox *mb, const char *action)
 {
 	if(action) {
-		if(!strcmp(action, "escape")) {
-			if(globals.appSpecific.type == kAppType_ChangelistViewer && s_requestedChangelist == 0) {
-				App_RequestShutdown();
+		p4UIChangelist *uicl = p4_find_uichangelist(strtou32(sdict_find_safe(&mb->data, "id")));
+		if(uicl) {
+			if(!strcmp(action, "escape")) {
+				if(uicl->requested == 0) {
+					p4_mark_uichangelist_for_removal(uicl);
+				}
+				return;
 			}
-			return;
-		}
-		const char *inputNumber = sdict_find_safe(&mb->data, "inputNumber");
-		s32 testChangelist = strtos32(inputNumber);
-		if(testChangelist > 0) {
-			s_requestedChangelist = (u32)testChangelist;
-			s_displayedChangelist = 0;
-			p4_describe_changelist(s_requestedChangelist);
+			const char *inputNumber = sdict_find_safe(&mb->data, "inputNumber");
+			s32 testChangelist = strtos32(inputNumber);
+			if(testChangelist > 0) {
+				uicl->requested = (u32)testChangelist;
+				uicl->displayed = 0;
+				p4_describe_changelist(uicl->requested);
+			}
 		}
 	}
 }
 
-void UIChangelist_EnterChangelist(void)
+void UIChangelist_EnterChangelist(p4UIChangelist *uicl)
 {
-	s_doneInit = true;
 	messageBox mb = {};
 	mb.callback = UIChangelist_MessageBoxCallback;
 	sdict_add_raw(&mb.data, "title", "View Changelist");
 	sdict_add_raw(&mb.data, "text", "Enter changelist to view:");
-	sdict_add_raw(&mb.data, "inputNumber", va("%u", s_requestedChangelist));
+	sdict_add_raw(&mb.data, "inputNumber", va("%u", uicl->requested));
+	sdict_add_raw(&mb.data, "id", va("%u", uicl->id));
 	mb_queue(mb);
-}
-
-void UIChangelist_InitChangelist(u32 id)
-{
-	s_doneInit = true;
-	s_requestedChangelist = id;
-	s_displayedChangelist = 0;
-	p4_describe_changelist(s_requestedChangelist);
 }
 
 void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles, b32 shelvedOpenByDefault, float indent)
@@ -392,37 +377,40 @@ void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *norma
 	}
 }
 
-void UIChangelist_Update(void)
+void UIChangelist_SetWindowTitle(p4UIChangelist *uicl)
 {
-	if(!s_doneInit || ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
-		UIChangelist_EnterChangelist();
+	if(uicl->requested) {
+		App_SetWindowTitle(va("Changelist %u - p4t", uicl->requested));
+	} else {
+		App_SetWindowTitle("Changelist - p4t");
 	}
+}
 
-	p4Changelist *cl = p4_find_changelist(s_requestedChangelist);
+void UIChangelist_Update(p4UIChangelist *uicl)
+{
+	p4Changelist *cl = p4_find_changelist(uicl->requested);
 	p4Changelist empty = {};
 	if(!cl) {
 		cl = &empty;
 	}
 	if(cl) {
-		if(!s_displayedChangelist || s_parity != cl->parity) {
-			s_displayedChangelist = s_requestedChangelist;
-			s_parity = cl->parity;
-			p4_build_changelist_files(cl, &s_normalFiles, &s_shelvedFiles);
-			s_normalFiles.active = s_shelvedFiles.count == 0;
-			s_shelvedFiles.active = s_shelvedFiles.count != 0;
-			if(globals.appSpecific.type == kAppType_ChangelistViewer && s_requestedChangelist) {
-				App_SetWindowTitle(va("CL %u - p4t", s_requestedChangelist));
-			}
+		if(!uicl->displayed || uicl->parity != cl->parity) {
+			uicl->displayed = uicl->requested;
+			uicl->parity = cl->parity;
+			p4_build_changelist_files(cl, &uicl->normalFiles, &uicl->shelvedFiles);
+			uicl->normalFiles.active = uicl->shelvedFiles.count == 0;
+			uicl->shelvedFiles.active = uicl->shelvedFiles.count != 0;
+			UIChangelist_SetWindowTitle(uicl);
 		}
 		UIChangelist_DrawInformation(&cl->normal);
-		UIChangelist_DrawFilesAndHeaders(cl, &s_normalFiles, &s_shelvedFiles, true);
+		UIChangelist_DrawFilesAndHeaders(cl, &uicl->normalFiles, &uicl->shelvedFiles, true);
 
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		if(ImGui::Button("###blank", ImGui::GetContentRegionAvail()) || ImGui::IsItemActive()) {
-			s_normalFiles.active = s_shelvedFiles.count == 0;
-			s_shelvedFiles.active = s_shelvedFiles.count != 0;
+			uicl->normalFiles.active = uicl->shelvedFiles.count == 0;
+			uicl->shelvedFiles.active = uicl->shelvedFiles.count != 0;
 		}
 		ImGui::PopStyleColor(3);
 	}

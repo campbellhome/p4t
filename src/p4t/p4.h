@@ -14,6 +14,7 @@ typedef struct sdict_s sdict_t;
 
 b32 p4_init(void);
 void p4_shutdown(void);
+void p4_update(void);
 
 typedef struct tag_p4Changelist {
 	sdict_t normal;
@@ -110,6 +111,24 @@ typedef struct tag_changesetColumnField {
 	b32 numeric;
 } changesetColumnField;
 
+typedef struct tag_p4UIChangelist
+{
+	u32 id;
+	u32 requested;
+	u32 displayed;
+	u32 parity;
+	uiChangelistFiles normalFiles;
+	uiChangelistFiles shelvedFiles;
+} p4UIChangelist;
+
+typedef struct tag_p4UIChangelists {
+	u32 count;
+	u32 allocated;
+	p4UIChangelist *data;
+	u32 lastId;
+	u8 pad[4];
+} p4UIChangelists;
+
 typedef struct tag_p4 {
 	sb_t exe;
 
@@ -119,6 +138,7 @@ typedef struct tag_p4 {
 	sdicts selfClients;
 	sdicts localClients;
 	p4Changelists changelists;
+	p4UIChangelists uiChangelists;
 	p4Changesets changesets;
 	p4UIChangesets uiChangesets;
 	const changesetColumnField *changesetColumnFields;
@@ -153,6 +173,13 @@ void p4_sort_uichangeset(p4UIChangeset *cs);
 void p4_build_changelist_files(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles);
 void p4_free_changelist_files(uiChangelistFiles *files);
 int p4_changelist_files_compare(const void *_a, const void *_b);
+
+//////////////////////////////////////////////////////////////////////////
+
+void p4_reset_uichangelist(p4UIChangelist *uicl);
+p4UIChangelist *p4_add_uichangelist(void);
+p4UIChangelist *p4_find_uichangelist(u32 id);
+void p4_mark_uichangelist_for_removal(p4UIChangelist *uicl);
 
 //////////////////////////////////////////////////////////////////////////
 // internal:
