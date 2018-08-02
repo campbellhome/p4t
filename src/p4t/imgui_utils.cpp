@@ -269,6 +269,9 @@ namespace ImGui
 
 	columnDrawResult DrawColumnHeader(columnDrawData h, u32 columnIndex)
 	{
+		#define ICON_SORT_UP ICON_FK_CARET_UP
+		#define ICON_SORT_DOWN ICON_FK_CARET_DOWN
+
 		columnDrawResult res = {};
 		const char *text = h.columnNames[columnIndex];
 		float *width = h.columnWidths + columnIndex;
@@ -276,7 +279,7 @@ namespace ImGui
 		if(last) {
 			*width = ImGui::GetContentRegionAvailWidth();
 		} else if(*width <= 0.0f) {
-			*width = h.columnScales[columnIndex] * ImGui::CalcTextSize(text).x + ImGui::CalcTextSize(" ^").x + ImGui::GetStyle().ItemSpacing.x * 2.0f;
+			*width = h.columnScales[columnIndex] * ImGui::CalcTextSize(text).x + ImGui::CalcTextSize(" " ICON_SORT_UP).x + ImGui::GetStyle().ItemSpacing.x * 2.0f;
 		}
 		float scale = (g_config.dpiScale <= 0.0f) ? 1.0f : g_config.dpiScale;
 		float startOffset = ImGui::GetCursorPosX();
@@ -302,7 +305,7 @@ namespace ImGui
 
 		res.active = res.active || ImGui::IsItemActive();
 		float endOffset = startOffset + *width * scale + ImGui::GetStyle().ItemSpacing.x;
-		const char *columnText = (*h.sortColumn == columnIndex) ? va("%s %s", *h.sortDescending ? "^" : "v", text) : text;
+		const char *columnText = (*h.sortColumn == columnIndex) ? va("%s %s", *h.sortDescending ? ICON_SORT_DOWN : ICON_SORT_UP, text) : text;
 		const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 		DrawColumnHeaderText(startOffset + ImGui::GetStyle().ItemInnerSpacing.x, *width * scale - itemPad, columnText);
 		ImGui::SameLine(endOffset);
