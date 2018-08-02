@@ -22,6 +22,8 @@ namespace ImGui
 	IMGUI_API void EndFrame();
 }
 
+#pragma comment(lib, "d3d9.lib")
+
 // Data
 static LPDIRECT3DDEVICE9 g_pd3dDevice = nullptr;
 static D3DPRESENT_PARAMETERS g_d3dpp;
@@ -57,7 +59,8 @@ static void UpdateDpiDependentStyle()
 	s.WindowPadding.y *= g_config.dpiScale;
 	s.WindowMinSize.x *= g_config.dpiScale;
 	s.WindowMinSize.y *= g_config.dpiScale;
-	s.ChildWindowRounding *= g_config.dpiScale;
+	s.ChildRounding *= g_config.dpiScale;
+	s.PopupRounding *= g_config.dpiScale;
 	s.FramePadding.x *= g_config.dpiScale;
 	s.FramePadding.y *= g_config.dpiScale;
 	s.FrameRounding *= g_config.dpiScale;
@@ -138,7 +141,7 @@ UINT GetDpiForWindowShim(_In_ HWND hwnd)
 	return USER_DEFAULT_SCREEN_DPI;
 }
 
-extern LRESULT ImGui_ImplDX9_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg) {
@@ -219,7 +222,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
-	if(ImGui_ImplDX9_WndProcHandler(hWnd, msg, wParam, lParam))
+	if(ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
 		return true;
 
 	switch(msg) {
@@ -256,10 +259,14 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 #endif // #ifdef LEAK_CHECK
 
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
 	g_defaultStyle = ImGui::GetStyle();
 
-	if(!App_Init(CommandLine))
+	if(!App_Init(CommandLine)) {
+		ImGui::DestroyContext();
 		return 0;
+	}
 
 	// Initialize Direct3D
 	LPDIRECT3D9 pD3D;
@@ -284,7 +291,11 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	}
 
 	// Setup ImGui binding
-	ImGui_ImplDX9_Init(globals.hwnd, g_pd3dDevice);
+	ImGui_ImplWin32_Init(globals.hwnd);
+	ImGui_ImplDX9_Init(g_pd3dDevice);
+
+	//ImGui::StyleColorsDark();
+	ImGui::StyleColorsClassic();
 
 	// Load Fonts
 	// (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
@@ -320,8 +331,12 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 			UpdateDpiDependentResources();
 		}
 		ImGui_ImplDX9_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
 
 		App_Update();
+
+		ImGui::EndFrame();
 
 		ImGuiIO &io = ImGui::GetIO();
 		bool requestRender = App_GetAndClearRequestRender() || key_is_any_down_or_released_this_frame();
@@ -345,6 +360,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 				}
 			}
 		}
+		requestRender = true;
 
 		// ImGui Rendering
 		if(requestRender) {
@@ -355,6 +371,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 			g_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clear_col_dx, 1.0f, 0);
 			if(g_pd3dDevice->BeginScene() >= 0) {
 				ImGui::Render();
+				ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 				g_pd3dDevice->EndScene();
 			} else {
 				ImGui::EndFrame();
@@ -374,6 +391,8 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	}
 
 	ImGui_ImplDX9_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 	if(g_pd3dDevice)
 		g_pd3dDevice->Release();
 	if(pD3D)

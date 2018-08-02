@@ -1,28 +1,28 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\src\thirdparty\imgui\imgui_draw.cpp">
-      <Filter>ThirdParty\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\imgui\imgui_impl_dx9.cpp">
-      <Filter>ThirdParty\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\imgui\imgui.cpp">
-      <Filter>ThirdParty\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\thirdparty\imgui\imgui_demo.cpp">
-      <Filter>ThirdParty\ImGui</Filter>
-    </ClCompile>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{bf1a8c57-7949-4216-8527-b8038f12505f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\ImGui">
+      <UniqueIdentifier>{8f7e618c-8e45-45cc-93a3-e5809aa2acf4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\ImGui\examples">
+      <UniqueIdentifier>{b83db95d-8dd2-4231-9f70-41b22fce6759}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\ImGui\misc">
+      <UniqueIdentifier>{89f48e8a-48fa-4b19-9fe1-2d75131af99e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\ImGui\misc\natvis">
+      <UniqueIdentifier>{1b271c42-9f2c-4169-b22a-257de2328fe0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\thirdparty\imgui\imgui_impl_dx9.h">
-      <Filter>ThirdParty\ImGui</Filter>
+    <ClInclude Include="..\src\thirdparty\imgui\examples\imgui_impl_win32.h">
+      <Filter>ThirdParty\ImGui\examples</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\thirdparty\imgui\imgui_internal.h">
-      <Filter>ThirdParty\ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\imgui\stb_rect_pack.h">
-      <Filter>ThirdParty\ImGui</Filter>
+    <ClInclude Include="..\src\thirdparty\imgui\examples\imgui_impl_dx9.h">
+      <Filter>ThirdParty\ImGui\examples</Filter>
     </ClInclude>
     <ClInclude Include="..\src\thirdparty\imgui\stb_textedit.h">
       <Filter>ThirdParty\ImGui</Filter>
@@ -36,21 +36,52 @@
     <ClInclude Include="..\src\thirdparty\imgui\imgui.h">
       <Filter>ThirdParty\ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\thirdparty\imgui\imgui_internal.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\imgui\stb_rect_pack.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\thirdparty\imgui\LICENSE">
+    <ClCompile Include="..\src\thirdparty\imgui\examples\imgui_impl_win32.cpp">
+      <Filter>ThirdParty\ImGui\examples</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\imgui\examples\imgui_impl_dx9.cpp">
+      <Filter>ThirdParty\ImGui\examples</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\imgui\imgui.cpp">
       <Filter>ThirdParty\ImGui</Filter>
-    </None>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\imgui\imgui_demo.cpp">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thirdparty\imgui\imgui_draw.cpp">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\src\thirdparty\imgui\misc\natvis\README.txt">
+      <Filter>ThirdParty\ImGui\misc\natvis</Filter>
+    </Text>
+    <Text Include="..\src\thirdparty\imgui\TODO.txt">
+      <Filter>ThirdParty\ImGui</Filter>
+    </Text>
+    <Text Include="..\src\thirdparty\imgui\CHANGELOG.txt">
+      <Filter>ThirdParty\ImGui</Filter>
+    </Text>
+    <Text Include="..\src\thirdparty\imgui\LICENSE.txt">
+      <Filter>ThirdParty\ImGui</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\src\thirdparty\imgui\misc\natvis\imgui.natvis">
+      <Filter>ThirdParty\ImGui\misc\natvis</Filter>
+    </Natvis>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="..\src\thirdparty\imgui\README.md">
       <Filter>ThirdParty\ImGui</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="ThirdParty">
-      <UniqueIdentifier>{bf1a8c57-7949-4216-8527-b8038f12505f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\ImGui">
-      <UniqueIdentifier>{8f7e618c-8e45-45cc-93a3-e5809aa2acf4}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
 </Project>

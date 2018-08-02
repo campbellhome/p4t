@@ -234,9 +234,9 @@ void App_Update()
 	if(s_showDemo) {
 		ImGui::ShowTestWindow();
 	} else {
-		ImGui::PushStyleColor(ImGuiCol_TitleBgActive, ImColor(63, 63, 70, 255)); // VS Dark Active Tab
-		ImGui::PushStyleColor(ImGuiCol_TitleBg, ImColor(45, 45, 48, 255));       // VS Dark Inactive Tab
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(42, 42, 44, 255));      // VS Dark Output Window
+		ImGui::PushStyleColor(ImGuiCol_TitleBgActive, (ImVec4)ImColor(63, 63, 70, 255)); // VS Dark Active Tab
+		ImGui::PushStyleColor(ImGuiCol_TitleBg, (ImVec4)ImColor(45, 45, 48, 255));       // VS Dark Inactive Tab
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, (ImVec4)ImColor(42, 42, 44, 255));      // VS Dark Output Window
 
 		float startY = ImGui::GetItemsLineHeightWithSpacing();
 		ImGuiIO &io = ImGui::GetIO();
@@ -259,7 +259,7 @@ void App_Update()
 		UIOutput_Update();
 		UIMessageBox_Update();
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(42, 42, 44, 255)); // VS Dark Output Window
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, (ImVec4)ImColor(42, 42, 44, 255)); // VS Dark Output Window
 		UIConfig_Update(&g_config);
 		ImGui::PopStyleColor();
 

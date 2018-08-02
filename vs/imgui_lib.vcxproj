@@ -10,6 +10,35 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\thirdparty\imgui\examples\imgui_impl_dx9.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\examples\imgui_impl_win32.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\imconfig.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\imgui.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\imgui_internal.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\stb_rect_pack.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\stb_textedit.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\stb_truetype.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\thirdparty\imgui\examples\imgui_impl_dx9.cpp" />
+    <ClCompile Include="..\src\thirdparty\imgui\examples\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\src\thirdparty\imgui\imgui.cpp" />
+    <ClCompile Include="..\src\thirdparty\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\src\thirdparty\imgui\imgui_draw.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\src\thirdparty\imgui\CHANGELOG.txt" />
+    <Text Include="..\src\thirdparty\imgui\LICENSE.txt" />
+    <Text Include="..\src\thirdparty\imgui\misc\natvis\README.txt" />
+    <Text Include="..\src\thirdparty\imgui\TODO.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\src\thirdparty\imgui\misc\natvis\imgui.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\thirdparty\imgui\README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{B7C212E2-07F8-4CD1-9D51-26F1D106AC90}</ProjectGuid>
@@ -62,6 +91,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src\thirdparty\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -80,6 +110,7 @@
       <ConformanceMode>true</ConformanceMode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src\thirdparty\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -88,25 +119,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="..\src\thirdparty\imgui\imconfig.h" />
-    <ClInclude Include="..\src\thirdparty\imgui\imgui.h" />
-    <ClInclude Include="..\src\thirdparty\imgui\imgui_impl_dx9.h" />
-    <ClInclude Include="..\src\thirdparty\imgui\imgui_internal.h" />
-    <ClInclude Include="..\src\thirdparty\imgui\stb_rect_pack.h" />
-    <ClInclude Include="..\src\thirdparty\imgui\stb_textedit.h" />
-    <ClInclude Include="..\src\thirdparty\imgui\stb_truetype.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\src\thirdparty\imgui\LICENSE" />
-    <None Include="..\src\thirdparty\imgui\README.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\src\thirdparty\imgui\imgui.cpp" />
-    <ClCompile Include="..\src\thirdparty\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\src\thirdparty\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\src\thirdparty\imgui\imgui_impl_dx9.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

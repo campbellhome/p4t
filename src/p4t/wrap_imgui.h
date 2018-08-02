@@ -18,7 +18,8 @@ BB_WARNING_DISABLE(4710) // snprintf not inlined
 BB_WARNING_PUSH(4820 4255 4668 4574 4365)
 
 #include "thirdparty/imgui/imgui.h"
-#include "thirdparty/imgui/imgui_impl_dx9.h"
+#include "thirdparty/imgui/examples/imgui_impl_dx9.h"
+#include "thirdparty/imgui/examples/imgui_impl_win32.h"
 #include <d3d9.h>
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>

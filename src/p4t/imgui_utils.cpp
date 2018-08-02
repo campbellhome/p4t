@@ -154,14 +154,14 @@ namespace ImGui
 		const ImGuiCol_ colorActive = ImGuiCol_ButtonActive;
 		switch(colors) {
 		case kButton_Normal:
-			PushStyleColor(colorNormal, ImColor(76, 76, 76));
-			PushStyleColor(colorHoverd, ImColor(128, 128, 128));
-			PushStyleColor(colorActive, ImColor(112, 112, 112));
+			PushStyleColor(colorNormal, (ImVec4)ImColor(76, 76, 76));
+			PushStyleColor(colorHoverd, (ImVec4)ImColor(128, 128, 128));
+			PushStyleColor(colorActive, (ImVec4)ImColor(112, 112, 112));
 			break;
 		case kButton_Disabled:
-			PushStyleColor(colorNormal, ImColor(64, 64, 64));
-			PushStyleColor(colorHoverd, ImColor(64, 64, 64));
-			PushStyleColor(colorActive, ImColor(64, 64, 64));
+			PushStyleColor(colorNormal, (ImVec4)ImColor(64, 64, 64));
+			PushStyleColor(colorHoverd, (ImVec4)ImColor(64, 64, 64));
+			PushStyleColor(colorActive, (ImVec4)ImColor(64, 64, 64));
 			break;
 		case kButton_TabActive:
 			PushStyleColor(colorNormal, styleColors[ImGuiCol_Header]);
@@ -169,7 +169,7 @@ namespace ImGui
 			PushStyleColor(colorActive, styleColors[ImGuiCol_HeaderActive]);
 			break;
 		case kButton_TabInactive:
-			PushStyleColor(colorNormal, ImColor(0, 0, 0, 0));
+			PushStyleColor(colorNormal, (ImVec4)ImColor(0, 0, 0, 0));
 			PushStyleColor(colorHoverd, styleColors[ImGuiCol_HeaderHovered]);
 			PushStyleColor(colorActive, styleColors[ImGuiCol_HeaderActive]);
 			break;
