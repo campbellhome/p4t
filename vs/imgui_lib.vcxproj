@@ -30,6 +30,7 @@
   <ItemGroup>
     <Text Include="..\src\thirdparty\imgui\CHANGELOG.txt" />
     <Text Include="..\src\thirdparty\imgui\LICENSE.txt" />
+    <Text Include="..\src\thirdparty\imgui\misc\fonts\README.txt" />
     <Text Include="..\src\thirdparty\imgui\misc\natvis\README.txt" />
     <Text Include="..\src\thirdparty\imgui\TODO.txt" />
   </ItemGroup>

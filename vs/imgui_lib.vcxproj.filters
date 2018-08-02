@@ -16,6 +16,9 @@
     <Filter Include="ThirdParty\ImGui\misc\natvis">
       <UniqueIdentifier>{1b271c42-9f2c-4169-b22a-257de2328fe0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\ImGui\misc\fonts">
+      <UniqueIdentifier>{a85c0e48-c11a-4119-9d88-0a065f0bba5b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\thirdparty\imgui\examples\imgui_impl_win32.h">
@@ -72,6 +75,9 @@
     </Text>
     <Text Include="..\src\thirdparty\imgui\LICENSE.txt">
       <Filter>ThirdParty\ImGui</Filter>
+    </Text>
+    <Text Include="..\src\thirdparty\imgui\misc\fonts\README.txt">
+      <Filter>ThirdParty\ImGui\misc\fonts</Filter>
     </Text>
   </ItemGroup>
   <ItemGroup>
