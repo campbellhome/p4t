@@ -145,6 +145,7 @@ void p4_shutdown(void)
 	sb_reset(&p4.exe);
 	sdict_reset(&p4.info);
 	sdict_reset(&p4.set);
+	sdicts_reset(&p4.allUsers);
 	sdicts_reset(&p4.allClients);
 	sdicts_reset(&p4.selfClients);
 	sdicts_reset(&p4.localClients);
@@ -241,6 +242,15 @@ static void task_p4clients_statechanged(task *_t)
 		}
 	}
 }
+static void task_p4users_statechanged(task *_t)
+{
+	task_process_statechanged(_t);
+	if(_t->state == kTaskState_Succeeded) {
+		task_p4 *t = (task_p4 *)_t->userdata;
+		sdicts_move(&p4.allUsers, &t->dicts);
+		task_queue(p4_task_create(task_p4clients_statechanged, p4_dir(), NULL, "\"%s\" -G clients", p4_exe()));
+	}
+}
 static void task_p4info_statechanged(task *_t)
 {
 	task_process_statechanged(_t);
@@ -249,8 +259,7 @@ static void task_p4info_statechanged(task *_t)
 		if(t->dicts.count == 1) {
 			sdict_move(&p4.info, t->dicts.data);
 		}
-
-		task_queue(p4_task_create(task_p4clients_statechanged, p4_dir(), NULL, "\"%s\" -G clients", p4_exe()));
+		task_queue(p4_task_create(task_p4users_statechanged, p4_dir(), NULL, "\"%s\" -G users", p4_exe()));
 	}
 }
 static void task_p4set_statechanged(task *t)

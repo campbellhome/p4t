@@ -153,6 +153,76 @@ void UIChangeset_SetWindowTitle(p4UIChangeset *uics)
 	}
 }
 
+struct sdictComboData {
+	sdicts *sds;
+	const char *key;
+	const char *option0;
+	const char *option1;
+};
+
+bool sdictComboEntry(void *_data, int idx, const char **out_text)
+{
+	sdictComboData *data = (sdictComboData *)_data;
+	if(idx == 0) {
+		*out_text = data->option0;
+		return true;
+	} else if(idx == 1) {
+		*out_text = data->option1;
+		return true;
+	} else {
+		idx -= 2;
+		sdicts *sds = data->sds;
+		const char *key = data->key;
+		if(idx >= 0 && (u32)idx < sds->count) {
+			sdict_t *sd = sds->data + idx;
+			*out_text = sdict_find_safe(sd, key);
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool sdictCombo(const char *label, sb_t *current, sdicts *sds, const char *key, const char *option0, const char *option1)
+{
+	const char *currentText = sb_get(current);
+	int currentIndex = -1;
+	if(!_stricmp(currentText, option0)) {
+		currentIndex = 0;
+	} else if(!_stricmp(currentText, option1)) {
+		currentIndex = 1;
+	} else {
+		for(u32 i = 0; i < sds->count; ++i) {
+			sdict_t *sd = sds->data + i;
+			const char *value = sdict_find_safe(sd, key);
+			if(!_stricmp(currentText, value)) {
+				currentIndex = (int)i + 2;
+				break;
+			}
+		}
+	}
+	sdictComboData data = { sds, key, option0, option1 };
+	bool ret = ImGui::Combo(label, &currentIndex, sdictComboEntry, &data, (int)sds->count + 2);
+	if(ret) {
+		const char *out = nullptr;
+		if(currentIndex == 0) {
+			out = option0;
+		} else if(currentIndex == 1) {
+			out = option1;
+		} else {
+			currentIndex -= 2;
+			if(currentIndex >= 0 && (u32)currentIndex < sds->count) {
+				sdict_t *sd = sds->data + currentIndex;
+				out = sdict_find_safe(sd, key);
+			}
+		}
+		if(out) {
+			sb_reset(current);
+			sb_append(current, out);
+		}
+	}
+	return ret;
+}
+
 void UIChangeset_Update(p4UIChangeset *uics)
 {
 	ImGui::PushID(uics);
@@ -168,8 +238,8 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	ImGui::SameLine();
 	ImGui::TextUnformatted("  User:");
 	ImGui::SameLine();
-	ImGui::PushItemWidth(96.0f * g_config.dpiScale);
-	if(ImGui::InputText("###user", &uics->user, 1024, ImGuiInputTextFlags_EnterReturnsTrue)) {
+	ImGui::PushItemWidth(140.0f * g_config.dpiScale);
+	if(sdictCombo("###user", &uics->user, &p4.allUsers, "User", "", "Current User")) {
 		uics->parity = 0;
 	}
 	ImGui::PopItemWidth();
@@ -177,8 +247,8 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	ImGui::SameLine();
 	ImGui::TextUnformatted("  Client:");
 	ImGui::SameLine();
-	ImGui::PushItemWidth(96.0f * g_config.dpiScale);
-	if(ImGui::InputText("###clientspec", &uics->clientspec, 1024, ImGuiInputTextFlags_EnterReturnsTrue)) {
+	ImGui::PushItemWidth(140.0f * g_config.dpiScale);
+	if(sdictCombo("###clientspec", &uics->clientspec, &p4.allClients, "client", "", "Current Client")) {
 		uics->parity = 0;
 	}
 	ImGui::PopItemWidth();
@@ -223,8 +293,26 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		if(uics->filterEnabled) {
 			build_filter_tokens(&tokens, sb_get(&uics->filter));
 		}
-		add_filter_token(&tokens, "user", sb_get(&uics->user));
-		add_filter_token(&tokens, "client", sb_get(&uics->clientspec));
+		const char *user = sb_get(&uics->user);
+		if(*user) {
+			if(!strcmp(user, "Current User")) {
+				user = sdict_find_safe(&p4.info, "userName");
+			}
+			if(filterToken *t = add_filter_token(&tokens, "user", user)) {
+				t->required = true;
+				t->prohibited = false;
+			}
+		}
+		const char *clientspec = sb_get(&uics->clientspec);
+		if(*clientspec) {
+			if(!strcmp(clientspec, "Current Client")) {
+				clientspec = p4_clientspec();
+			}
+			if(filterToken *t = add_filter_token(&tokens, "client", clientspec)) {
+				t->required = true;
+				t->prohibited = false;
+			}
+		}
 
 		for(u32 i = 0; i < uics->count; ++i) {
 			p4_reset_uichangesetentry(uics->data + i);

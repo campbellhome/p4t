@@ -17,12 +17,12 @@ void reset_filter_tokens(filterTokens *tokens)
 	bba_free(*tokens);
 }
 
-b32 add_filter_token(filterTokens *tokens, const char *category, const char *text)
+filterToken *add_filter_token(filterTokens *tokens, const char *category, const char *text)
 {
 	if(!text || !*text) {
-		return false;
+		return NULL;
 	} else if(!bba_add(*tokens, 1)) {
-		return false;
+		return NULL;
 	} else {
 		filterToken *t = &bba_last(*tokens);
 		if(category) {
@@ -37,7 +37,7 @@ b32 add_filter_token(filterTokens *tokens, const char *category, const char *tex
 			++text;
 		}
 		sb_append(&t->text, text);
-		return true;
+		return t;
 	}
 }
 

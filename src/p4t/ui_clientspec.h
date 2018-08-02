@@ -6,3 +6,4 @@
 #include "common.h"
 
 void UIClientspec_MenuBar();
+const char *UIClientspec_ActiveClientspecName();

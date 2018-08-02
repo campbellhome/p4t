@@ -26,7 +26,7 @@ typedef struct tag_filterTokens {
 } filterTokens;
 
 void reset_filter_tokens(filterTokens *tokens);
-b32 add_filter_token(filterTokens *tokens, const char *category, const char *text);
+filterToken *add_filter_token(filterTokens *tokens, const char *category, const char *text);
 void build_filter_tokens(filterTokens *tokens, const char *src);
 b32 passes_filter_tokens(filterTokens *tokens, sdict_t *sd, const char **keys, u32 numKeys);
 

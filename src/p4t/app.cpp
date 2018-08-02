@@ -146,6 +146,8 @@ bool App_Init(const char *cmdline)
 		p4UIChangeset *uics = p4_add_uichangeset(true);
 		if(uics) {
 			UITabs_AddTab(kTabType_Changeset, uics->id);
+			sb_append(&uics->user, "Current User");
+			sb_append(&uics->clientspec, "Current Client");
 		}
 		uics = p4_add_uichangeset(false);
 		if(uics) {
