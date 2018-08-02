@@ -450,10 +450,21 @@ p4UIChangeset *p4_add_uichangeset(b32 pending)
 {
 	if(bba_add(p4.uiChangesets, 1)) {
 		p4UIChangeset *cs = &bba_last(p4.uiChangesets);
-		cs->id = ++p4.uiChangesets.lastId;
+		cs->id = ++p4.lastId;
 		cs->pending = pending;
 		cs->lastClickIndex = ~0U;
 		return cs;
+	}
+	return NULL;
+}
+
+p4UIChangeset *p4_find_uichangeset(u32 id)
+{
+	for(u32 i = 0; i < p4.uiChangesets.count; ++i) {
+		p4UIChangeset *uics = p4.uiChangesets.data + i;
+		if(uics->id == id) {
+			return uics;
+		}
 	}
 	return NULL;
 }
@@ -462,7 +473,7 @@ p4UIChangelist *p4_add_uichangelist(void)
 {
 	if(bba_add(p4.uiChangelists, 1)) {
 		p4UIChangelist *uicl = &bba_last(p4.uiChangelists);
-		uicl->id = ++p4.uiChangelists.lastId;
+		uicl->id = ++p4.lastId;
 		return uicl;
 	}
 	return NULL;

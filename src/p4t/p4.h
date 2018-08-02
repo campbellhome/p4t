@@ -101,8 +101,6 @@ typedef struct tag_p4UIChangesets {
 	u32 count;
 	u32 allocated;
 	p4UIChangeset *data;
-	u32 lastId;
-	u8 pad[4];
 } p4UIChangesets;
 
 typedef struct tag_changesetColumnField {
@@ -125,8 +123,6 @@ typedef struct tag_p4UIChangelists {
 	u32 count;
 	u32 allocated;
 	p4UIChangelist *data;
-	u32 lastId;
-	u8 pad[4];
 } p4UIChangelists;
 
 typedef struct tag_p4 {
@@ -142,6 +138,8 @@ typedef struct tag_p4 {
 	p4Changesets changesets;
 	p4UIChangesets uiChangesets;
 	const changesetColumnField *changesetColumnFields;
+	u32 lastId;
+	u8 pad[4];
 } p4_t;
 extern p4_t p4;
 
@@ -168,6 +166,7 @@ void p4_refresh_changeset(p4Changeset *cs);
 sdict_t *p4_find_changelist_in_changeset(p4Changeset *cs, u32 number, const char *client);
 
 p4UIChangeset *p4_add_uichangeset(b32 pending);
+p4UIChangeset *p4_find_uichangeset(u32 id);
 void p4_sort_uichangeset(p4UIChangeset *cs);
 
 void p4_build_changelist_files(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles);

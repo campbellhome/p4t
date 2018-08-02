@@ -124,6 +124,7 @@
     <ClInclude Include="..\src\p4t\ui_config.h" />
     <ClInclude Include="..\src\p4t\ui_message_box.h" />
     <ClInclude Include="..\src\p4t\ui_output.h" />
+    <ClInclude Include="..\src\p4t\ui_tabs.h" />
     <ClInclude Include="..\src\p4t\wrap_imgui.h" />
     <ClInclude Include="..\src\p4t\wrap_shellscalingapi.h" />
     <ClInclude Include="..\src\thirdparty\parson\parson.h" />
@@ -159,6 +160,7 @@
     <ClCompile Include="..\src\p4t\ui_config.cpp" />
     <ClCompile Include="..\src\p4t\ui_message_box.cpp" />
     <ClCompile Include="..\src\p4t\ui_output.cpp" />
+    <ClCompile Include="..\src\p4t\ui_tabs.cpp" />
     <ClCompile Include="..\src\thirdparty\parson\parson.c">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level3</WarningLevel>

@@ -204,6 +204,18 @@ namespace ImGui
 		}
 		return ret;
 	}
+	bool TabButton(const char *label, u32 *active, u32 id, const ImVec2 &size)
+	{
+		if(s_tabCount++) {
+			SameLine();
+		}
+		bool isActive = *active == id;
+		bool ret = Button(label, isActive ? kButton_TabActive : kButton_TabInactive, size);
+		if(ret && !isActive) {
+			*active = id;
+		}
+		return ret;
+	}
 	void EndTabButtons(void)
 	{
 	}
@@ -211,6 +223,15 @@ namespace ImGui
 	bool BeginTabChild(sb_t *active, const char *str_id, const ImVec2 &size, bool border, ImGuiWindowFlags extra_flags)
 	{
 		if(strcmp(sb_get(active), str_id)) {
+			return false;
+		}
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4);
+		return BeginChild(str_id, size, border, extra_flags);
+	}
+
+	bool BeginTabChild(u32 *active, u32 id, const char *str_id, const ImVec2 &size, bool border, ImGuiWindowFlags extra_flags)
+	{
+		if(*active != id) {
 			return false;
 		}
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4);

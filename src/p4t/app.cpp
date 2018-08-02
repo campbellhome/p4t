@@ -19,6 +19,7 @@
 #include "ui_config.h"
 #include "ui_message_box.h"
 #include "ui_output.h"
+#include "ui_tabs.h"
 #include "va.h"
 #include "win32_resource.h"
 #include "wrap_shellscalingapi.h"
@@ -35,7 +36,6 @@ static appSpecificData s_appSpecific[] = {
 	{ "p4cl", "p4cl", "Changelist - p4t", false, kAppType_ChangelistViewer },
 };
 
-static sb_t s_activeTab;
 static bool s_showDemo;
 static sb_t s_imguiPath;
 
@@ -126,8 +126,7 @@ bool App_Init(const char *cmdline)
 	if(globals.appSpecific.type == kAppType_ChangelistViewer) {
 		p4UIChangelist *uicl = p4_add_uichangelist();
 		if(uicl) {
-			sb_reset(&s_activeTab);
-			sb_append(&s_activeTab, va("changelist%u", uicl->id));
+			UITabs_AddTab(kTabType_Changelist, uicl->id);
 			int index = cmdline_find("-change");
 			if(index + 1 < argc) {
 				u32 cl = strtou32(argv[index + 1]);
@@ -144,10 +143,13 @@ bool App_Init(const char *cmdline)
 			return false;
 		}
 	} else {
-		p4UIChangeset *pendingChanges = p4_add_uichangeset(true);
-		p4_add_uichangeset(false);
-		if(pendingChanges) {
-			sb_append(&s_activeTab, va("changeset%u", pendingChanges->id));
+		p4UIChangeset *uics = p4_add_uichangeset(true);
+		if(uics) {
+			UITabs_AddTab(kTabType_Changeset, uics->id);
+		}
+		uics = p4_add_uichangeset(false);
+		if(uics) {
+			UITabs_AddTab(kTabType_Changeset, uics->id, false);
 		}
 	}
 
@@ -165,6 +167,7 @@ void App_Shutdown()
 	config_write(&g_config);
 	config_reset(&g_config);
 	config_write_apptype(&g_apptypeConfig);
+	UITabs_Reset();
 	BB_SHUTDOWN();
 
 	if(globals.hwnd) {
@@ -176,7 +179,6 @@ void App_Shutdown()
 
 	output_shutdown();
 	sb_reset(&s_imguiPath);
-	sb_reset(&s_activeTab);
 	cmdline_shutdown();
 }
 
@@ -240,45 +242,13 @@ void App_Update()
 		ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
 		bool open = true;
 		if(ImGui::Begin("mainwindow", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
-
-			ImGui::BeginTabButtons();
-			for(u32 i = 0; i < p4.uiChangesets.count; ++i) {
-				p4UIChangeset *uics = p4.uiChangesets.data + i;
-				const char *title = uics->pending ? "Pending Changelists" : "Submitted Changelists";
-				if(ImGui::TabButton(va(" %s ###changeset%u", title, uics->id), &s_activeTab, va("changeset%u", uics->id))) {
-					UIChangeset_SetWindowTitle(uics);
-				}
-			}
-			for(u32 i = 0; i < p4.uiChangelists.count; ++i) {
-				p4UIChangelist *uicl = p4.uiChangelists.data + i;
-				const char *title = uicl->requested ? va("Changelist %u", uicl->requested) : "Changelist";
-				if(ImGui::TabButton(va(" %s ###changelist%u", title, uicl->id), &s_activeTab, va("changelist%u", uicl->id))) {
-					UIChangelist_SetWindowTitle(uicl);
-				}
-			}
-			ImGui::EndTabButtons();
-
-			for(u32 i = 0; i < p4.uiChangesets.count; ++i) {
-				p4UIChangeset *cs = p4.uiChangesets.data + i;
-				if(ImGui::BeginTabChild(&s_activeTab, va("changeset%u", cs->id))) {
-					UIChangeset_Update(cs);
-					ImGui::EndTabChild();
-				}
-			}
-			for(u32 i = 0; i < p4.uiChangelists.count; ++i) {
-				p4UIChangelist *uicl = p4.uiChangelists.data + i;
-				if(ImGui::BeginTabChild(&s_activeTab, va("changelist%u", uicl->id))) {
-					UIChangelist_Update(uicl);
-					ImGui::EndTabChild();
-				}
-			}
+			UITabs_Update();
 
 			if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
 				p4UIChangelist *uicl = p4_add_uichangelist();
 				if(uicl) {
+					UITabs_AddTab(kTabType_Changelist, uicl->id);
 					UIChangelist_EnterChangelist(uicl);
-					sb_reset(&s_activeTab);
-					sb_append(&s_activeTab, va("changelist%u", uicl->id));
 				}
 			}
 		}

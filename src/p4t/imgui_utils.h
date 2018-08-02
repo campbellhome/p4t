@@ -23,8 +23,8 @@ namespace ImGui
 	bool MenuItem(const char *label, const char *shortcut, b32 *p_selected, bool enabled = true);
 	bool Begin(const char *name, b32 *p_open, ImGuiWindowFlags flags = 0);
 	bool IsKeyPressed(ImGuiKey_ key, bool repeat = true);
-    bool InputText(const char* label, sb_t* buf, u32 buf_size, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
-    bool InputTextMultiline(const char* label, sb_t* buf, u32 buf_size, const ImVec2& size = ImVec2(0,0), ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL);
+	bool InputText(const char *label, sb_t *buf, u32 buf_size, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void *user_data = NULL);
+	bool InputTextMultiline(const char *label, sb_t *buf, u32 buf_size, const ImVec2 &size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void *user_data = NULL);
 
 	enum verticalScrollDir_e {
 		kVerticalScroll_None,
@@ -53,9 +53,11 @@ namespace ImGui
 
 	void BeginTabButtons(void);
 	bool TabButton(const char *label, sb_t *active, const char *name, const ImVec2 &size = ImVec2(0.0f, 0.0f));
+	bool TabButton(const char *label, u32 *active, u32 id, const ImVec2 &size = ImVec2(0.0f, 0.0f));
 	void EndTabButtons(void);
 
 	bool BeginTabChild(sb_t *active, const char *str_id, const ImVec2 &size = ImVec2(0, 0), bool border = true, ImGuiWindowFlags extra_flags = 0);
+	bool BeginTabChild(u32 *active, u32 id, const char *str_id, const ImVec2 &size = ImVec2(0, 0), bool border = true, ImGuiWindowFlags extra_flags = 0);
 	void EndTabChild();
 
 	struct columnDrawResult {
