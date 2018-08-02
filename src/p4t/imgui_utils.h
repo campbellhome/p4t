@@ -82,4 +82,7 @@ namespace ImGui
 	void PushSelectableColors(b32 selected, b32 viewActive);
 	void PopSelectableColors(b32 selected, b32 viewActive);
 
+	bool BeginContextMenu(const char *name);
+	void EndContextMenu();
+
 } // namespace ImGui

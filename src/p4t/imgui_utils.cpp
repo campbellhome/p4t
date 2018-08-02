@@ -344,4 +344,17 @@ namespace ImGui
 		}
 	}
 
+	bool BeginContextMenu(const char *name)
+	{
+		if(IsMouseClicked(1) && IsItemHoveredRect()) {
+			OpenPopup(name);
+		}
+		return BeginPopup(name);
+	}
+
+	void EndContextMenu()
+	{
+		EndPopup();
+	}
+
 } // namespace ImGui

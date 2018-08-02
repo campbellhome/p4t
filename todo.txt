@@ -1,10 +1,7 @@
 in progress:
 
 short list:
-* unified tab list
-* right click tabs for close menu
 * user/client changeset input should be combo boxes with defaults
-* input text with app focus should request render (for bb also)
 
 todo:
 * drag and drop tabs
@@ -18,3 +15,6 @@ todo:
 * remove p4cl.exe?  dunno
 
 done:
+* unified tab list
+* input text with app focus should request render (for bb also)
+* right click tabs for close menu

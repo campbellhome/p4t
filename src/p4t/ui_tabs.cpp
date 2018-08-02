@@ -67,6 +67,13 @@ void UITabs_Update(tabs *ts)
 				if(ImGui::TabButton(va(" %s ###changelist%u", title, uicl->id), &ts->activeTab, i)) {
 					UIChangelist_SetWindowTitle(uicl);
 				}
+				if(ImGui::BeginContextMenu(va("context%u", uicl->id))) {
+					ts->activeTab = i;
+					if(ImGui::MenuItem("Close Tab")) {
+						p4_mark_uichangelist_for_removal(uicl);
+					}
+					ImGui::EndContextMenu();
+				}
 			}
 			break;
 		}
