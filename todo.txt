@@ -1,7 +1,9 @@
 in progress:
 
 short list:
-* user/client changeset input should be combo boxes with defaults
+* right click menus for different diff options, other commands
+* icons for add/edit/delete/integrate, out of date/unresolved
+* double click changelist
 
 todo:
 * drag and drop tabs
@@ -10,11 +12,11 @@ todo:
 * taskkill processes on quit
 * upgrade imgui
 * imgui theme support
-* icons
 * right click menus for different diff options, other commands
 * remove p4cl.exe?  dunno
 
 done:
+* user/client changeset input should be combo boxes with defaults
 * unified tab list
 * input text with app focus should request render (for bb also)
 * right click tabs for close menu

@@ -333,11 +333,14 @@ void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl,
 		}
 
 		ImGui::SameLine(0.0f, indent);
+		ImColor iconColor = files->shelved ? COLOR_FILE_SHELVED : ImColor(ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
 		const char *icon = UIIcons_ClassifyFile(file.fields.field.depotPath, file.fields.field.filetype);
-		if(files->shelved) {
-			ImGui::TextColored(COLOR_FILE_SHELVED, "%s", icon);
+		if(file.unresolved) {
+			ImGui::IconOverlayColored(iconColor, icon, COLOR_FILE_UNRESOLVED, ICON_FILE_UNRESOLVED);
+		} else if(strchr(file.fields.field.rev, '/') != nullptr) {
+			ImGui::IconOverlayColored(iconColor, icon, COLOR_FILE_OUT_OF_DATE, ICON_FILE_OUT_OF_DATE);
 		} else {
-			ImGui::TextUnformatted(icon);
+			ImGui::IconColored(iconColor, icon);
 		}
 		ImGui::SameLine();
 		if(cltype == kChangelistType_Submitted) {

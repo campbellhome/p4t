@@ -562,12 +562,14 @@ static void p4_build_changelist_files_internal(sdict_t *change, sdicts *sds, uiC
 			const char *filename = (lastSlash) ? lastSlash + 1 : NULL;
 			const char *localPath = "";
 			const char *headRev = NULL;
+			bool unresolved = false;
 			for(u32 i = 0; i < sds->count; ++i) {
 				sdict_t *sd = sds->data + i;
 				const char *detailedDepotFile = sdict_find_safe(sd, "depotFile");
 				if(!strcmp(detailedDepotFile, depotFile)) {
 					localPath = sdict_find_safe(sd, "path");
 					headRev = sdict_find(sd, "headRev");
+					unresolved = sdict_find(sd, "unresolved") != NULL;
 				}
 			}
 			if(filename && bba_add(*files, 1)) {
@@ -582,6 +584,7 @@ static void p4_build_changelist_files_internal(sdict_t *change, sdicts *sds, uiC
 				file->fields.field.filetype = _strdup(type);
 				file->fields.field.depotPath = _strdup(depotFile);
 				file->fields.field.localPath = _strdup(localPath);
+				file->unresolved = unresolved;
 			}
 		} else {
 			break;

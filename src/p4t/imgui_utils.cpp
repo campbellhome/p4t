@@ -376,16 +376,16 @@ namespace ImGui
 		EndPopup();
 	}
 
-	void IconOverlayColored(const char *icon, ImColor iconColor, const char *overlay, ImColor overlayColor)
+	void IconOverlayColored(ImColor iconColor, const char *icon, ImColor overlayColor, const char *overlay)
 	{
-		ImVec2 pos = ImGui::GetCursorPos();
-		ImGui::TextColored(iconColor, "%s", icon);
-		float end = ImGui::GetCursorPosX();
-		pos.x = pos.x + (end - pos.x) / 4;
+		ImVec2 pos = GetIconPosForText();
+		IconColored(iconColor, icon);
+		float end = pos.x + CalcTextSize(icon).x;
+		pos.x = pos.x + (end - pos.x) / 2;
 		ImDrawList *drawList = ImGui::GetWindowDrawList();
 		ImVec2 size = ImGui::CalcTextSize(overlay);
 		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
-		float deltaY = lineHeight - size.y;
+		float deltaY = lineHeight - size.y + 2 * g_config.dpiScale;
 		pos.y += deltaY;
 		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), overlay);
 		drawList->AddText(ImVec2(pos.x + 0, pos.y + 0), overlayColor, overlay);
@@ -394,53 +394,37 @@ namespace ImGui
 	void IconOverlay(const char *icon, const char *overlay, ImColor overlayColor)
 	{
 		ImColor textColor = GetStyle().Colors[ImGuiCol_Text];
-		IconOverlayColored(icon, textColor, overlay, overlayColor);
+		IconOverlayColored(textColor, icon, overlayColor, overlay);
 	}
 
-	void IconColored(const char *icon1, ImColor color1, const char *icon2, ImColor color2)
+	void IconColored(ImColor color, const char *icon)
 	{
-		ImVec2 pos = ImGui::GetCursorPos();
-		ImGui::TextColored(ImColor(0, 0, 0, 0), "%s", icon1);
+		ImVec2 pos = GetIconPosForText();
+		ImGui::TextColored(ImColor(0, 0, 0, 0), "%s", icon);
 		ImDrawList *drawList = ImGui::GetWindowDrawList();
-		ImVec2 size1 = ImGui::CalcTextSize(icon1);
+		ImVec2 size = ImGui::CalcTextSize(icon);
 		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
-		float deltaY = lineHeight - size1.y;
+		float deltaY = lineHeight - size.y;
 		pos.y += deltaY;
-		ImVec2 size2 = ImGui::CalcTextSize(icon2);
-		float offsetX = (size1.x > size2.x) ? (size1.x - size2.x) / 2 : 0.0f;
-		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), icon1);
-		if(icon2) {
-			drawList->AddText(ImVec2(pos.x + 1 + offsetX, pos.y + 1), ImColor(0, 0, 0), icon2);
-		}
-		drawList->AddText(ImVec2(pos.x + 0, pos.y + 0), color1, icon1);
-		if(icon2) {
-			drawList->AddText(ImVec2(pos.x + 0 + offsetX, pos.y + 0), color2, icon2);
-		}
+		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), icon);
+		drawList->AddText(ImVec2(pos.x + 0, pos.y + 0), color, icon);
 	}
 
-	void Icon(const char *icon1, const char *icon2)
+	void Icon(const char *icon)
 	{
 		ImColor textColor = GetStyle().Colors[ImGuiCol_Text];
-		IconColored(icon1, textColor, icon2, textColor);
+		IconColored(textColor, icon);
 	}
 
-	void DrawIconAtPos(ImVec2 pos, const char *icon1, ImColor color1, const char *icon2, ImColor color2)
+	void DrawIconAtPos(ImVec2 pos, const char *icon, ImColor color)
 	{
 		ImDrawList *drawList = ImGui::GetWindowDrawList();
-		ImVec2 size1 = ImGui::CalcTextSize(icon1);
+		ImVec2 size = ImGui::CalcTextSize(icon);
 		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
-		float deltaY = lineHeight - size1.y;
+		float deltaY = lineHeight - size.y;
 		pos.y += deltaY;
-		ImVec2 size2 = ImGui::CalcTextSize(icon2);
-		float offsetX = (size1.x > size2.x) ? (size1.x - size2.x) / 2 : 0.0f;
-		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), icon1);
-		if(icon2) {
-			drawList->AddText(ImVec2(pos.x + 1 + offsetX, pos.y + 1), ImColor(0, 0, 0), icon2);
-		}
-		drawList->AddText(ImVec2(pos.x + 0, pos.y + 0), color1, icon1);
-		if(icon2) {
-			drawList->AddText(ImVec2(pos.x + 0 + offsetX, pos.y + 0), color2, icon2);
-		}
+		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), icon);
+		drawList->AddText(ImVec2(pos.x + 0, pos.y + 0), color, icon);
 	}
 
 	ImVec2 GetIconPosForButton()

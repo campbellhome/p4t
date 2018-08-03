@@ -43,8 +43,8 @@ typedef struct tag_uiChangelistFile {
 			char *localPath;
 		} field;
 	} fields;
+	b32 unresolved;
 	b32 selected;
-	u8 pad[4];
 } uiChangelistFile;
 
 typedef struct tag_uiChangelistFiles {

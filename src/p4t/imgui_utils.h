@@ -87,12 +87,12 @@ namespace ImGui
 	void EndContextMenu();
 
 	void IconOverlay(const char *icon, const char *overlay, ImColor overlayColor);
-	void IconOverlayColored(const char *icon, ImColor iconColor, const char *overlay, ImColor overlayColor);
+	void IconOverlayColored(ImColor iconColor, const char *icon, ImColor overlayColor, const char *overlay);
 
-	void Icon(const char *icon1, const char *icon2 = nullptr);
-	void IconColored(const char *icon1, ImColor color1, const char *icon2 = nullptr, ImColor color2 = ImColor());
+	void Icon(const char *icon);
+	void IconColored(ImColor color, const char *icon);
 
-	void DrawIconAtPos(ImVec2 pos, const char *icon1, ImColor color1, const char *icon2 = nullptr, ImColor color2 = ImColor());
+	void DrawIconAtPos(ImVec2 pos, const char *icon, ImColor color);
 	ImVec2 GetIconPosForButton();
 	ImVec2 GetIconPosForText();
 
