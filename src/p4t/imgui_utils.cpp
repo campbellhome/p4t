@@ -264,7 +264,9 @@ namespace ImGui
 		float width = h.columnWidths[columnIndex] * g_config.dpiScale;
 		float x1 = floorf(0.5f + windowX + offset - 1.0f);
 		float x2 = floorf(0.5f + windowX + offset + width - 1.0f);
-		ImGui::SameLine(offset);
+		if(columnIndex) {
+			ImGui::SameLine(offset);
+		}
 		ImGui::PushClipRect(ImVec2(x1, -FLT_MAX), ImVec2(x2, +FLT_MAX), true);
 		ImGui::TextUnformatted(text, end);
 		ImGui::PopClipRect();

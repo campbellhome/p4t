@@ -15,6 +15,7 @@ void UIChangelist_DrawInformation(sdict_t *cl);
 void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles = nullptr, float indent = 0.0f);
 void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles, b32 shelvedOpenByDefault, float indent = 0.0f);
 void UIChangelist_SetWindowTitle(p4UIChangelist *uicl);
+void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles, float indent);
 
 // for standalone CL viewer
 void UIChangelist_Shutdown(void);

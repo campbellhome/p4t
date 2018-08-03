@@ -205,6 +205,19 @@ p4Changelist *p4_find_default_changelist(const char *client)
 	return NULL;
 }
 
+p4ChangelistType p4_get_changelist_type(sdict_t *cl)
+{
+	p4ChangelistType ret = kChangelistType_Submitted;
+	if(!strcmp(sdict_find_safe(cl, "status"), "pending")) {
+		if(!strcmp(sdict_find_safe(cl, "client"), p4_clientspec())) {
+			ret = kChangelistType_PendingLocal;
+		} else {
+			ret = kChangelistType_PendingOther;
+		}
+	}
+	return ret;
+}
+
 sdict_t *p4_get_info(void)
 {
 	return &p4.info;

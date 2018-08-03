@@ -13,6 +13,7 @@
 #include "str.h"
 #include "time_utils.h"
 #include "ui_changelist.h"
+#include "ui_icons.h"
 #include "va.h"
 
 const char *s_submittedColumnNames[] = {
@@ -385,15 +386,26 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			float iconWidth = ImGui::CalcTextSize(ICON_CHANGELIST).x;
 			ImVec2 pos = ImGui::GetIconPosForText();
 			pos.x -= iconWidth * 0.5f;
-			ImColor iconColor = COLOR_SUBMITTED_CHANGELIST;
-			if(!strcmp(sdict_find_safe(c, "status"), "pending")) {
-				if(!strcmp(sdict_find_safe(c, "client"), p4_clientspec())) {
-					iconColor = COLOR_PENDING_CHANGELIST_LOCAL;
-				} else {
-					iconColor = COLOR_PENDING_CHANGELIST_OTHER;
-				}
+			ImColor iconColor;
+			switch(p4_get_changelist_type(c)) {
+			case kChangelistType_PendingLocal:
+				iconColor = COLOR_PENDING_CHANGELIST_LOCAL;
+				break;
+			case kChangelistType_PendingOther:
+				iconColor = COLOR_PENDING_CHANGELIST_OTHER;
+				break;
+			case kChangelistType_Submitted:
+				iconColor = COLOR_SUBMITTED_CHANGELIST;
+				break;
 			}
-			ImGui::DrawIconAtPos(pos, ICON_CHANGELIST, iconColor);
+			//ImGui::DrawIconAtPos(pos, ICON_CHANGELIST, iconColor);
+			ImGui::TextColored(iconColor, "%s", ICON_CHANGELIST);
+			//ImGui::SameLine(1.0f * g_config.dpiScale, 0.0f);
+
+			ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
+			ImGui::GetStyle().ItemSpacing.x = -1 * ImGui::CalcTextSize(ICON_CHANGELIST).x * 0.5f; // -5.0f * g_config.dpiScale;
+			ImGui::SameLine();
+			ImGui::GetStyle().ItemSpacing = spacing;
 
 			for(u32 col = 0; col < data.numColumns; ++col) {
 				if(data.columnNames[col]) {
@@ -416,7 +428,20 @@ void UIChangeset_Update(p4UIChangeset *uics)
 						e->parity = cl->parity;
 						p4_build_changelist_files(cl, &e->normalFiles, &e->shelvedFiles);
 					}
-					UIChangelist_DrawFilesAndHeaders(cl, &e->normalFiles, &e->shelvedFiles, false, 20.0f * g_config.dpiScale);
+
+					UIChangelist_DrawFilesNoColumns(&e->normalFiles, cl, &e->shelvedFiles, 30.0f * g_config.dpiScale);
+					if(e->shelvedFiles.count) {
+						ImGui::TextUnformatted("");
+						ImGui::SameLine(0.0f, 20.0f * g_config.dpiScale);
+						const char *title = va("Shelved File%s: %u", e->shelvedFiles.count == 1 ? "" : "s", e->shelvedFiles.count);
+						bool shelvedOpenByDefault = false;
+						bool shelvedExpanded = ImGui::TreeNodeEx(va("%s###shelved%u%s", title, cl->number, sdict_find_safe(&cl->normal, "client")), shelvedOpenByDefault ? ImGuiTreeNodeFlags_DefaultOpen : 0);
+						if(shelvedExpanded) {
+							UIChangelist_DrawFilesNoColumns(&e->shelvedFiles, cl, &e->normalFiles, 40.0f * g_config.dpiScale);
+							ImGui::TreePop();
+						}
+					}
+					//UIChangelist_DrawFilesAndHeaders(cl, &e->normalFiles, &e->shelvedFiles, false, 20.0f * g_config.dpiScale);
 				} else {
 					if(!e->described) {
 						e->described = true;

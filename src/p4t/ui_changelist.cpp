@@ -12,6 +12,7 @@
 #include "sdict.h"
 #include "str.h"
 #include "time_utils.h"
+#include "ui_icons.h"
 #include "va.h"
 #include <math.h>
 
@@ -281,6 +282,69 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 		ImGui::DrawColumnHeaderText(columnOffsets[2], g_config.uiChangelist.columnWidth[2] + itemPad, file.fields.str[2]);
 		ImGui::DrawColumnHeaderText(columnOffsets[3], g_config.uiChangelist.columnWidth[3] + itemPad, file.fields.str[3]);
 		ImGui::DrawColumnHeaderText(columnOffsets[4], g_config.uiChangelist.columnWidth[4] + itemPad, file.fields.str[4], strrchr(file.fields.str[4], '/'));
+	}
+
+	if(anyActive) {
+		files->active = true;
+	} else if(ImGui::IsAnyItemActive()) {
+		files->active = false;
+	}
+
+	if(files->active) {
+		if(ImGui::IsKeyPressed('A') && ImGui::GetIO().KeyCtrl) {
+			UIChangelist_Logs_SelectAll(files);
+		} else if(ImGui::IsKeyPressed('C') && ImGui::GetIO().KeyCtrl) {
+			UIChangelist_CopySelectedFilesToClipboard(files, ImGui::GetIO().KeyShift);
+		} else if(ImGui::IsKeyPressed('D') && ImGui::GetIO().KeyCtrl) {
+			UIChangelist_DiffSelectedFiles(files, cl);
+		} else if(ImGui::IsKeyPressed(ImGui::GetIO().KeyMap[ImGuiKey_Escape])) {
+			UIChangelist_Logs_ClearSelection(files);
+			files->active = false;
+		}
+	}
+
+	ImGui::PopID();
+}
+
+void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles, float indent)
+{
+	ImGui::PushID(files);
+
+	b32 anyActive = false;
+
+	p4ChangelistType cltype = p4_get_changelist_type(&cl->normal);
+
+	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
+	for(u32 i = 0; i < files->count; ++i) {
+		uiChangelistFile &file = files->data[i];
+		ImGui::PushSelectableColors(file.selected, files->active);
+		ImGui::Selectable(va("###%s", file.fields.field.filename), file.selected != 0);
+		ImGui::PopSelectableColors(file.selected, files->active);
+		if(ImGui::IsItemHovered()) {
+			if(ImGui::IsItemClicked()) {
+				UIChangelist_HandleClick(files, i);
+				if(otherFiles) {
+					UIChangelist_Logs_ClearSelection(otherFiles);
+				}
+			}
+		}
+		if(ImGui::IsItemActive()) {
+			anyActive = true;
+		}
+
+		ImGui::SameLine(0.0f, indent);
+		const char *icon = UIIcons_ClassifyFile(file.fields.field.depotPath, file.fields.field.filetype);
+		if(files->shelved) {
+			ImGui::TextColored(COLOR_FILE_SHELVED, "%s", icon);
+		} else {
+			ImGui::TextUnformatted(icon);
+		}
+		ImGui::SameLine();
+		if(cltype == kChangelistType_Submitted) {
+			ImGui::Text("%s#%s", file.fields.field.depotPath, file.fields.field.rev);
+		} else {
+			ImGui::Text("%s#%s <%s>", file.fields.field.depotPath, file.fields.field.rev, file.fields.field.filetype);
+		}
 	}
 
 	if(anyActive) {

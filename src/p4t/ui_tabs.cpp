@@ -8,6 +8,7 @@
 #include "p4.h"
 #include "ui_changelist.h"
 #include "ui_changeset.h"
+#include "ui_icons.h"
 #include "va.h"
 
 static tabs s_tabs;

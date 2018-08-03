@@ -16,19 +16,6 @@ b32 p4_init(void);
 void p4_shutdown(void);
 void p4_update(void);
 
-#define ICON_CHANGELIST ICON_FK_CHEVRON_CIRCLE_UP
-#define COLOR_PENDING_CHANGELIST_OTHER ImColor(128, 128, 128)
-#define COLOR_PENDING_CHANGELIST_LOCAL ImColor(192, 64, 64)
-#define COLOR_SUBMITTED_CHANGELIST ImColor(69, 96, 192)
-
-#define ICON_FILE_OUT_OF_DATE ICON_FK_CARET_UP
-#define COLOR_FILE_OUT_OF_DATE ImColor(256, 256, 96)
-
-#define ICON_FILE_UNRESOLVED ICON_FK_QUESTION
-#define COLOR_FILE_UNRESOLVED ImColor(192, 64, 64)
-
-#define COLOR_FILE_SHELVED ImColor(127, 106, 0)
-
 typedef struct tag_p4Changelist {
 	sdict_t normal;
 	sdict_t shelved;
@@ -168,6 +155,13 @@ const char *p4_clientspec_arg(void);
 // per-file: depotFile0, action0, type0, rev0, fileSize0, digest0
 p4Changelist *p4_find_changelist(u32 cl);
 p4Changelist *p4_find_default_changelist(const char *client);
+
+typedef enum tag_p4ChangelistType {
+	kChangelistType_PendingOther,
+	kChangelistType_PendingLocal,
+	kChangelistType_Submitted,
+} p4ChangelistType;
+p4ChangelistType p4_get_changelist_type(sdict_t *cl);
 
 sdict_t *p4_get_info(void);
 
