@@ -54,6 +54,7 @@ namespace ImGui
 	void BeginTabButtons(void);
 	bool TabButton(const char *label, sb_t *active, const char *name, const ImVec2 &size = ImVec2(0.0f, 0.0f));
 	bool TabButton(const char *label, u32 *active, u32 id, const ImVec2 &size = ImVec2(0.0f, 0.0f));
+	bool TabButtonIconColored(const char *icon, ImColor iconColor, const char *label, u32 *active, u32 id, const ImVec2 &size = ImVec2(0.0f, 0.0f));
 	void EndTabButtons(void);
 
 	bool BeginTabChild(sb_t *active, const char *str_id, const ImVec2 &size = ImVec2(0, 0), bool border = true, ImGuiWindowFlags extra_flags = 0);
@@ -84,5 +85,15 @@ namespace ImGui
 
 	bool BeginContextMenu(const char *name);
 	void EndContextMenu();
+
+	void IconOverlay(const char *icon, const char *overlay, ImColor overlayColor);
+	void IconOverlayColored(const char *icon, ImColor iconColor, const char *overlay, ImColor overlayColor);
+
+	void Icon(const char *icon1, const char *icon2 = nullptr);
+	void IconColored(const char *icon1, ImColor color1, const char *icon2 = nullptr, ImColor color2 = ImColor());
+
+	void DrawIconAtPos(ImVec2 pos, const char *icon1, ImColor color1, const char *icon2 = nullptr, ImColor color2 = ImColor());
+	ImVec2 GetIconPosForButton();
+	ImVec2 GetIconPosForText();
 
 } // namespace ImGui

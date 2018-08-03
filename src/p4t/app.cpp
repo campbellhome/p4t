@@ -252,6 +252,74 @@ void App_Update()
 			ImGui::EndMenu();
 		}
 		UIClientspec_MenuBar();
+
+#if 0
+		ImGui::IconOverlay(ICON_FK_FILE_O, ICON_FK_CARET_UP, ImColor(256, 256, 96));
+		ImGui::SameLine();
+		ImGui::IconOverlay(ICON_FK_FILE_CODE_O, ICON_FK_QUESTION, ImColor(192, 51, 51));
+		ImGui::SameLine();
+		ImGui::IconColored(ICON_FK_ARROW_CIRCLE_UP, ImColor(192, 51, 51));
+		ImGui::SameLine();
+		ImGui::IconColored(ICON_FK_CHEVRON_CIRCLE_UP, ImColor(192, 51, 51));
+		ImGui::SameLine();
+		ImGui::IconColored(ICON_FK_CIRCLE_O, ImColor(192, 51, 51), ICON_FK_CARET_UP, ImColor(256, 256, 96));
+		ImGui::SameLine();
+		ImGui::IconColored(ICON_FK_TASKS, ImColor(192, 51, 51));
+		ImGui::SameLine();
+		ImGui::Icon(ICON_FK_CIRCLE_O, ICON_FK_CARET_UP);
+
+		ImGui::SameLine();
+		// Pending Changelist - other clientspec
+		ImGui::IconColored(ICON_FK_CHEVRON_CIRCLE_UP, ImColor(128, 128, 128));
+
+		ImGui::SameLine();
+		// Pending Changelist - local clientspec
+		ImGui::IconColored(ICON_FK_CHEVRON_CIRCLE_UP, ImColor(192, 64, 64));
+
+		ImGui::SameLine();
+		// Pending Changelist - local clientspec, out of date
+		ImGui::IconOverlayColored(ICON_FK_CHEVRON_CIRCLE_UP, ImColor(192, 64, 64), ICON_FK_CARET_UP, ImColor(256, 256, 96));
+
+		ImGui::SameLine();
+		// Pending Changelist - local clientspec, unresolved
+		ImGui::IconOverlayColored(ICON_FK_CHEVRON_CIRCLE_UP, ImColor(192, 64, 64), ICON_FK_QUESTION, ImColor(192, 64, 64));
+
+		ImGui::SameLine();
+		// Submitted Changelist
+		ImGui::IconColored(ICON_FK_CHEVRON_CIRCLE_UP, ImColor(69, 96, 192));
+
+		//ICON_FK_FILE_O
+		//ICON_FK_FILE_TEXT_O
+		//ICON_FK_FILE_PDF_O
+		//ICON_FK_FILE_WORD_O
+		//ICON_FK_FILE_EXCEL_O
+		//ICON_FK_FILE_POWERPOINT_O
+		//ICON_FK_FILE_IMAGE_O
+		//ICON_FK_FILE_ARCHIVE_O
+		//ICON_FK_FILE_AUDIO_O
+		//ICON_FK_FILE_VIDEO_O
+		//ICON_FK_FILE_CODE_O
+		//
+		//ICON_FK_FOLDER_O
+		//ICON_FK_FOLDER_OPEN_O
+		//
+		//ICON_FK_QUESTION
+		//ICON_FK_QUESTION_CIRCLE
+		//ICON_FK_QUESTION_CIRCLE_O
+		//
+		//ICON_FK_CARET_UP
+		//ICON_FK_CARET_SQUARE_O_UP
+		//ICON_FK_ARROW_CIRCLE_UP
+
+		// submitted CL:
+		//ICON_FK_ARROW_CIRCLE_UP
+		//ICON_FK_CHEVRON_CIRCLE_UP
+		//ICON_FK_CIRCLE_O ICON_FK_CARET_UP
+
+		// pending CL:
+		//ICON_FK_TASKS
+#endif
+
 		ImGui::EndMainMenuBar();
 	}
 

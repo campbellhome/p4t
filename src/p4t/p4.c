@@ -180,10 +180,12 @@ void p4_update(void)
 
 p4Changelist *p4_find_changelist(u32 cl)
 {
-	for(u32 i = 0; i < p4.changelists.count; ++i) {
-		p4Changelist *change = p4.changelists.data + i;
-		if(change->number == cl) {
-			return change;
+	if(cl) {
+		for(u32 i = 0; i < p4.changelists.count; ++i) {
+			p4Changelist *change = p4.changelists.data + i;
+			if(change->number == cl) {
+				return change;
+			}
 		}
 	}
 	return NULL;

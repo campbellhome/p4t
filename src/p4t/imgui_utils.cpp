@@ -169,7 +169,7 @@ namespace ImGui
 			PushStyleColor(colorActive, styleColors[ImGuiCol_HeaderActive]);
 			break;
 		case kButton_TabInactive:
-			PushStyleColor(colorNormal, (ImVec4)ImColor(0, 0, 0, 0));
+			PushStyleColor(colorNormal, (ImVec4)ImColor(255, 255, 255, 12));
 			PushStyleColor(colorHoverd, styleColors[ImGuiCol_HeaderHovered]);
 			PushStyleColor(colorActive, styleColors[ImGuiCol_HeaderActive]);
 			break;
@@ -216,6 +216,20 @@ namespace ImGui
 		}
 		return ret;
 	}
+	bool TabButtonIconColored(const char *icon, ImColor iconColor, const char *label, u32 *active, u32 id, const ImVec2 &size)
+	{
+		if(s_tabCount++) {
+			SameLine();
+		}
+		bool isActive = *active == id;
+		ImVec2 iconPos = GetIconPosForButton();
+		bool ret = Button(label, isActive ? kButton_TabActive : kButton_TabInactive, size);
+		if(ret && !isActive) {
+			*active = id;
+		}
+		DrawIconAtPos(iconPos, icon, iconColor);
+		return ret;
+	}
 	void EndTabButtons(void)
 	{
 	}
@@ -225,7 +239,7 @@ namespace ImGui
 		if(strcmp(sb_get(active), str_id)) {
 			return false;
 		}
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4);
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4 * g_config.dpiScale);
 		return BeginChild(str_id, size, border, extra_flags);
 	}
 
@@ -234,7 +248,7 @@ namespace ImGui
 		if(*active != id) {
 			return false;
 		}
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4);
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4 * g_config.dpiScale);
 		return BeginChild(str_id, size, border, extra_flags);
 	}
 
@@ -269,8 +283,8 @@ namespace ImGui
 
 	columnDrawResult DrawColumnHeader(columnDrawData h, u32 columnIndex)
 	{
-		#define ICON_SORT_UP ICON_FK_CARET_UP
-		#define ICON_SORT_DOWN ICON_FK_CARET_DOWN
+#define ICON_SORT_UP ICON_FK_CARET_UP
+#define ICON_SORT_DOWN ICON_FK_CARET_DOWN
 
 		columnDrawResult res = {};
 		const char *text = h.columnNames[columnIndex];
@@ -358,6 +372,92 @@ namespace ImGui
 	void EndContextMenu()
 	{
 		EndPopup();
+	}
+
+	void IconOverlayColored(const char *icon, ImColor iconColor, const char *overlay, ImColor overlayColor)
+	{
+		ImVec2 pos = ImGui::GetCursorPos();
+		ImGui::TextColored(iconColor, "%s", icon);
+		float end = ImGui::GetCursorPosX();
+		pos.x = pos.x + (end - pos.x) / 4;
+		ImDrawList *drawList = ImGui::GetWindowDrawList();
+		ImVec2 size = ImGui::CalcTextSize(overlay);
+		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
+		float deltaY = lineHeight - size.y;
+		pos.y += deltaY;
+		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), overlay);
+		drawList->AddText(ImVec2(pos.x + 0, pos.y + 0), overlayColor, overlay);
+	}
+
+	void IconOverlay(const char *icon, const char *overlay, ImColor overlayColor)
+	{
+		ImColor textColor = GetStyle().Colors[ImGuiCol_Text];
+		IconOverlayColored(icon, textColor, overlay, overlayColor);
+	}
+
+	void IconColored(const char *icon1, ImColor color1, const char *icon2, ImColor color2)
+	{
+		ImVec2 pos = ImGui::GetCursorPos();
+		ImGui::TextColored(ImColor(0, 0, 0, 0), "%s", icon1);
+		ImDrawList *drawList = ImGui::GetWindowDrawList();
+		ImVec2 size1 = ImGui::CalcTextSize(icon1);
+		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
+		float deltaY = lineHeight - size1.y;
+		pos.y += deltaY;
+		ImVec2 size2 = ImGui::CalcTextSize(icon2);
+		float offsetX = (size1.x > size2.x) ? (size1.x - size2.x) / 2 : 0.0f;
+		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), icon1);
+		if(icon2) {
+			drawList->AddText(ImVec2(pos.x + 1 + offsetX, pos.y + 1), ImColor(0, 0, 0), icon2);
+		}
+		drawList->AddText(ImVec2(pos.x + 0, pos.y + 0), color1, icon1);
+		if(icon2) {
+			drawList->AddText(ImVec2(pos.x + 0 + offsetX, pos.y + 0), color2, icon2);
+		}
+	}
+
+	void Icon(const char *icon1, const char *icon2)
+	{
+		ImColor textColor = GetStyle().Colors[ImGuiCol_Text];
+		IconColored(icon1, textColor, icon2, textColor);
+	}
+
+	void DrawIconAtPos(ImVec2 pos, const char *icon1, ImColor color1, const char *icon2, ImColor color2)
+	{
+		ImDrawList *drawList = ImGui::GetWindowDrawList();
+		ImVec2 size1 = ImGui::CalcTextSize(icon1);
+		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
+		float deltaY = lineHeight - size1.y;
+		pos.y += deltaY;
+		ImVec2 size2 = ImGui::CalcTextSize(icon2);
+		float offsetX = (size1.x > size2.x) ? (size1.x - size2.x) / 2 : 0.0f;
+		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), icon1);
+		if(icon2) {
+			drawList->AddText(ImVec2(pos.x + 1 + offsetX, pos.y + 1), ImColor(0, 0, 0), icon2);
+		}
+		drawList->AddText(ImVec2(pos.x + 0, pos.y + 0), color1, icon1);
+		if(icon2) {
+			drawList->AddText(ImVec2(pos.x + 0 + offsetX, pos.y + 0), color2, icon2);
+		}
+	}
+
+	ImVec2 GetIconPosForButton()
+	{
+		ImVec2 windowPos = ImGui::GetWindowPos();
+		ImVec2 cursorPos = ImGui::GetCursorPos();
+		ImVec2 framePadding = ImGui::GetStyle().FramePadding;
+		ImVec2 textPos(windowPos.x + cursorPos.x + framePadding.x, windowPos.y + cursorPos.y - framePadding.y * 0.5f + 1);
+		return textPos;
+	}
+
+	ImVec2 GetIconPosForText()
+	{
+		ImVec2 windowPos = ImGui::GetWindowPos();
+		ImVec2 cursorPos = ImGui::GetCursorPos();
+		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
+		float fontHeight = ImGui::CalcTextSize(nullptr).y;
+		ImVec2 textPos(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y - lineHeight + fontHeight);
+		return textPos;
 	}
 
 } // namespace ImGui

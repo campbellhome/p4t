@@ -64,7 +64,13 @@ void UITabs_Update(tabs *ts)
 			p4UIChangelist *uicl = p4_find_uichangelist(t->id);
 			if(uicl) {
 				const char *title = uicl->requested ? va("Changelist %u", uicl->requested) : "Changelist";
-				if(ImGui::TabButton(va(" %s ###changelist%u", title, uicl->id), &ts->activeTab, i)) {
+				ImColor color = COLOR_PENDING_CHANGELIST_OTHER;
+				p4Changelist *cl = p4_find_changelist(uicl->requested);
+				if(cl) {
+					b32 pending = !strcmp(sdict_find_safe(&cl->normal, "status"), "pending");
+					color = (pending) ? COLOR_PENDING_CHANGELIST_LOCAL : COLOR_SUBMITTED_CHANGELIST;
+				}
+				if(ImGui::TabButtonIconColored(ICON_CHANGELIST, color, va("    %s ###changelist%u", title, uicl->id), &ts->activeTab, i)) {
 					UIChangelist_SetWindowTitle(uicl);
 				}
 				if(ImGui::BeginContextMenu(va("context%u", uicl->id))) {
@@ -81,7 +87,8 @@ void UITabs_Update(tabs *ts)
 			p4UIChangeset *uics = p4_find_uichangeset(t->id);
 			if(uics) {
 				const char *title = uics->pending ? "Pending Changelists" : "Submitted Changelists";
-				if(ImGui::TabButton(va(" %s ###changeset%u", title, uics->id), &ts->activeTab, i)) {
+				ImColor color = (uics->pending) ? COLOR_PENDING_CHANGELIST_LOCAL : COLOR_SUBMITTED_CHANGELIST;
+				if(ImGui::TabButtonIconColored(ICON_CHANGELIST, color, va("    %s ###changeset%u", title, uics->id), &ts->activeTab, i)) {
 					UIChangeset_SetWindowTitle(uics);
 				}
 			}

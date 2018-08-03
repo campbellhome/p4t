@@ -380,6 +380,21 @@ void UIChangeset_Update(p4UIChangeset *uics)
 					UIChangeset_HandleClick(uics, i);
 				}
 			}
+
+			ImGui::SameLine();
+			float iconWidth = ImGui::CalcTextSize(ICON_CHANGELIST).x;
+			ImVec2 pos = ImGui::GetIconPosForText();
+			pos.x -= iconWidth * 0.5f;
+			ImColor iconColor = COLOR_SUBMITTED_CHANGELIST;
+			if(!strcmp(sdict_find_safe(c, "status"), "pending")) {
+				if(!strcmp(sdict_find_safe(c, "client"), p4_clientspec())) {
+					iconColor = COLOR_PENDING_CHANGELIST_LOCAL;
+				} else {
+					iconColor = COLOR_PENDING_CHANGELIST_OTHER;
+				}
+			}
+			ImGui::DrawIconAtPos(pos, ICON_CHANGELIST, iconColor);
+
 			for(u32 col = 0; col < data.numColumns; ++col) {
 				if(data.columnNames[col]) {
 					const changesetColumnField *field = p4.changesetColumnFields + col;
@@ -387,6 +402,9 @@ void UIChangeset_Update(p4UIChangeset *uics)
 					if(field->time) {
 						u32 time = strtou32(value);
 						value = time ? Time_StringFromEpochTime(time) : "";
+					}
+					if(!col) {
+						value = va("  %s", value);
 					}
 					ImGui::DrawColumnText(data, col, value);
 				}
