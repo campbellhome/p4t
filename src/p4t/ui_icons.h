@@ -18,5 +18,8 @@
 
 #define COLOR_FILE_SHELVED ImColor(127, 106, 0)
 
+// unused, for future:
+#define ICON_CLIENTSPEC ICON_FK_TASKS
+
 const char *UIIcons_ClassifyFile(const char *depotPath, const char *filetype = nullptr);
 const char *UIIcons_GetIconSpaces(const char *icon);
