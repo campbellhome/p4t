@@ -70,7 +70,7 @@ static void UIChangelist_DrawInformationColumn(sdict_t *cl, float fullWidth, cha
 	ImGui::EndGroup();
 }
 
-static void UIChangelist_CopySelectedFilesToClipboard(uiChangelistFiles *files, bool extraInfo)
+static void UIChangelist_Files_CopySelectedToClipboard(uiChangelistFiles *files, bool extraInfo)
 {
 	u32 i;
 	sb_t sb;
@@ -90,7 +90,7 @@ static void UIChangelist_CopySelectedFilesToClipboard(uiChangelistFiles *files, 
 	sb_reset(&sb);
 }
 
-static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files, p4Changelist *cl)
+static void UIChangelist_Files_DiffSelected(uiChangelistFiles *files, p4Changelist *cl)
 {
 	const char *infoClientName = p4_clientspec();
 	const char *clientName = sdict_find_safe(&cl->normal, "client");
@@ -121,7 +121,7 @@ static void UIChangelist_DiffSelectedFiles(uiChangelistFiles *files, p4Changelis
 	}
 }
 
-static void UIChangelist_Logs_ClearSelection(uiChangelistFiles *files)
+static void UIChangelist_Files_ClearSelection(uiChangelistFiles *files)
 {
 	files->lastClickIndex = ~0U;
 	for(u32 i = 0; i < files->count; ++i) {
@@ -129,7 +129,7 @@ static void UIChangelist_Logs_ClearSelection(uiChangelistFiles *files)
 	}
 }
 
-static void UIChangelist_Logs_SelectAll(uiChangelistFiles *files)
+static void UIChangelist_Files_SelectAll(uiChangelistFiles *files)
 {
 	files->lastClickIndex = ~0U;
 	for(u32 i = 0; i < files->count; ++i) {
@@ -174,7 +174,7 @@ static void UIChangelist_HandleClick(uiChangelistFiles *files, u32 index)
 			}
 		}
 	} else {
-		UIChangelist_Logs_ClearSelection(files);
+		UIChangelist_Files_ClearSelection(files);
 		UIChangelist_Logs_AddSelection(files, index);
 	}
 }
@@ -236,6 +236,43 @@ static const char *s_columnNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_columnNames) == BB_ARRAYSIZE(g_config.uiChangelist.columnWidth));
 
+void UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file, u32 index, uiChangelistFiles *otherFiles)
+{
+		ImGui::PushSelectableColors(file.selected, files->active);
+		ImGui::Selectable(va("###%s", file.fields.field.filename), file.selected != 0);
+		ImGui::PopSelectableColors(file.selected, files->active);
+		if(ImGui::IsItemHovered()) {
+			if(ImGui::IsItemClicked()) {
+				UIChangelist_HandleClick(files, index);
+				if(otherFiles) {
+					UIChangelist_Files_ClearSelection(otherFiles);
+				}
+			}
+		}
+}
+
+void UIChangelist_FinishFiles(uiChangelistFiles *files, p4Changelist *cl, b32 anyActive)
+{
+	if(anyActive) {
+		files->active = true;
+	} else if(ImGui::IsAnyItemActive()) {
+		files->active = false;
+	}
+
+	if(files->active) {
+		if(ImGui::IsKeyPressed('A') && ImGui::GetIO().KeyCtrl) {
+			UIChangelist_Files_SelectAll(files);
+		} else if(ImGui::IsKeyPressed('C') && ImGui::GetIO().KeyCtrl) {
+			UIChangelist_Files_CopySelectedToClipboard(files, ImGui::GetIO().KeyShift);
+		} else if(ImGui::IsKeyPressed('D') && ImGui::GetIO().KeyCtrl) {
+			UIChangelist_Files_DiffSelected(files, cl);
+		} else if(ImGui::IsKeyPressed(ImGui::GetIO().KeyMap[ImGuiKey_Escape])) {
+			UIChangelist_Files_ClearSelection(files);
+			files->active = false;
+		}
+	}
+}
+
 void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles, float indent)
 {
 	// Columns: File Name, Revision, Action, Filetype, In Folder
@@ -268,19 +305,9 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 
 	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 	for(u32 i = 0; i < files->count; ++i) {
-		uiChangelistFile &file = files->data[i];
 		float start = ImGui::GetIconPosForText().x - ImGui::GetStyle().ItemSpacing.x;
-		ImGui::PushSelectableColors(file.selected, files->active);
-		ImGui::Selectable(va("###%s", file.fields.field.filename), file.selected != 0);
-		ImGui::PopSelectableColors(file.selected, files->active);
-		if(ImGui::IsItemHovered()) {
-			if(ImGui::IsItemClicked()) {
-				UIChangelist_HandleClick(files, i);
-				if(otherFiles) {
-					UIChangelist_Logs_ClearSelection(otherFiles);
-				}
-			}
-		}
+		uiChangelistFile &file = files->data[i];
+		UIChangelist_FileSelectable(files, file, i, otherFiles);
 		if(ImGui::IsItemActive()) {
 			anyActive = true;
 		}
@@ -297,24 +324,7 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 	}
 	IMGUI_ONCE_UPON_A_FRAME ImGui::SetTooltip("mouse: %.1f %.1f   window: %.1f", ImGui::GetMousePos().x, ImGui::GetMousePos().y, ImGui::GetWindowPos().x);
 
-	if(anyActive) {
-		files->active = true;
-	} else if(ImGui::IsAnyItemActive()) {
-		files->active = false;
-	}
-
-	if(files->active) {
-		if(ImGui::IsKeyPressed('A') && ImGui::GetIO().KeyCtrl) {
-			UIChangelist_Logs_SelectAll(files);
-		} else if(ImGui::IsKeyPressed('C') && ImGui::GetIO().KeyCtrl) {
-			UIChangelist_CopySelectedFilesToClipboard(files, ImGui::GetIO().KeyShift);
-		} else if(ImGui::IsKeyPressed('D') && ImGui::GetIO().KeyCtrl) {
-			UIChangelist_DiffSelectedFiles(files, cl);
-		} else if(ImGui::IsKeyPressed(ImGui::GetIO().KeyMap[ImGuiKey_Escape])) {
-			UIChangelist_Logs_ClearSelection(files);
-			files->active = false;
-		}
-	}
+	UIChangelist_FinishFiles(files, cl, anyActive);
 
 	ImGui::PopID();
 }
@@ -330,17 +340,7 @@ void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl,
 	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile &file = files->data[i];
-		ImGui::PushSelectableColors(file.selected, files->active);
-		ImGui::Selectable(va("###%s", file.fields.field.filename), file.selected != 0);
-		ImGui::PopSelectableColors(file.selected, files->active);
-		if(ImGui::IsItemHovered()) {
-			if(ImGui::IsItemClicked()) {
-				UIChangelist_HandleClick(files, i);
-				if(otherFiles) {
-					UIChangelist_Logs_ClearSelection(otherFiles);
-				}
-			}
-		}
+		UIChangelist_FileSelectable(files, file, i, otherFiles);
 		if(ImGui::IsItemActive()) {
 			anyActive = true;
 		}
@@ -355,24 +355,7 @@ void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl,
 		}
 	}
 
-	if(anyActive) {
-		files->active = true;
-	} else if(ImGui::IsAnyItemActive()) {
-		files->active = false;
-	}
-
-	if(files->active) {
-		if(ImGui::IsKeyPressed('A') && ImGui::GetIO().KeyCtrl) {
-			UIChangelist_Logs_SelectAll(files);
-		} else if(ImGui::IsKeyPressed('C') && ImGui::GetIO().KeyCtrl) {
-			UIChangelist_CopySelectedFilesToClipboard(files, ImGui::GetIO().KeyShift);
-		} else if(ImGui::IsKeyPressed('D') && ImGui::GetIO().KeyCtrl) {
-			UIChangelist_DiffSelectedFiles(files, cl);
-		} else if(ImGui::IsKeyPressed(ImGui::GetIO().KeyMap[ImGuiKey_Escape])) {
-			UIChangelist_Logs_ClearSelection(files);
-			files->active = false;
-		}
-	}
+	UIChangelist_FinishFiles(files, cl, anyActive);
 
 	ImGui::PopID();
 }
