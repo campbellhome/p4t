@@ -184,6 +184,16 @@ namespace ImGui
 			PushStyleColor(colorHoverd, styleColors[ImGuiCol_HeaderHovered]);
 			PushStyleColor(colorActive, styleColors[ImGuiCol_HeaderActive]);
 			break;
+		case kButton_ColumnHeader:
+			PushStyleColor(colorNormal, styleColors[colorNormal]);
+			PushStyleColor(colorHoverd, styleColors[colorHoverd]);
+			PushStyleColor(colorActive, styleColors[colorActive]);
+			break;
+		case kButton_ResizeBar:
+			PushStyleColor(colorNormal, styleColors[colorNormal]);
+			PushStyleColor(colorHoverd, styleColors[colorHoverd]);
+			PushStyleColor(colorActive, styleColors[colorActive]);
+			break;
 		}
 	}
 	void PopButtonColors(void)
@@ -313,23 +323,14 @@ namespace ImGui
 		float scale = (g_config.dpiScale <= 0.0f) ? 1.0f : g_config.dpiScale;
 		float startOffset = ImGui::GetCursorPosX();
 
-		{
-			const float normal = 0.3f;
-			const float hovered = 0.6f;
-			const float active = 0.6f;
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 0.2f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
-			if(ImGui::Button(va("###%s", text), ImVec2(*width * scale, 0.0f))) {
-				res.sortChanged = true;
-				if(*h.sortColumn == columnIndex) {
-					*h.sortDescending = !*h.sortDescending;
-				} else {
-					*h.sortColumn = columnIndex;
-					*h.sortDescending = false;
-				}
+		if(Button(va("###%s", text), kButton_ColumnHeader, ImVec2(*width * scale, 0.0f))) {
+			res.sortChanged = true;
+			if(*h.sortColumn == columnIndex) {
+				*h.sortDescending = !*h.sortDescending;
+			} else {
+				*h.sortColumn = columnIndex;
+				*h.sortDescending = false;
 			}
-			ImGui::PopStyleColor(3);
 		}
 
 		res.active = res.active || ImGui::IsItemActive();
@@ -337,16 +338,9 @@ namespace ImGui
 		const char *columnText = (*h.sortColumn == columnIndex) ? va("%s %s", *h.sortDescending ? ICON_SORT_DOWN : ICON_SORT_UP, text) : text;
 		const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 		DrawColumnHeaderText(startOffset + ImGui::GetStyle().ItemInnerSpacing.x, *width * scale - itemPad, columnText);
-		ImGui::SameLine(endOffset);
+		SameLine(endOffset);
 		if(!last) {
-			const float normal = 0.4f;
-			const float hovered = 0.8f;
-			const float active = 0.8f;
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
-			ImGui::Button(va("|###sep%s", text), ImVec2(2.0f * g_config.dpiScale, 0.0f));
-			ImGui::PopStyleColor(3);
+			Button(va("|###sep%s", text), kButton_ResizeBar, ImVec2(2.0f * g_config.dpiScale, 0.0f));
 			if(ImGui::IsItemActive()) {
 				res.active = true;
 				*width += ImGui::GetIO().MouseDelta.x / scale;

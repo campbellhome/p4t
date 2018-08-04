@@ -48,6 +48,8 @@ namespace ImGui
 		kButton_Disabled,
 		kButton_TabActive,
 		kButton_TabInactive,
+		kButton_ColumnHeader,
+		kButton_ResizeBar,
 	};
 	void PushButtonColors(buttonType_e colors);
 	void PopButtonColors(void);
