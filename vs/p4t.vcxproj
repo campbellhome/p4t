@@ -109,6 +109,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\p4t\app.h" />
     <ClInclude Include="..\src\p4t\config.h" />
+    <ClInclude Include="..\src\p4t\imgui_themes.h" />
     <ClInclude Include="..\src\p4t\imgui_utils.h" />
     <ClInclude Include="..\src\p4t\json_generated.h" />
     <ClInclude Include="..\src\p4t\keys.h" />
@@ -143,6 +144,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\p4t\app.cpp" />
     <ClCompile Include="..\src\p4t\config.c" />
+    <ClCompile Include="..\src\p4t\imgui_themes.cpp" />
     <ClCompile Include="..\src\p4t\imgui_utils.cpp" />
     <ClCompile Include="..\src\p4t\json_generated.c" />
     <ClCompile Include="..\src\p4t\keys.c" />

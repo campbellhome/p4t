@@ -3,6 +3,7 @@
 
 #include "ui_config.h"
 #include "imgui_utils.h"
+#include "imgui_themes.h"
 
 #include "bb_array.h"
 #include "bb_string.h"

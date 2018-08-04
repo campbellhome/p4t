@@ -70,6 +70,9 @@
     <ClCompile Include="..\src\p4t\ui_icons.cpp">
       <Filter>Source\p4t</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\p4t\imgui_themes.cpp">
+      <Filter>Source\p4t</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\p4t\wrap_imgui.h">
@@ -136,6 +139,9 @@
       <Filter>Source\p4t</Filter>
     </ClInclude>
     <ClInclude Include="..\src\p4t\ui_icons.h">
+      <Filter>Source\p4t</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\p4t\imgui_themes.h">
       <Filter>Source\p4t</Filter>
     </ClInclude>
   </ItemGroup>
