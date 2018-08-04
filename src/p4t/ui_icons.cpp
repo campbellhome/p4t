@@ -2,8 +2,11 @@
 // MIT license (see License.txt)
 
 #include "ui_icons.h"
+#include "bb_common.h"
 #include "imgui_utils.h"
 #include "sdict.h"
+#include <math.h>
+#include <stdio.h>
 
 struct uiIconExtension {
 	const char *extension;
@@ -71,4 +74,23 @@ const char *UIIcons_ClassifyFile(const char *depotPath, const char *filetype)
 			return s_exts[i].icon;
 	}
 	return ICON_FK_FILE;
+}
+
+static char s_spacingBuffer[64];
+static int s_spacingFrame;
+static const char *s_spacingIcon;
+const char *UIIcons_GetIconSpaces(const char *icon)
+{
+	int currentFrame = ImGui::GetFrameCount();
+	if(s_spacingFrame == currentFrame && s_spacingIcon == icon) {
+		return s_spacingBuffer;
+	}
+	s_spacingFrame = currentFrame;
+	s_spacingIcon = icon;
+	float width = ImGui::CalcTextSize(icon).x;
+	float spaceWidth = ImGui::CalcTextSize(" ").x;
+	int numSpaces = (int)ceilf(width / spaceWidth);
+	bb_snprintf(s_spacingBuffer, sizeof(s_spacingBuffer), "%*s", numSpaces, " ");
+	s_spacingBuffer[sizeof(s_spacingBuffer) - 1] = '\0';
+	return s_spacingBuffer;
 }

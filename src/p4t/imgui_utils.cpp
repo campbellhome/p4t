@@ -257,30 +257,32 @@ namespace ImGui
 		EndChild();
 	}
 
-	void DrawColumnText(columnDrawData h, u32 columnIndex, const char *text, const char *end)
+	void PushColumnHeaderClipRect(float offset, float width)
 	{
 		float windowX = ImGui::GetWindowPos().x;
-		float offset = h.columnOffsets[columnIndex];
-		float width = h.columnWidths[columnIndex] * g_config.dpiScale;
 		float x1 = floorf(0.5f + windowX + offset - 1.0f);
 		float x2 = floorf(0.5f + windowX + offset + width - 1.0f);
+		PushClipRect(ImVec2(x1, -FLT_MAX), ImVec2(x2, +FLT_MAX), true);
+	}
+
+	void DrawColumnText(columnDrawData h, u32 columnIndex, const char *text, const char *end)
+	{
+		float offset = h.columnOffsets[columnIndex];
+		float width = h.columnWidths[columnIndex] * g_config.dpiScale;
+		PushColumnHeaderClipRect(offset, width);
 		if(columnIndex) {
 			ImGui::SameLine(offset);
 		}
-		ImGui::PushClipRect(ImVec2(x1, -FLT_MAX), ImVec2(x2, +FLT_MAX), true);
-		ImGui::TextUnformatted(text, end);
-		ImGui::PopClipRect();
+		TextUnformatted(text, end);
+		PopClipRect();
 	}
 
 	void DrawColumnHeaderText(float offset, float width, const char *text, const char *end)
 	{
-		float windowX = ImGui::GetWindowPos().x;
-		float x1 = floorf(0.5f + windowX + offset - 1.0f);
-		float x2 = floorf(0.5f + windowX + offset + width - 1.0f);
-		ImGui::SameLine(offset);
-		ImGui::PushClipRect(ImVec2(x1, -FLT_MAX), ImVec2(x2, +FLT_MAX), true);
-		ImGui::TextUnformatted(text, end);
-		ImGui::PopClipRect();
+		PushColumnHeaderClipRect(offset, width);
+		SameLine(offset);
+		TextUnformatted(text, end);
+		PopClipRect();
 	}
 
 	columnDrawResult DrawColumnHeader(columnDrawData h, u32 columnIndex)
@@ -432,7 +434,7 @@ namespace ImGui
 		ImVec2 windowPos = ImGui::GetWindowPos();
 		ImVec2 cursorPos = ImGui::GetCursorPos();
 		ImVec2 framePadding = ImGui::GetStyle().FramePadding;
-		ImVec2 textPos(windowPos.x + cursorPos.x + framePadding.x, windowPos.y + cursorPos.y - framePadding.y * 0.5f + 1);
+		ImVec2 textPos(windowPos.x + cursorPos.x + framePadding.x + GetScrollX(), windowPos.y + cursorPos.y - framePadding.y * 0.5f + 1 - GetScrollY());
 		return textPos;
 	}
 
@@ -442,7 +444,7 @@ namespace ImGui
 		ImVec2 cursorPos = ImGui::GetCursorPos();
 		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
 		float fontHeight = ImGui::CalcTextSize(nullptr).y;
-		ImVec2 textPos(windowPos.x + cursorPos.x, windowPos.y + cursorPos.y - lineHeight + fontHeight);
+		ImVec2 textPos(windowPos.x + cursorPos.x + GetScrollX(), windowPos.y + cursorPos.y - lineHeight + fontHeight - GetScrollY());
 		return textPos;
 	}
 

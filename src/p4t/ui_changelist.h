@@ -10,7 +10,6 @@ typedef struct tag_p4UIChangelist p4UIChangelist;
 typedef struct tag_uiChangelistFiles uiChangelistFiles;
 
 // for use in other UIs
-void UIChangelist_DrawSingleLine(sdict_t *cl);
 void UIChangelist_DrawInformation(sdict_t *cl);
 void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles = nullptr, float indent = 0.0f);
 void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles, b32 shelvedOpenByDefault, float indent = 0.0f);

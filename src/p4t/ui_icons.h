@@ -19,3 +19,4 @@
 #define COLOR_FILE_SHELVED ImColor(127, 106, 0)
 
 const char *UIIcons_ClassifyFile(const char *depotPath, const char *filetype = nullptr);
+const char *UIIcons_GetIconSpaces(const char *icon);

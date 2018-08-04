@@ -76,6 +76,7 @@ namespace ImGui
 		u32 numColumns;
 		u8 pad[4];
 	};
+	void PushColumnHeaderClipRect(float offset, float width);
 	void DrawColumnText(columnDrawData h, u32 columnIndex, const char *text, const char *end = nullptr);
 	void DrawColumnHeaderText(float offset, float width, const char *text, const char *end = nullptr);
 	columnDrawResult DrawColumnHeader(columnDrawData h, u32 columnIndex);
