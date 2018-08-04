@@ -341,9 +341,9 @@ void UIChangeset_Update(p4UIChangeset *uics)
 
 	uiChangesetConfig *config = uics->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
 
+	ImGui::columnDrawData data = {};
 	float columnOffsets[6] = {};
 	BB_CTASSERT(BB_ARRAYSIZE(columnOffsets) == BB_ARRAYSIZE(config->columnWidth) + 1);
-	ImGui::columnDrawData data = {};
 	data.columnWidths = config->columnWidth;
 	data.columnScales = s_columnScales;
 	data.columnOffsets = columnOffsets;
@@ -365,100 +365,108 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	}
 	ImGui::NewLine();
 
-	for(u32 i = 0; i < uics->count; ++i) {
-		p4UIChangesetEntry *e = uics->data + i;
-		sdict_t *c = p4_find_changelist_in_changeset(cs, e->changelist, sb_get(&e->client));
-		if(c) {
-			b32 expanded = ImGui::TreeNode(va("###node%u%s", e->changelist, sb_get(&e->client)));
-			if(expanded) {
-				ImGui::TreePop();
-			}
-			ImGui::SameLine();
-			ImGui::PushSelectableColors(e->selected, ImGui::IsActiveSelectables(uics));
-			ImGui::Selectable(va("###%u%s", e->changelist, sb_get(&e->client)), e->selected != 0);
-			ImGui::PopSelectableColors(e->selected, ImGui::IsActiveSelectables(uics));
-			if(ImGui::IsItemActive()) {
-				anyActive = true;
-			}
-			if(ImGui::IsItemHovered()) {
-				if(ImGui::IsItemClicked()) {
-					UIChangeset_HandleClick(uics, i);
+	if(ImGui::BeginChild("##changelists", ImVec2(0, 0), false, ImGuiWindowFlags_None)) {
+		for(u32 i = 0; i < uics->count; ++i) {
+			p4UIChangesetEntry *e = uics->data + i;
+			sdict_t *c = p4_find_changelist_in_changeset(cs, e->changelist, sb_get(&e->client));
+			if(c) {
+				b32 expanded = ImGui::TreeNode(va("###node%u%s", e->changelist, sb_get(&e->client)));
+				if(expanded) {
+					ImGui::TreePop();
 				}
-			}
-
-			ImGui::SameLine();
-			float iconWidth = ImGui::CalcTextSize(ICON_CHANGELIST).x;
-			ImVec2 pos = ImGui::GetIconPosForText();
-			pos.x -= iconWidth * 0.5f;
-			ImColor iconColor;
-			switch(p4_get_changelist_type(c)) {
-			case kChangelistType_PendingLocal:
-				iconColor = COLOR_PENDING_CHANGELIST_LOCAL;
-				break;
-			case kChangelistType_PendingOther:
-				iconColor = COLOR_PENDING_CHANGELIST_OTHER;
-				break;
-			case kChangelistType_Submitted:
-				iconColor = COLOR_SUBMITTED_CHANGELIST;
-				break;
-			}
-			//ImGui::DrawIconAtPos(pos, ICON_CHANGELIST, iconColor);
-			ImGui::TextColored(iconColor, "%s", ICON_CHANGELIST);
-			//ImGui::SameLine(1.0f * g_config.dpiScale, 0.0f);
-
-			ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
-			ImGui::GetStyle().ItemSpacing.x = -1 * ImGui::CalcTextSize(ICON_CHANGELIST).x * 0.5f; // -5.0f * g_config.dpiScale;
-			ImGui::SameLine();
-			ImGui::GetStyle().ItemSpacing = spacing;
-
-			for(u32 col = 0; col < data.numColumns; ++col) {
-				if(data.columnNames[col]) {
-					const changesetColumnField *field = p4.changesetColumnFields + col;
-					const char *value = sdict_find_safe(c, field->key);
-					if(field->time) {
-						u32 time = strtou32(value);
-						value = time ? Time_StringFromEpochTime(time) : "";
-					}
-					if(!col) {
-						value = va("  %s", value);
-					}
-					ImGui::DrawColumnText(data, col, value);
+				ImGui::SameLine();
+				ImGui::PushSelectableColors(e->selected, ImGui::IsActiveSelectables(uics));
+				ImGui::Selectable(va("###%u%s", e->changelist, sb_get(&e->client)), e->selected != 0);
+				ImGui::PopSelectableColors(e->selected, ImGui::IsActiveSelectables(uics));
+				if(ImGui::IsItemActive()) {
+					anyActive = true;
 				}
-			}
-			if(expanded) {
-				p4Changelist *cl = e->changelist ? p4_find_changelist(e->changelist) : p4_find_default_changelist(sb_get(&e->client));
-				if(cl) {
-					if(e->parity != cl->parity) {
-						e->parity = cl->parity;
-						p4_build_changelist_files(cl, &e->normalFiles, &e->shelvedFiles);
+				if(ImGui::IsItemHovered()) {
+					if(ImGui::IsItemClicked()) {
+						UIChangeset_HandleClick(uics, i);
 					}
+				}
 
-					UIChangelist_DrawFilesNoColumns(&e->normalFiles, cl, 30.0f * g_config.dpiScale);
-					if(e->shelvedFiles.count) {
-						ImGui::TextUnformatted("");
-						ImGui::SameLine(0.0f, 20.0f * g_config.dpiScale);
-						const char *title = va("Shelved File%s: %u", e->shelvedFiles.count == 1 ? "" : "s", e->shelvedFiles.count);
-						bool shelvedOpenByDefault = false;
-						bool shelvedExpanded = ImGui::TreeNodeEx(va("%s###shelved%u%s", title, cl->number, sdict_find_safe(&cl->normal, "client")), shelvedOpenByDefault ? ImGuiTreeNodeFlags_DefaultOpen : 0);
-						if(shelvedExpanded) {
-							UIChangelist_DrawFilesNoColumns(&e->shelvedFiles, cl, 40.0f * g_config.dpiScale);
-							ImGui::TreePop();
+				ImGui::SameLine();
+				float iconWidth = ImGui::CalcTextSize(ICON_CHANGELIST).x;
+				ImVec2 pos = ImGui::GetIconPosForText();
+				pos.x -= iconWidth * 0.5f;
+				ImColor iconColor;
+				switch(p4_get_changelist_type(c)) {
+				case kChangelistType_PendingLocal:
+					iconColor = COLOR_PENDING_CHANGELIST_LOCAL;
+					break;
+				case kChangelistType_PendingOther:
+					iconColor = COLOR_PENDING_CHANGELIST_OTHER;
+					break;
+				case kChangelistType_Submitted:
+					iconColor = COLOR_SUBMITTED_CHANGELIST;
+					break;
+				}
+				//ImGui::DrawIconAtPos(pos, ICON_CHANGELIST, iconColor);
+				ImGui::TextColored(iconColor, "%s", ICON_CHANGELIST);
+				//ImGui::SameLine(1.0f * g_config.dpiScale, 0.0f);
+
+				ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
+				ImGui::GetStyle().ItemSpacing.x = -1 * ImGui::CalcTextSize(ICON_CHANGELIST).x * 0.5f; // -5.0f * g_config.dpiScale;
+				ImGui::SameLine();
+				ImGui::GetStyle().ItemSpacing = spacing;
+
+				for(u32 col = 0; col < data.numColumns; ++col) {
+					if(data.columnNames[col]) {
+						const changesetColumnField *field = p4.changesetColumnFields + col;
+						const char *value = sdict_find_safe(c, field->key);
+						if(field->time) {
+							u32 time = strtou32(value);
+							value = time ? Time_StringFromEpochTime(time) : "";
+						}
+						if(!col) {
+							value = va("  %s", value);
+						}
+						if(col == data.numColumns - 1) {
+							ImGui::SameLine(data.columnOffsets[col]);
+							ImGui::TextUnformatted(value);
+						} else {
+							ImGui::DrawColumnText(data, col, value);
 						}
 					}
-					//UIChangelist_DrawFilesAndHeaders(cl, &e->normalFiles, &e->shelvedFiles, false, 20.0f * g_config.dpiScale);
-				} else {
-					if(!e->described) {
-						e->described = true;
-						if(e->changelist) {
-							p4_describe_changelist(e->changelist);
-						} else {
-							p4_describe_default_changelist(sb_get(&e->client));
+				}
+				if(expanded) {
+					p4Changelist *cl = e->changelist ? p4_find_changelist(e->changelist) : p4_find_default_changelist(sb_get(&e->client));
+					if(cl) {
+						if(e->parity != cl->parity) {
+							e->parity = cl->parity;
+							p4_build_changelist_files(cl, &e->normalFiles, &e->shelvedFiles);
+						}
+
+						UIChangelist_DrawFilesNoColumns(&e->normalFiles, cl, 30.0f * g_config.dpiScale);
+						if(e->shelvedFiles.count) {
+							ImGui::TextUnformatted("");
+							ImGui::SameLine(0.0f, 20.0f * g_config.dpiScale);
+							const char *title = va("Shelved File%s: %u", e->shelvedFiles.count == 1 ? "" : "s", e->shelvedFiles.count);
+							bool shelvedOpenByDefault = false;
+							bool shelvedExpanded = ImGui::TreeNodeEx(va("%s###shelved%u%s", title, cl->number, sdict_find_safe(&cl->normal, "client")), shelvedOpenByDefault ? ImGuiTreeNodeFlags_DefaultOpen : 0);
+							if(shelvedExpanded) {
+								UIChangelist_DrawFilesNoColumns(&e->shelvedFiles, cl, 40.0f * g_config.dpiScale);
+								ImGui::TreePop();
+							}
+						}
+						//UIChangelist_DrawFilesAndHeaders(cl, &e->normalFiles, &e->shelvedFiles, false, 20.0f * g_config.dpiScale);
+					} else {
+						if(!e->described) {
+							e->described = true;
+							if(e->changelist) {
+								p4_describe_changelist(e->changelist);
+							} else {
+								p4_describe_default_changelist(sb_get(&e->client));
+							}
 						}
 					}
 				}
 			}
 		}
 	}
+	ImGui::EndChild();
 
 	// Request more (older) changes if we have reached the end of our current set
 	float windowHeight = ImGui::GetWindowHeight();
