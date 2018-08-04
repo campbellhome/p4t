@@ -75,7 +75,7 @@ void UIMessageBox_Update()
 		title = "Untitled";
 	}
 
-	ImGuiWindowFlags_ flags = ImGuiWindowFlags_NoSavedSettings;
+	int flags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
 	if(!ImGui::BeginPopupModal(title, nullptr, flags)) {
 		s_activeFrames = 0;
 		ImGui::OpenPopup(title);

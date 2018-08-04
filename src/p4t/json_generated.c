@@ -162,6 +162,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.version = (u32)json_object_get_number(obj, "version");
 			dst.diff = json_deserialize_diffConfig_t(json_object_get_value(obj, "diff"));
 			dst.clientspec = json_deserialize_sb_t(json_object_get_value(obj, "clientspec"));
+			dst.colorscheme = json_deserialize_sb_t(json_object_get_value(obj, "colorscheme"));
 			dst.singleInstanceCheck = json_object_get_boolean(obj, "singleInstanceCheck");
 			dst.singleInstancePrompt = json_object_get_boolean(obj, "singleInstancePrompt");
 			dst.dpiAware = json_object_get_boolean(obj, "dpiAware");
@@ -313,6 +314,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_number(obj, "version", src->version);
 		json_object_set_value(obj, "diff", json_serialize_diffConfig_t(&src->diff));
 		json_object_set_value(obj, "clientspec", json_serialize_sb_t(&src->clientspec));
+		json_object_set_value(obj, "colorscheme", json_serialize_sb_t(&src->colorscheme));
 		json_object_set_boolean(obj, "singleInstanceCheck", src->singleInstanceCheck);
 		json_object_set_boolean(obj, "singleInstancePrompt", src->singleInstancePrompt);
 		json_object_set_boolean(obj, "dpiAware", src->dpiAware);

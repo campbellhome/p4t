@@ -214,11 +214,11 @@ void UIChangelist_DrawInformation(sdict_t *cl)
 	const float normal = 0.4f;
 	const float hovered = 0.8f;
 	const float active = 0.8f;
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
+	//ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
+	//ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
+	//ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
 	ImGui::Button("-###sepDesc", ImVec2(ImGui::GetContentRegionAvailWidth(), 2.0f * g_config.dpiScale));
-	ImGui::PopStyleColor(3);
+	//ImGui::PopStyleColor(3);
 	if(ImGui::IsItemActive()) {
 		g_config.uiChangelist.descHeight += ImGui::GetIO().MouseDelta.y / scale;
 	}

@@ -244,13 +244,13 @@ void App_Update()
 			}
 			ImGui::EndMenu();
 		}
-		if(ImGui::BeginMenu("Help")) {
-			if(ImGui::MenuItem("Demo")) {
-				BB_LOG("UI::Menu::Demo", "s_showDemo -> %d", !s_showDemo);
-				s_showDemo = !s_showDemo;
-			}
-			ImGui::EndMenu();
-		}
+		//if(ImGui::BeginMenu("Help")) {
+		//	if(ImGui::MenuItem("Demo")) {
+		//		BB_LOG("UI::Menu::Demo", "s_showDemo -> %d", !s_showDemo);
+		//		s_showDemo = !s_showDemo;
+		//	}
+		//	ImGui::EndMenu();
+		//}
 		UIClientspec_MenuBar();
 
 		ImGui::EndMainMenuBar();
@@ -259,36 +259,34 @@ void App_Update()
 	if(s_showDemo) {
 		ImGui::ShowTestWindow();
 	} else {
-		ImGui::PushStyleColor(ImGuiCol_TitleBgActive, (ImVec4)ImColor(63, 63, 70, 255)); // VS Dark Active Tab
-		ImGui::PushStyleColor(ImGuiCol_TitleBg, (ImVec4)ImColor(45, 45, 48, 255));       // VS Dark Inactive Tab
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, (ImVec4)ImColor(42, 42, 44, 255));      // VS Dark Output Window
-
-		float startY = ImGui::GetItemsLineHeightWithSpacing();
+		float startY = ImGui::GetFrameHeight();
 		ImGuiIO &io = ImGui::GetIO();
 		ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiSetCond_Always);
 		ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
 		bool open = true;
+		ImGuiStyle &style = ImGui::GetStyle();
+		float oldWindowRounding = style.WindowRounding;
+		style.WindowRounding = 0.0f;
 		if(ImGui::Begin("mainwindow", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
-			UITabs_Update();
+			if(UIConfig_IsOpen()) {
+				UIConfig_Update(&g_config);
+			} else {
+				UITabs_Update();
 
-			if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
-				p4UIChangelist *uicl = p4_add_uichangelist();
-				if(uicl) {
-					UITabs_AddTab(kTabType_Changelist, uicl->id);
-					UIChangelist_EnterChangelist(uicl);
+				if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
+					p4UIChangelist *uicl = p4_add_uichangelist();
+					if(uicl) {
+						UITabs_AddTab(kTabType_Changelist, uicl->id);
+						UIChangelist_EnterChangelist(uicl);
+					}
 				}
 			}
 		}
 		ImGui::End();
+		style.WindowRounding = oldWindowRounding;
 
 		UIOutput_Update();
 		UIMessageBox_Update();
-
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, (ImVec4)ImColor(42, 42, 44, 255)); // VS Dark Output Window
-		UIConfig_Update(&g_config);
-		ImGui::PopStyleColor();
-
-		ImGui::PopStyleColor(3);
 
 		if(globals.appSpecific.type == kAppType_ChangelistViewer && !p4.uiChangelists.count) {
 			App_RequestShutdown();

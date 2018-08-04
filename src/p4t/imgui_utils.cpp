@@ -12,6 +12,17 @@ namespace ImGui
 {
 	int s_tabCount;
 
+	void StyleColorsVSDark(ImGuiStyle *dst)
+	{
+		StyleColorsDark(dst);
+		ImGuiStyle *style = dst ? dst : &ImGui::GetStyle();
+		ImVec4 *colors = style->Colors;
+		colors[ImGuiCol_TitleBgActive] = ImColor(63, 63, 70, 255); // VS Dark Active Tab
+		colors[ImGuiCol_TitleBg] = ImColor(45, 45, 48, 255);       // VS Dark Inactive Tab
+		colors[ImGuiCol_WindowBg] = ImColor(42, 42, 44, 255);      // VS Dark Output Window
+		colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+	}
+
 	bool Checkbox(const char *label, b8 *v)
 	{
 		bool b = *v != 0;

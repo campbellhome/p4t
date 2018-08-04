@@ -39,16 +39,34 @@ bool UIConfig_IsOpen()
 	return s_configOpen;
 }
 
+static const char *s_colorschemes[] = {
+	"ImGui Dark",
+	"Light",
+	"Classic",
+	"Visual Studio Dark",
+};
+
+void UIConfig_ApplyColorscheme(config_t *config)
+{
+	if(!config) {
+		config = &g_config;
+	}
+	const char *colorscheme = sb_get(&config->colorscheme);
+	if(!strcmp(colorscheme, "Visual Studio Dark")) {
+		ImGui::StyleColorsVSDark();
+	} else if(!strcmp(colorscheme, "Classic")) {
+		ImGui::StyleColorsClassic();
+	} else if(!strcmp(colorscheme, "Light")) {
+		ImGui::StyleColorsLight();
+	} else /*if(!strcmp(colorscheme, "Dark"))*/ {
+		ImGui::StyleColorsDark();
+		// modal background for default Dark theme looks like a non-responding Window
+		ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+	}
+}
+
 void UIConfig_Update(config_t *config)
 {
-	if(!s_configOpen)
-		return;
-	//ImGui::SetNextWindowContentWidth(580.0f);
-	//if(s_configNeedFocus) {
-	//	ImGui::SetNextWindowFocus();
-	//	s_configNeedFocus = false;
-	//}
-
 	float startY = ImGui::GetItemsLineHeightWithSpacing();
 	ImGuiIO &io = ImGui::GetIO();
 	SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiSetCond_Always);
@@ -59,6 +77,21 @@ void UIConfig_Update(config_t *config)
 			InputFloat("Double-click seconds", &s_uiConfig->doubleClickSeconds);
 			Checkbox("Single instance check", &s_uiConfig->singleInstanceCheck);
 			Checkbox("Single instance prompt", &s_uiConfig->singleInstancePrompt);
+
+			int colorschemeIndex = -1;
+			for(int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i) {
+				if(!strcmp(sb_get(&s_uiConfig->colorscheme), s_colorschemes[i])) {
+					colorschemeIndex = i;
+					break;
+				}
+			}
+			if(ImGui::Combo("Colorscheme", &colorschemeIndex, s_colorschemes, BB_ARRAYSIZE(s_colorschemes))) {
+				if(colorschemeIndex >= 0 && colorschemeIndex < BB_ARRAYSIZE(s_colorschemes)) {
+					sb_reset(&s_uiConfig->colorscheme);
+					sb_append(&s_uiConfig->colorscheme, s_colorschemes[colorschemeIndex]);
+					UIConfig_ApplyColorscheme(s_uiConfig);
+				}
+			}
 		}
 		if(ImGui::CollapsingHeader("Font", ImGuiTreeNodeFlags_DefaultOpen)) {
 			Checkbox("DPI Aware", &s_uiConfig->dpiAware);
@@ -136,6 +169,7 @@ void UIConfig_Update(config_t *config)
 		SameLine();
 		if(Button("Cancel")) {
 			s_configOpen = false;
+			UIConfig_ApplyColorscheme();
 		}
 	}
 	End();

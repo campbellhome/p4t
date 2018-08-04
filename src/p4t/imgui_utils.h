@@ -10,6 +10,8 @@ typedef struct sb_s sb_t;
 
 namespace ImGui
 {
+	void StyleColorsVSDark(ImGuiStyle *dst = nullptr); // Visual Studio Dark style
+
 	const ImGuiTreeNodeFlags DefaultOpenTreeNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
 	                                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
 	                                                    ImGuiTreeNodeFlags_DefaultOpen;

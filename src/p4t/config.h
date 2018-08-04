@@ -80,6 +80,7 @@ AUTOJSON typedef struct config_s {
 	u32 version;
 	diffConfig_t diff;
 	sb_t clientspec;
+	sb_t colorscheme;
 	b32 singleInstanceCheck;
 	b32 singleInstancePrompt;
 	b32 dpiAware;

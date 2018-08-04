@@ -5,8 +5,10 @@
 
 #include "app.h"
 #include "config.h"
+#include "imgui_utils.h"
 #include "keys.h"
 #include "thirdparty/imgui/misc/fonts/forkawesome-webfont.h"
+#include "ui_config.h"
 #include "time_utils.h"
 #include "va.h"
 
@@ -83,6 +85,8 @@ static void UpdateDpiDependentStyle()
 	s.DisplayWindowPadding.y *= g_config.dpiScale;
 	s.DisplaySafeAreaPadding.x *= g_config.dpiScale;
 	s.DisplaySafeAreaPadding.y *= g_config.dpiScale;
+
+	UIConfig_ApplyColorscheme();
 }
 
 static void MergeIconFont(float fontSize)
@@ -314,9 +318,6 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	// Setup ImGui binding
 	ImGui_ImplWin32_Init(globals.hwnd);
 	ImGui_ImplDX9_Init(g_pd3dDevice);
-
-	//ImGui::StyleColorsDark();
-	ImGui::StyleColorsClassic();
 
 	// Load Fonts
 	// (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
