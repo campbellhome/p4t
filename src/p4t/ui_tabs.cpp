@@ -71,7 +71,7 @@ void UITabs_Update(tabs *ts)
 					b32 pending = !strcmp(sdict_find_safe(&cl->normal, "status"), "pending");
 					color = (pending) ? COLOR_PENDING_CHANGELIST_LOCAL : COLOR_SUBMITTED_CHANGELIST;
 				}
-				if(ImGui::TabButtonIconColored(ICON_CHANGELIST, color, va("    %s ###changelist%u", title, uicl->id), &ts->activeTab, i)) {
+				if(ImGui::TabButtonIconColored(ICON_CHANGELIST, color, va("%s%s ###changelist%u", UIIcons_GetIconSpaces(ICON_CHANGELIST), title, uicl->id), &ts->activeTab, i)) {
 					UIChangelist_SetWindowTitle(uicl);
 				}
 				if(ImGui::BeginContextMenu(va("context%u", uicl->id))) {
@@ -89,7 +89,7 @@ void UITabs_Update(tabs *ts)
 			if(uics) {
 				const char *title = uics->pending ? "Pending Changelists" : "Submitted Changelists";
 				ImColor color = (uics->pending) ? COLOR_PENDING_CHANGELIST_LOCAL : COLOR_SUBMITTED_CHANGELIST;
-				if(ImGui::TabButtonIconColored(ICON_CHANGELIST, color, va("    %s ###changeset%u", title, uics->id), &ts->activeTab, i)) {
+				if(ImGui::TabButtonIconColored(ICON_CHANGELIST, color, va("%s%s ###changeset%u", UIIcons_GetIconSpaces(ICON_CHANGELIST), title, uics->id), &ts->activeTab, i)) {
 					UIChangeset_SetWindowTitle(uics);
 				}
 			}
