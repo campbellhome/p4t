@@ -236,7 +236,7 @@ static const char *s_columnNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_columnNames) == BB_ARRAYSIZE(g_config.uiChangelist.columnWidth));
 
-b32 UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file, u32 index, uiChangelistFiles *otherFiles)
+b32 UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file, u32 index)
 {
 	b32 anyActive = false;
 	ImGui::PushSelectableColors(file.selected, ImGui::IsActiveSelectables(files));
@@ -249,9 +249,6 @@ b32 UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file
 		if(ImGui::IsItemClicked()) {
 			anyActive = true;
 			UIChangelist_HandleClick(files, index);
-			if(otherFiles) {
-				UIChangelist_Files_ClearSelection(otherFiles);
-			}
 		}
 		if(ImGui::BeginContextMenu(va("context_%p_%d", files, index))) {
 			anyActive = true;
@@ -269,6 +266,8 @@ void UIChangelist_FinishFiles(uiChangelistFiles *files, p4Changelist *cl, b32 an
 {
 	if(anyActive) {
 		ImGui::SetActiveSelectables(files);
+	} else if(ImGui::IsAnyItemActive() && ImGui::IsActiveSelectables(files)) {
+		ImGui::SetActiveSelectables(nullptr);
 	}
 
 	if(ImGui::IsActiveSelectables(files)) {
@@ -285,7 +284,7 @@ void UIChangelist_FinishFiles(uiChangelistFiles *files, p4Changelist *cl, b32 an
 	}
 }
 
-void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles, float indent)
+void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, float indent)
 {
 	// Columns: File Name, Revision, Action, Filetype, In Folder
 
@@ -319,7 +318,7 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 	for(u32 i = 0; i < files->count; ++i) {
 		float start = ImGui::GetIconPosForText().x - ImGui::GetStyle().ItemSpacing.x;
 		uiChangelistFile &file = files->data[i];
-		if(UIChangelist_FileSelectable(files, file, i, otherFiles)) {
+		if(UIChangelist_FileSelectable(files, file, i)) {
 			anyActive = true;
 		}
 
@@ -340,7 +339,7 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 	ImGui::PopID();
 }
 
-void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl, uiChangelistFiles *otherFiles, float indent)
+void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl, float indent)
 {
 	ImGui::PushID(files);
 
@@ -351,7 +350,7 @@ void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl,
 	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile &file = files->data[i];
-		if(UIChangelist_FileSelectable(files, file, i, otherFiles)) {
+		if(UIChangelist_FileSelectable(files, file, i)) {
 			anyActive = true;
 		}
 
@@ -427,7 +426,7 @@ void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *norma
 	ImGui::SameLine(0.0f, indent);
 	b32 expanded = ImGui::TreeNodeEx(va("%s###files%u%s", title, cl->number, sdict_find_safe(&cl->normal, "client")), ImGuiTreeNodeFlags_DefaultOpen);
 	if(expanded) {
-		UIChangelist_DrawFiles(normalFiles, cl, shelvedFiles, indent);
+		UIChangelist_DrawFiles(normalFiles, cl, indent);
 		ImGui::TreePop();
 	}
 	if(shelvedFiles->count) {
@@ -436,7 +435,7 @@ void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *norma
 		title = va("Shelved File%s: %u", shelvedFiles->count == 1 ? "" : "s", shelvedFiles->count);
 		expanded = ImGui::TreeNodeEx(va("%s###shelved%u%s", title, cl->number, sdict_find_safe(&cl->normal, "client")), shelvedOpenByDefault ? ImGuiTreeNodeFlags_DefaultOpen : 0);
 		if(expanded) {
-			UIChangelist_DrawFiles(shelvedFiles, cl, normalFiles, indent);
+			UIChangelist_DrawFiles(shelvedFiles, cl, indent);
 			ImGui::TreePop();
 		}
 	}

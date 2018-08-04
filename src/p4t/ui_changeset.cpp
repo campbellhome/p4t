@@ -429,7 +429,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 						p4_build_changelist_files(cl, &e->normalFiles, &e->shelvedFiles);
 					}
 
-					UIChangelist_DrawFilesNoColumns(&e->normalFiles, cl, &e->shelvedFiles, 30.0f * g_config.dpiScale);
+					UIChangelist_DrawFilesNoColumns(&e->normalFiles, cl, 30.0f * g_config.dpiScale);
 					if(e->shelvedFiles.count) {
 						ImGui::TextUnformatted("");
 						ImGui::SameLine(0.0f, 20.0f * g_config.dpiScale);
@@ -437,7 +437,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 						bool shelvedOpenByDefault = false;
 						bool shelvedExpanded = ImGui::TreeNodeEx(va("%s###shelved%u%s", title, cl->number, sdict_find_safe(&cl->normal, "client")), shelvedOpenByDefault ? ImGuiTreeNodeFlags_DefaultOpen : 0);
 						if(shelvedExpanded) {
-							UIChangelist_DrawFilesNoColumns(&e->shelvedFiles, cl, &e->normalFiles, 40.0f * g_config.dpiScale);
+							UIChangelist_DrawFilesNoColumns(&e->shelvedFiles, cl, 40.0f * g_config.dpiScale);
 							ImGui::TreePop();
 						}
 					}
