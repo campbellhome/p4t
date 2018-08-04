@@ -238,17 +238,17 @@ BB_CTASSERT(BB_ARRAYSIZE(s_columnNames) == BB_ARRAYSIZE(g_config.uiChangelist.co
 
 void UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file, u32 index, uiChangelistFiles *otherFiles)
 {
-		ImGui::PushSelectableColors(file.selected, files->active);
-		ImGui::Selectable(va("###%s", file.fields.field.filename), file.selected != 0);
-		ImGui::PopSelectableColors(file.selected, files->active);
-		if(ImGui::IsItemHovered()) {
-			if(ImGui::IsItemClicked()) {
-				UIChangelist_HandleClick(files, index);
-				if(otherFiles) {
-					UIChangelist_Files_ClearSelection(otherFiles);
-				}
+	ImGui::PushSelectableColors(file.selected, files->active);
+	ImGui::Selectable(va("###%s", file.fields.field.filename), file.selected != 0);
+	ImGui::PopSelectableColors(file.selected, files->active);
+	if(ImGui::IsItemHovered()) {
+		if(ImGui::IsItemClicked()) {
+			UIChangelist_HandleClick(files, index);
+			if(otherFiles) {
+				UIChangelist_Files_ClearSelection(otherFiles);
 			}
 		}
+	}
 }
 
 void UIChangelist_FinishFiles(uiChangelistFiles *files, p4Changelist *cl, b32 anyActive)
