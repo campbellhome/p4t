@@ -236,27 +236,41 @@ static const char *s_columnNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_columnNames) == BB_ARRAYSIZE(g_config.uiChangelist.columnWidth));
 
-void UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file, u32 index, uiChangelistFiles *otherFiles)
+b32 UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file, u32 index, uiChangelistFiles *otherFiles)
 {
+	b32 anyActive = false;
 	ImGui::PushSelectableColors(file.selected, files->active);
 	ImGui::Selectable(va("###%s", file.fields.field.filename), file.selected != 0);
 	ImGui::PopSelectableColors(file.selected, files->active);
+	if(ImGui::IsItemActive()) {
+		anyActive = true;
+	}
 	if(ImGui::IsItemHovered()) {
 		if(ImGui::IsItemClicked()) {
+			anyActive = true;
 			UIChangelist_HandleClick(files, index);
 			if(otherFiles) {
 				UIChangelist_Files_ClearSelection(otherFiles);
 			}
 		}
+		if(ImGui::BeginContextMenu(va("context_%p_%d", files, index))) {
+			anyActive = true;
+			if(!file.selected) {
+				UIChangelist_Files_ClearSelection(files);
+				UIChangelist_Logs_AddSelection(files, index);
+			}
+			ImGui::EndContextMenu();
+		}
 	}
+	return anyActive;
 }
 
 void UIChangelist_FinishFiles(uiChangelistFiles *files, p4Changelist *cl, b32 anyActive)
 {
 	if(anyActive) {
 		files->active = true;
-	} else if(ImGui::IsAnyItemActive()) {
-		files->active = false;
+		//} else if(ImGui::IsAnyItemActive()) {
+		//	files->active = false;
 	}
 
 	if(files->active) {
@@ -307,8 +321,7 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, uiChange
 	for(u32 i = 0; i < files->count; ++i) {
 		float start = ImGui::GetIconPosForText().x - ImGui::GetStyle().ItemSpacing.x;
 		uiChangelistFile &file = files->data[i];
-		UIChangelist_FileSelectable(files, file, i, otherFiles);
-		if(ImGui::IsItemActive()) {
+		if(UIChangelist_FileSelectable(files, file, i, otherFiles)) {
 			anyActive = true;
 		}
 
@@ -340,8 +353,7 @@ void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl,
 	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile &file = files->data[i];
-		UIChangelist_FileSelectable(files, file, i, otherFiles);
-		if(ImGui::IsItemActive()) {
+		if(UIChangelist_FileSelectable(files, file, i, otherFiles)) {
 			anyActive = true;
 		}
 
