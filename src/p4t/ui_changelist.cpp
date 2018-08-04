@@ -332,7 +332,6 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, float in
 		ImGui::DrawColumnHeaderText(columnOffsets[3], g_config.uiChangelist.columnWidth[3] * g_config.dpiScale + itemPad, file.fields.str[3]);
 		ImGui::DrawColumnHeaderText(columnOffsets[4], g_config.uiChangelist.columnWidth[4] * g_config.dpiScale + itemPad, file.fields.str[4], strrchr(file.fields.str[4], '/'));
 	}
-	IMGUI_ONCE_UPON_A_FRAME ImGui::SetTooltip("mouse: %.1f %.1f   window: %.1f", ImGui::GetMousePos().x, ImGui::GetMousePos().y, ImGui::GetWindowPos().x);
 
 	UIChangelist_FinishFiles(files, cl, anyActive);
 
