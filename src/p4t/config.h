@@ -71,6 +71,12 @@ AUTOJSON typedef struct tag_appTypeConfig {
 	u32 version;
 } appTypeConfig;
 
+AUTOJSON typedef struct tag_p4Config {
+	sb_t clientspec;
+	u32 changelistBlockSize;
+	u8 pad[4];
+} p4Config;
+
 AUTOJSON typedef struct config_s {
 	fontConfig_t logFontConfig;
 	fontConfig_t uiFontConfig;
@@ -79,8 +85,8 @@ AUTOJSON typedef struct config_s {
 	uiChangesetConfig uiSubmittedChangesets;
 	u32 version;
 	diffConfig_t diff;
-	sb_t clientspec;
 	sb_t colorscheme;
+	p4Config p4;
 	b32 singleInstanceCheck;
 	b32 singleInstancePrompt;
 	b32 dpiAware;
@@ -89,7 +95,8 @@ AUTOJSON typedef struct config_s {
 	u8 pad[4];
 } config_t;
 
-enum { kConfigVersion = 2, kConfigAppTypeVersion = 1 };
+enum { kConfigVersion = 3,
+	   kConfigAppTypeVersion = 1 };
 extern config_t g_config;
 extern appTypeConfig g_apptypeConfig;
 

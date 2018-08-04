@@ -147,6 +147,23 @@ appTypeConfig json_deserialize_appTypeConfig(JSON_Value *src)
 	return dst;
 }
 
+p4Config json_deserialize_p4Config(JSON_Value *src)
+{
+	p4Config dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.clientspec = json_deserialize_sb_t(json_object_get_value(obj, "clientspec"));
+			dst.changelistBlockSize = (u32)json_object_get_number(obj, "changelistBlockSize");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
+		}
+	}
+	return dst;
+}
+
 config_t json_deserialize_config_t(JSON_Value *src)
 {
 	config_t dst;
@@ -161,8 +178,8 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.uiSubmittedChangesets = json_deserialize_uiChangesetConfig(json_object_get_value(obj, "uiSubmittedChangesets"));
 			dst.version = (u32)json_object_get_number(obj, "version");
 			dst.diff = json_deserialize_diffConfig_t(json_object_get_value(obj, "diff"));
-			dst.clientspec = json_deserialize_sb_t(json_object_get_value(obj, "clientspec"));
 			dst.colorscheme = json_deserialize_sb_t(json_object_get_value(obj, "colorscheme"));
+			dst.p4 = json_deserialize_p4Config(json_object_get_value(obj, "p4"));
 			dst.singleInstanceCheck = json_object_get_boolean(obj, "singleInstanceCheck");
 			dst.singleInstancePrompt = json_object_get_boolean(obj, "singleInstancePrompt");
 			dst.dpiAware = json_object_get_boolean(obj, "dpiAware");
@@ -301,6 +318,20 @@ JSON_Value *json_serialize_appTypeConfig(const appTypeConfig *src)
 	return val;
 }
 
+JSON_Value *json_serialize_p4Config(const p4Config *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "clientspec", json_serialize_sb_t(&src->clientspec));
+		json_object_set_number(obj, "changelistBlockSize", src->changelistBlockSize);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_config_t(const config_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -313,8 +344,8 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "uiSubmittedChangesets", json_serialize_uiChangesetConfig(&src->uiSubmittedChangesets));
 		json_object_set_number(obj, "version", src->version);
 		json_object_set_value(obj, "diff", json_serialize_diffConfig_t(&src->diff));
-		json_object_set_value(obj, "clientspec", json_serialize_sb_t(&src->clientspec));
 		json_object_set_value(obj, "colorscheme", json_serialize_sb_t(&src->colorscheme));
+		json_object_set_value(obj, "p4", json_serialize_p4Config(&src->p4));
 		json_object_set_boolean(obj, "singleInstanceCheck", src->singleInstanceCheck);
 		json_object_set_boolean(obj, "singleInstancePrompt", src->singleInstancePrompt);
 		json_object_set_boolean(obj, "dpiAware", src->dpiAware);

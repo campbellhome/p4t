@@ -41,8 +41,8 @@ config_t *config_clone(config_t *config)
 	sb_append(&target->diff.path, sb_get(&config->diff.path));
 	sb_init(&target->diff.args);
 	sb_append(&target->diff.args, sb_get(&config->diff.args));
-	sb_init(&target->clientspec);
-	sb_append(&target->clientspec, sb_get(&config->clientspec));
+	sb_init(&target->p4.clientspec);
+	sb_append(&target->p4.clientspec, sb_get(&config->p4.clientspec));
 	sb_init(&target->colorscheme);
 	sb_append(&target->colorscheme, sb_get(&config->colorscheme));
 	return target;
@@ -54,7 +54,7 @@ void config_reset(config_t *config)
 	sb_reset(&config->uiFontConfig.path);
 	sb_reset(&config->diff.path);
 	sb_reset(&config->diff.args);
-	sb_reset(&config->clientspec);
+	sb_reset(&config->p4.clientspec);
 	sb_reset(&config->colorscheme);
 }
 
@@ -95,6 +95,9 @@ b32 config_read(config_t *config)
 	}
 	if(config->version < 2) {
 		sb_append(&config->diff.args, "%1 %2");
+	}
+	if(config->version < 3) {
+		config->p4.changelistBlockSize = 1000;
 	}
 	config->version = kConfigVersion;
 	if(!globals.appSpecific.allowSingleInstance) {

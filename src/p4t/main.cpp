@@ -5,10 +5,10 @@
 
 #include "app.h"
 #include "config.h"
+#include "imgui_themes.h"
 #include "imgui_utils.h"
 #include "keys.h"
 #include "thirdparty/imgui/misc/fonts/forkawesome-webfont.h"
-#include "ui_config.h"
 #include "time_utils.h"
 #include "va.h"
 
@@ -35,7 +35,6 @@ static D3DPRESENT_PARAMETERS g_d3dpp;
 static bool g_hasFocus;
 static bool g_trackingMouse;
 static int g_dpi = USER_DEFAULT_SCREEN_DPI;
-static ImGuiStyle g_defaultStyle;
 
 extern "C" b32 App_HasFocus(void)
 {
@@ -54,39 +53,6 @@ static void ResetD3D()
 	IM_ASSERT(hr != D3DERR_INVALIDCALL);
 #endif
 	ImGui_ImplDX9_CreateDeviceObjects();
-}
-
-static void UpdateDpiDependentStyle()
-{
-	ImGuiStyle &s = ImGui::GetStyle();
-	s = g_defaultStyle;
-	s.WindowPadding.x *= g_config.dpiScale;
-	s.WindowPadding.y *= g_config.dpiScale;
-	s.WindowMinSize.x *= g_config.dpiScale;
-	s.WindowMinSize.y *= g_config.dpiScale;
-	s.ChildRounding *= g_config.dpiScale;
-	s.PopupRounding *= g_config.dpiScale;
-	s.FramePadding.x *= g_config.dpiScale;
-	s.FramePadding.y *= g_config.dpiScale;
-	s.FrameRounding *= g_config.dpiScale;
-	s.ItemSpacing.x *= g_config.dpiScale;
-	s.ItemSpacing.y *= g_config.dpiScale;
-	s.ItemInnerSpacing.x *= g_config.dpiScale;
-	s.ItemInnerSpacing.y *= g_config.dpiScale;
-	s.TouchExtraPadding.x *= g_config.dpiScale;
-	s.TouchExtraPadding.y *= g_config.dpiScale;
-	s.IndentSpacing *= g_config.dpiScale;
-	s.ColumnsMinSpacing *= g_config.dpiScale;
-	s.ScrollbarSize *= g_config.dpiScale;
-	s.ScrollbarRounding *= g_config.dpiScale;
-	s.GrabMinSize *= g_config.dpiScale;
-	s.GrabRounding *= g_config.dpiScale;
-	s.DisplayWindowPadding.x *= g_config.dpiScale;
-	s.DisplayWindowPadding.y *= g_config.dpiScale;
-	s.DisplaySafeAreaPadding.x *= g_config.dpiScale;
-	s.DisplaySafeAreaPadding.y *= g_config.dpiScale;
-
-	UIConfig_ApplyColorscheme();
 }
 
 static void MergeIconFont(float fontSize)
@@ -127,7 +93,7 @@ void UpdateDpiDependentResources()
 {
 	InitFonts();
 	ResetD3D();
-	UpdateDpiDependentStyle();
+	ImGui::Style_Apply();
 }
 
 bool g_needUpdateDpiDependentResources;
@@ -174,7 +140,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		EnableNonClientDpiScalingShim(hWnd);
 		g_dpi = (int)GetDpiForWindowShim(hWnd);
 		g_config.dpiScale = g_dpi / (float)USER_DEFAULT_SCREEN_DPI;
-		UpdateDpiDependentStyle();
+		ImGui::Style_Apply();
 		break;
 	case WM_DPICHANGED: {
 		g_dpi = HIWORD(wParam);
@@ -286,7 +252,6 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	g_defaultStyle = ImGui::GetStyle();
 
 	if(!App_Init(CommandLine)) {
 		ImGui::DestroyContext();

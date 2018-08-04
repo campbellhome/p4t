@@ -37,7 +37,7 @@ const char *p4_exe(void)
 
 const char *p4_dir(void)
 {
-	const char *configClientspec = sb_get(&g_config.clientspec);
+	const char *configClientspec = sb_get(&g_config.p4.clientspec);
 	for(u32 i = 0; i < p4.localClients.count; ++i) {
 		if(!strcmp(configClientspec, sdict_find_safe(p4.localClients.data + i, "client"))) {
 			return sdict_find_safe(p4.localClients.data + i, "Root");
@@ -53,7 +53,7 @@ const char *p4_dir(void)
 
 const char *p4_clientspec(void)
 {
-	const char *configClientspec = sb_get(&g_config.clientspec);
+	const char *configClientspec = sb_get(&g_config.p4.clientspec);
 	for(u32 i = 0; i < p4.localClients.count; ++i) {
 		if(!strcmp(configClientspec, sdict_find_safe(p4.localClients.data + i, "client"))) {
 			return configClientspec;
@@ -250,11 +250,6 @@ static void task_p4clients_statechanged(task *_t)
 				}
 			}
 		}
-
-		if(globals.appSpecific.type == kAppType_Normal) {
-			p4_add_changeset(true);
-			p4_add_changeset(false);
-		}
 	}
 }
 static void task_p4users_statechanged(task *_t)
@@ -312,16 +307,6 @@ void p4_info(void)
 	task_queue(setTask);
 }
 
-p4Changeset *p4_find_changeset(b32 pending)
-{
-	for(u32 i = 0; i < p4.changesets.count; ++i) {
-		p4Changeset *cs = p4.changesets.data + i;
-		if(cs->pending == pending)
-			return cs;
-	}
-	return NULL;
-}
-
 void p4_build_default_changelist(sdict_t *sd, const char *owner, const char *client)
 {
 	sdict_add_raw(sd, "code", "stat");
@@ -335,70 +320,178 @@ void p4_build_default_changelist(sdict_t *sd, const char *owner, const char *cli
 	sdict_add_raw(sd, "desc_oneline", "");
 }
 
-static void task_p4changes_statechanged(task *t)
+p4Changeset *p4_find_or_add_changeset(b32 pending)
 {
-	task_process_statechanged(t);
-	if(t->state == kTaskState_Succeeded) {
-		b32 pending = strtos32(sdict_find_safe(&t->extraData, "pending"));
-		p4Changeset *cs = p4_find_changeset(pending);
-		if(cs) {
-			++cs->parity;
-			p4_reset_changeset(cs);
-			task_p4 *p = (task_p4 *)t->userdata;
-			sdicts_move(&cs->changelists, &p->dicts);
-			for(u32 i = 0; i < cs->changelists.count; ++i) {
-				sdict_t *sd = cs->changelists.data + i;
-				const char *desc = sdict_find(sd, "desc");
-				if(desc) {
-					char ch;
-					sb_t sb = { 0 };
-					while((ch = *desc++) != '\0') {
-						if(ch == '\r') {
-							// do nothing
-						} else if(ch == '\n' || ch == '\t') {
-							sb_append_char(&sb, ' ');
-						} else {
-							sb_append_char(&sb, ch);
-						}
-					}
-					sdict_add_raw(sd, "desc_oneline", sb_get(&sb));
-					sb_reset(&sb);
-				}
-			}
-			if(pending) {
-				for(u32 clientIdx = 0; clientIdx < p4.allClients.count; ++clientIdx) {
-					sdict_t *clientDict = p4.allClients.data + clientIdx;
-					const char *client = sdict_find(clientDict, "client");
-					const char *owner = sdict_find(clientDict, "Owner");
-					if(client && owner) {
-						if(bba_add(cs->changelists, 1)) {
-							sdict_t *sd = &bba_last(cs->changelists);
-							p4_build_default_changelist(sd, owner, client);
-						}
-					}
-				}
-			}
-		}
+	for(u32 i = 0; i < p4.changesets.count; ++i) {
+		p4Changeset *cs = p4.changesets.data + i;
+		if(cs->pending == pending)
+			return cs;
 	}
+	return p4_add_changeset(pending);
 }
+
 p4Changeset *p4_add_changeset(b32 pending)
 {
 	if(bba_add(p4.changesets, 1)) {
 		p4Changeset *cs = &bba_last(p4.changesets);
 		cs->pending = pending;
-		task *t = task_queue(p4_task_create(task_p4changes_statechanged, p4_dir(), NULL, "\"%s\" -G changes -s %s -L", p4_exe(), pending ? "pending" : "submitted"));
-		if(t) {
-			sdict_add_raw(&t->extraData, "pending", va("%d", cs->pending));
-		}
+		cs->highestReceived = 0;
+		cs->lowestRequested = INT_MAX;
+		cs->refreshed = false;
+		cs->updating = false;
 		return cs;
 	}
 	return NULL;
 }
+
+static void task_p4changes_refresh_statechanged(task *t)
+{
+	task_process_statechanged(t);
+	if(task_done(t)) {
+		b32 pending = strtos32(sdict_find_safe(&t->extraData, "pending"));
+		p4Changeset *cs = p4_find_or_add_changeset(pending);
+		if(cs) {
+			cs->updating = false;
+			if(t->state == kTaskState_Succeeded) {
+				++cs->parity;
+				cs->refreshed = true;
+				p4_reset_changeset(cs);
+				task_p4 *p = (task_p4 *)t->userdata;
+				sdicts_move(&cs->changelists, &p->dicts);
+				for(u32 i = 0; i < cs->changelists.count; ++i) {
+					sdict_t *sd = cs->changelists.data + i;
+					u32 number = strtou32(sdict_find(sd, "change"));
+					cs->lowestRequested = BB_MIN(cs->lowestRequested, number);
+					cs->highestReceived = BB_MAX(cs->highestReceived, number);
+					const char *desc = sdict_find(sd, "desc");
+					if(desc) {
+						char ch;
+						sb_t sb = { 0 };
+						while((ch = *desc++) != '\0') {
+							if(ch == '\r') {
+								// do nothing
+							} else if(ch == '\n' || ch == '\t') {
+								sb_append_char(&sb, ' ');
+							} else {
+								sb_append_char(&sb, ch);
+							}
+						}
+						sdict_add_raw(sd, "desc_oneline", sb_get(&sb));
+						sb_reset(&sb);
+					}
+				}
+				if(pending) {
+					for(u32 clientIdx = 0; clientIdx < p4.allClients.count; ++clientIdx) {
+						sdict_t *clientDict = p4.allClients.data + clientIdx;
+						const char *client = sdict_find(clientDict, "client");
+						const char *owner = sdict_find(clientDict, "Owner");
+						if(client && owner) {
+							if(bba_add(cs->changelists, 1)) {
+								sdict_t *sd = &bba_last(cs->changelists);
+								p4_build_default_changelist(sd, owner, client);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
 void p4_refresh_changeset(p4Changeset *cs)
 {
-	task *t = task_queue(p4_task_create(task_p4changes_statechanged, p4_dir(), NULL, "\"%s\" -G changes -s %s -L", p4_exe(), cs->pending ? "pending" : "submitted"));
-	if(t) {
-		sdict_add_raw(&t->extraData, "pending", va("%d", cs->pending));
+	if(!cs->updating && p4.allClients.count > 0) {
+		cs->highestReceived = 0;
+		cs->refreshed = false;
+		if(cs->pending) {
+			task *t = task_queue(
+			    p4_task_create(task_p4changes_refresh_statechanged, p4_dir(), NULL,
+			                   "\"%s\" -G changes -s pending -L", p4_exe()));
+			if(t) {
+				cs->updating = true;
+				cs->lowestRequested = 1;
+				sdict_add_raw(&t->extraData, "pending", "1");
+			}
+		} else {
+			task *t = task_queue(
+			    p4_task_create(task_p4changes_refresh_statechanged, p4_dir(), NULL,
+			                   "\"%s\" -G changes -s submitted -L%s", p4_exe(),
+			                   g_config.p4.changelistBlockSize ? va(" -m %u", g_config.p4.changelistBlockSize) : ""));
+			if(t) {
+				cs->updating = true;
+				cs->lowestRequested = INT_MAX;
+				sdict_add_raw(&t->extraData, "pending", "0");
+			}
+		}
+	}
+}
+
+static void task_p4changes_older_statechanged(task *t)
+{
+	task_process_statechanged(t);
+	if(task_done(t)) {
+		b32 pending = strtos32(sdict_find_safe(&t->extraData, "pending"));
+		p4Changeset *cs = p4_find_or_add_changeset(pending);
+		if(cs) {
+			cs->updating = false;
+			if(t->state == kTaskState_Succeeded) {
+				++cs->parity;
+				task_p4 *p = (task_p4 *)t->userdata;
+				for(u32 i = 0; i < p->dicts.count; ++i) {
+					if(bba_add(cs->changelists, 1)) {
+						sdict_t *src = p->dicts.data + i;
+						sdict_t *sd = &bba_last(cs->changelists);
+						*sd = *src;
+						memset(src, 0, sizeof(*src));
+						u32 number = strtou32(sdict_find(sd, "change"));
+						cs->lowestRequested = BB_MIN(cs->lowestRequested, number);
+						const char *desc = sdict_find(sd, "desc");
+						if(desc) {
+							char ch;
+							sb_t sb = { 0 };
+							while((ch = *desc++) != '\0') {
+								if(ch == '\r') {
+									// do nothing
+								} else if(ch == '\n' || ch == '\t') {
+									sb_append_char(&sb, ' ');
+								} else {
+									sb_append_char(&sb, ch);
+								}
+							}
+							sdict_add_raw(sd, "desc_oneline", sb_get(&sb));
+							sb_reset(&sb);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+void p4_request_older_changes(p4Changeset *cs)
+{
+	if(!cs->updating && cs->lowestRequested > 1 && cs->highestReceived && !cs->pending) {
+		if(g_config.p4.changelistBlockSize) {
+			task *t = task_queue(
+			    p4_task_create(task_p4changes_older_statechanged, p4_dir(), NULL,
+			                   "\"%s\" -G changes -s submitted -L -m %u //...@0,%u", p4_exe(),
+			                   g_config.p4.changelistBlockSize, cs->lowestRequested - 1));
+			if(t) {
+				cs->updating = true;
+				u32 target = cs->lowestRequested - g_config.p4.changelistBlockSize;
+				cs->lowestRequested = (target < cs->lowestRequested) ? target : 1;
+				sdict_add_raw(&t->extraData, "pending", va("%d", cs->pending));
+			}
+		} else {
+			// should only happen if someone changes g_config.p4.changelistBlockSize to 0 after initial refresh
+			task *t = task_queue(
+			    p4_task_create(task_p4changes_older_statechanged, p4_dir(), NULL,
+			                   "\"%s\" -G changes -s submitted -L //...@0,%u", p4_exe(),
+			                   cs->lowestRequested - 1));
+			if(t) {
+				cs->updating = true;
+				cs->lowestRequested = 1;
+				sdict_add_raw(&t->extraData, "pending", va("%d", cs->pending));
+			}
+		}
 	}
 }
 

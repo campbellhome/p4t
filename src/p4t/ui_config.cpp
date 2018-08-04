@@ -2,8 +2,8 @@
 // MIT license (see License.txt)
 
 #include "ui_config.h"
-#include "imgui_utils.h"
 #include "imgui_themes.h"
+#include "imgui_utils.h"
 
 #include "bb_array.h"
 #include "bb_string.h"
@@ -45,6 +45,7 @@ static const char *s_colorschemes[] = {
 	"Light",
 	"Classic",
 	"Visual Studio Dark",
+	"Windows",
 };
 
 void UIConfig_ApplyColorscheme(config_t *config)
@@ -52,6 +53,7 @@ void UIConfig_ApplyColorscheme(config_t *config)
 	if(!config) {
 		config = &g_config;
 	}
+	Style_Reset();
 	const char *colorscheme = sb_get(&config->colorscheme);
 	if(!strcmp(colorscheme, "Visual Studio Dark")) {
 		ImGui::StyleColorsVSDark();
@@ -59,6 +61,8 @@ void UIConfig_ApplyColorscheme(config_t *config)
 		ImGui::StyleColorsClassic();
 	} else if(!strcmp(colorscheme, "Light")) {
 		ImGui::StyleColorsLight();
+	} else if(!strcmp(colorscheme, "Windows")) {
+		ImGui::StyleColorsWindows();
 	} else /*if(!strcmp(colorscheme, "Dark"))*/ {
 		ImGui::StyleColorsDark();
 		// modal background for default Dark theme looks like a non-responding Window
@@ -93,24 +97,24 @@ void UIConfig_Update(config_t *config)
 					UIConfig_ApplyColorscheme(s_uiConfig);
 				}
 			}
+			Checkbox("DPI Aware", &s_uiConfig->dpiAware);
+			if(ImGui::IsItemHovered()) {
+				ImGui::SetTooltip("Requires restart.  Default font is not recommended if DPI Aware.");
+			}
 		}
 		if(ImGui::CollapsingHeader("Font", ImGuiTreeNodeFlags_DefaultOpen)) {
-			Checkbox("DPI Aware", &s_uiConfig->dpiAware);
-			ImGui::SameLine();
-			ImGui::PushItemWidth(150.0f * g_config.dpiScale);
-			InputFloat("DPI Scale", &s_uiConfig->dpiScale);
-			ImGui::PopItemWidth();
 			BeginGroup();
 			PushID("UIFont");
 			Checkbox("Custom UI Font", &s_uiConfig->uiFontConfig.enabled);
 			if(s_uiConfig->uiFontConfig.enabled) {
+				ImGui::AlignFirstTextHeightToWidgets();
+				ImGui::TextUnformatted("Font size:");
+				ImGui::SameLine();
 				int val = (int)s_uiConfig->uiFontConfig.size;
-				PushItemWidth(80.0f * g_config.dpiScale);
-				InputInt("size", &val, 1, 10);
-				PopItemWidth();
+				InputInt("##size", &val, 1, 10);
 				val = BB_CLAMP(val, 1, 1024);
 				s_uiConfig->uiFontConfig.size = (u32)val;
-				Text("Path:");
+				TextUnformatted("Path:");
 				SameLine();
 				PushItemWidth(300.0f * g_config.dpiScale);
 				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
@@ -124,10 +128,11 @@ void UIConfig_Update(config_t *config)
 			PushID("LogFont");
 			Checkbox("Custom Log Font", &s_uiConfig->logFontConfig.enabled);
 			if(s_uiConfig->logFontConfig.enabled) {
+				ImGui::AlignFirstTextHeightToWidgets();
+				ImGui::TextUnformatted("Font size:");
+				ImGui::SameLine();
 				int val = (int)s_uiConfig->logFontConfig.size;
-				PushItemWidth(80.0f * g_config.dpiScale);
 				InputInt("size", &val, 1, 10);
-				PopItemWidth();
 				val = BB_CLAMP(val, 1, 1024);
 				s_uiConfig->logFontConfig.size = (u32)val;
 				Text("Path:");
@@ -156,6 +161,19 @@ void UIConfig_Update(config_t *config)
 				InputText("##args", &s_uiConfig->diff.args, 1024, flags);
 				PopItemWidth();
 			}
+			PopID();
+		}
+		if(ImGui::CollapsingHeader("Perforce", ImGuiTreeNodeFlags_DefaultOpen)) {
+			PushID("Perforce");
+			ImGui::AlignFirstTextHeightToWidgets();
+			ImGui::TextUnformatted("Changelists to fetch at a time:");
+			ImGui::SameLine();
+			int val = (int)s_uiConfig->p4.changelistBlockSize;
+			InputInt("##changelistBlockSize", &val, 100, 1000);
+			val = BB_CLAMP(val, 0, 10000);
+			s_uiConfig->p4.changelistBlockSize = (u32)val;
+			ImGui::SameLine();
+			ImGui::TextUnformatted("(0 fetches all)");
 			PopID();
 		}
 		Separator();

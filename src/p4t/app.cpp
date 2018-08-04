@@ -7,6 +7,7 @@
 #include "config.h"
 #include "env_utils.h"
 #include "imgui_utils.h"
+#include "imgui_themes.h"
 #include "message_box.h"
 #include "output.h"
 #include "p4.h"
@@ -103,6 +104,7 @@ bool App_Init(const char *cmdline)
 	sb_va(&s_imguiPath, "\\%s_imgui.ini", globals.appSpecific.configName);
 	ImGuiIO &io = ImGui::GetIO();
 	io.IniFilename = sb_get(&s_imguiPath);
+	ImGui::Style_Init();
 
 	const char *applicationName = globals.appSpecific.configName;
 #ifdef _DEBUG
@@ -143,7 +145,8 @@ bool App_Init(const char *cmdline)
 			return false;
 		}
 	} else {
-		p4UIChangeset *uics = p4_add_uichangeset(true);
+		p4UIChangeset *uics;
+		uics = p4_add_uichangeset(true);
 		if(uics) {
 			UITabs_AddTab(kTabType_Changeset, uics->id);
 			sb_append(&uics->user, "Current User");

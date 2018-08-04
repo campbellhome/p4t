@@ -25,7 +25,7 @@ const char *UIClientspec_ClientspecName(u32 i)
 
 const char *UIClientspec_ActiveClientspecName()
 {
-	const char *configClientspec = sb_get(&g_config.clientspec);
+	const char *configClientspec = sb_get(&g_config.p4.clientspec);
 	for(u32 i = 0; i < p4.localClients.count; ++i) {
 		if(!strcmp(configClientspec, sdict_find_safe(p4.localClients.data + i, "client"))) {
 			return configClientspec;
@@ -43,13 +43,13 @@ void UIClientspec_MenuBar()
 
 	if(ImGui::BeginMenu(UIClientspec_ActiveClientspecName())) {
 		if(ImGui::MenuItem(UIClientspec_DefaultClientspecName())) {
-			sb_reset(&g_config.clientspec);
+			sb_reset(&g_config.p4.clientspec);
 		}
 		for(u32 i = 0; i < p4.localClients.count; ++i) {
 			const char *clientspec = sdict_find_safe(p4.localClients.data + i, "client");
 			if(ImGui::MenuItem(clientspec)) {
-				sb_reset(&g_config.clientspec);
-				sb_append(&g_config.clientspec, clientspec);
+				sb_reset(&g_config.p4.clientspec);
+				sb_append(&g_config.p4.clientspec, clientspec);
 			}
 		}
 		ImGui::EndMenu();

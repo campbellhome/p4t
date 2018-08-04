@@ -7,5 +7,9 @@ struct ImGuiStyle;
 
 namespace ImGui
 {
+	void Style_Init();
+	void Style_Apply();
+	void Style_Reset();
 	void StyleColorsVSDark(ImGuiStyle *dst = nullptr);
+	void StyleColorsWindows(ImGuiStyle *dst = nullptr);
 } // namespace ImGui

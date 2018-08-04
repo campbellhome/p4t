@@ -280,10 +280,14 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		ImGui::EndTooltip();
 	}
 
-	p4Changeset *cs = p4_find_changeset(uics->pending);
+	p4Changeset *cs = p4_find_or_add_changeset(uics->pending);
 	if(!cs) {
 		ImGui::PopID();
 		return;
+	}
+
+	if(!cs->refreshed) {
+		p4_refresh_changeset(cs);
 	}
 
 	if(uics->parity != cs->parity) {
@@ -453,6 +457,16 @@ void UIChangeset_Update(p4UIChangeset *uics)
 					}
 				}
 			}
+		}
+	}
+
+	// Request more (older) changes if we have reached the end of our current set
+	float windowHeight = ImGui::GetWindowHeight();
+	float cursorY = ImGui::GetCursorPosY() - ImGui::GetScrollY();
+	if(cursorY <= windowHeight) {
+		// don't request more when user is dragging scrollbar - it pops around
+		if(!ImGui::GetIO().MouseDown[0]) {
+			p4_request_older_changes(cs);
 		}
 	}
 

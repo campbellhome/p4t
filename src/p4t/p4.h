@@ -61,6 +61,10 @@ typedef struct tag_p4Changeset {
 	b32 pending;
 	u32 parity;
 	sdicts changelists;
+	u32 lowestRequested;
+	u32 highestReceived;
+	b32 refreshed;
+	b32 updating;
 } p4Changeset;
 
 typedef struct tag_p4Changesets {
@@ -107,8 +111,7 @@ typedef struct tag_changesetColumnField {
 	b32 numeric;
 } changesetColumnField;
 
-typedef struct tag_p4UIChangelist
-{
+typedef struct tag_p4UIChangelist {
 	u32 id;
 	u32 requested;
 	u32 displayed;
@@ -167,8 +170,9 @@ sdict_t *p4_get_info(void);
 
 void p4_info(void);
 
-p4Changeset *p4_find_changeset(b32 pending);
+p4Changeset *p4_find_or_add_changeset(b32 pending);
 void p4_refresh_changeset(p4Changeset *cs);
+void p4_request_older_changes(p4Changeset *cs);
 sdict_t *p4_find_changelist_in_changeset(p4Changeset *cs, u32 number, const char *client);
 
 p4UIChangeset *p4_add_uichangeset(b32 pending);
