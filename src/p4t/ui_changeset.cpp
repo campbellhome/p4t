@@ -370,9 +370,9 @@ void UIChangeset_Update(p4UIChangeset *uics)
 				ImGui::TreePop();
 			}
 			ImGui::SameLine();
-			ImGui::PushSelectableColors(e->selected, uics->active);
+			ImGui::PushSelectableColors(e->selected, ImGui::IsActiveSelectables(uics));
 			ImGui::Selectable(va("###%u%s", e->changelist, sb_get(&e->client)), e->selected != 0);
-			ImGui::PopSelectableColors(e->selected, uics->active);
+			ImGui::PopSelectableColors(e->selected, ImGui::IsActiveSelectables(uics));
 			if(ImGui::IsItemActive()) {
 				anyActive = true;
 			}
@@ -457,12 +457,12 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	}
 
 	if(anyActive) {
-		uics->active = true;
-	} else if(ImGui::IsAnyItemActive()) {
-		uics->active = false;
+		ImGui::SetActiveSelectables(uics);
+	} else if(ImGui::IsAnyItemActive() && ImGui::IsActiveSelectables(uics)) {
+		ImGui::SetActiveSelectables(nullptr);
 	}
 
-	if(uics->active) {
+	if(ImGui::IsActiveSelectables(uics)) {
 		ImGuiIO &io = ImGui::GetIO();
 		if(ImGui::IsKeyPressed('A') && io.KeyCtrl) {
 			UIChangeset_SelectAll(uics);

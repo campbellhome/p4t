@@ -97,4 +97,7 @@ namespace ImGui
 	ImVec2 GetIconPosForButton();
 	ImVec2 GetIconPosForText();
 
+	void SetActiveSelectables(const void *data);
+	bool IsActiveSelectables(const void *data);
+
 } // namespace ImGui

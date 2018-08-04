@@ -239,9 +239,9 @@ BB_CTASSERT(BB_ARRAYSIZE(s_columnNames) == BB_ARRAYSIZE(g_config.uiChangelist.co
 b32 UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file, u32 index, uiChangelistFiles *otherFiles)
 {
 	b32 anyActive = false;
-	ImGui::PushSelectableColors(file.selected, files->active);
+	ImGui::PushSelectableColors(file.selected, ImGui::IsActiveSelectables(files));
 	ImGui::Selectable(va("###%s", file.fields.field.filename), file.selected != 0);
-	ImGui::PopSelectableColors(file.selected, files->active);
+	ImGui::PopSelectableColors(file.selected, ImGui::IsActiveSelectables(files));
 	if(ImGui::IsItemActive()) {
 		anyActive = true;
 	}
@@ -268,12 +268,10 @@ b32 UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file
 void UIChangelist_FinishFiles(uiChangelistFiles *files, p4Changelist *cl, b32 anyActive)
 {
 	if(anyActive) {
-		files->active = true;
-		//} else if(ImGui::IsAnyItemActive()) {
-		//	files->active = false;
+		ImGui::SetActiveSelectables(files);
 	}
 
-	if(files->active) {
+	if(ImGui::IsActiveSelectables(files)) {
 		if(ImGui::IsKeyPressed('A') && ImGui::GetIO().KeyCtrl) {
 			UIChangelist_Files_SelectAll(files);
 		} else if(ImGui::IsKeyPressed('C') && ImGui::GetIO().KeyCtrl) {
@@ -282,7 +280,7 @@ void UIChangelist_FinishFiles(uiChangelistFiles *files, p4Changelist *cl, b32 an
 			UIChangelist_Files_DiffSelected(files, cl);
 		} else if(ImGui::IsKeyPressed(ImGui::GetIO().KeyMap[ImGuiKey_Escape])) {
 			UIChangelist_Files_ClearSelection(files);
-			files->active = false;
+			ImGui::SetActiveSelectables(nullptr);
 		}
 	}
 }
@@ -465,8 +463,7 @@ void UIChangelist_Update(p4UIChangelist *uicl)
 			uicl->displayed = uicl->requested;
 			uicl->parity = cl->parity;
 			p4_build_changelist_files(cl, &uicl->normalFiles, &uicl->shelvedFiles);
-			uicl->normalFiles.active = uicl->shelvedFiles.count == 0;
-			uicl->shelvedFiles.active = uicl->shelvedFiles.count != 0;
+			ImGui::SetActiveSelectables(uicl->shelvedFiles.count == 0 ? &uicl->normalFiles : &uicl->shelvedFiles);
 			UIChangelist_SetWindowTitle(uicl);
 		}
 		UIChangelist_DrawInformation(&cl->normal);
@@ -476,8 +473,7 @@ void UIChangelist_Update(p4UIChangelist *uicl)
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 		if(ImGui::Button("###blank", ImGui::GetContentRegionAvail()) || ImGui::IsItemActive()) {
-			uicl->normalFiles.active = uicl->shelvedFiles.count == 0;
-			uicl->shelvedFiles.active = uicl->shelvedFiles.count != 0;
+			ImGui::SetActiveSelectables(uicl->shelvedFiles.count == 0 ? &uicl->normalFiles : &uicl->shelvedFiles);
 		}
 		ImGui::PopStyleColor(3);
 	}

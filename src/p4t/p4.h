@@ -52,11 +52,9 @@ typedef struct tag_uiChangelistFiles {
 	u32 allocated;
 	uiChangelistFile *data;
 	u32 lastClickIndex;
-	b32 active;
 	b32 shelved;
 	u32 sortColumn;
 	b32 sortDescending;
-	u8 pad[4];
 } uiChangelistFiles;
 
 typedef struct tag_p4Changeset {
@@ -94,7 +92,7 @@ typedef struct tag_p4UIChangeset {
 	b32 filterEnabled;
 	u32 id;
 	u32 lastClickIndex;
-	b32 active;
+	u8 pad[4];
 } p4UIChangeset;
 
 typedef struct tag_p4UIChangesets {

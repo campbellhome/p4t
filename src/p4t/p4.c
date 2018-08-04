@@ -592,7 +592,6 @@ static void p4_build_changelist_files_internal(sdict_t *change, sdicts *sds, uiC
 	}
 	qsort(files->data, files->count, sizeof(uiChangelistFile), &p4_changelist_files_compare);
 	files->lastClickIndex = ~0u;
-	files->active = false;
 }
 void p4_build_changelist_files(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles)
 {

@@ -448,4 +448,15 @@ namespace ImGui
 		return textPos;
 	}
 
+	static const void *s_activeSelectables;
+	void SetActiveSelectables(const void *data)
+	{
+		s_activeSelectables = data;
+	}
+
+	bool IsActiveSelectables(const void *data)
+	{
+		return s_activeSelectables == data;
+	}
+
 } // namespace ImGui
