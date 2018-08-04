@@ -182,16 +182,63 @@ static void UIChangelist_HandleClick(uiChangelistFiles *files, u32 index)
 //////////////////////////////////////////////////////////////////////////
 // for use in other UIs
 
-void UIChangelist_DrawFileIcon(uiChangelistFiles *files, uiChangelistFile *file)
+void UIChangelist_DrawFileIcon(uiChangelistFiles *files, uiChangelistFile *file, p4ChangelistType cltype)
 {
-	ImColor iconColor = files->shelved ? COLOR_FILE_SHELVED : ImColor(ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
 	const char *icon = UIIcons_ClassifyFile(file->fields.field.depotPath, file->fields.field.filetype);
+	ImColor disabledColor = ImColor(ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
+	ImColor iconColor = files->shelved ? COLOR_FILE_SHELVED : disabledColor;
+
+	const char *actionIcon = nullptr;
+	ImColor actionIconColor = COLOR_FILE_SHELVED_ACTION;
+	if(!files->shelved) {
+		if(cltype == kChangelistType_PendingLocal) {
+			actionIconColor = COLOR_FILE_LOCAL_ACTION;
+		} else if(cltype == kChangelistType_PendingOther) {
+			actionIconColor = COLOR_FILE_REMOTE_ACTION;
+		} else {
+			actionIconColor = COLOR_FILE_SUBMITTED_ACTION;
+		}
+	}
+	if(!strcmp(file->fields.field.action, "add")) {
+		actionIcon = ICON_FK_PLUS;
+	} else if(!strcmp(file->fields.field.action, "edit")) {
+		actionIcon = ICON_FK_CHECK;
+	} else if(!strcmp(file->fields.field.action, "integrate")) {
+		actionIcon = ICON_FK_SHARE;
+	} else if(!strcmp(file->fields.field.action, "branch")) {
+		actionIcon = ICON_FK_SHARE;
+	} else if(!strcmp(file->fields.field.action, "delete")) {
+		actionIcon = ICON_FK_TIMES;
+	}
+
+	const char *statusIcon = nullptr;
+	ImColor statusIconColor;
 	if(file->unresolved) {
-		ImGui::IconOverlayColored(iconColor, icon, COLOR_FILE_UNRESOLVED, ICON_FILE_UNRESOLVED);
+		statusIcon = ICON_FILE_UNRESOLVED;
+		statusIconColor = COLOR_FILE_UNRESOLVED;
 	} else if(strchr(file->fields.field.rev, '/') != nullptr) {
-		ImGui::IconOverlayColored(iconColor, icon, COLOR_FILE_OUT_OF_DATE, ICON_FILE_OUT_OF_DATE);
-	} else {
-		ImGui::IconColored(iconColor, icon);
+		statusIcon = ICON_FILE_OUT_OF_DATE;
+		statusIconColor = COLOR_FILE_OUT_OF_DATE;
+	}
+
+	ImVec2 size = ImGui::CalcTextSize(icon);
+	ImVec2 pos = ImGui::GetIconPosForText();
+	ImGui::IconColored(iconColor, icon);
+	if(statusIcon) {
+		ImVec2 statusPos(pos.x + size.x * 0.5f, pos.y + size.y * 0.5f);
+		ImGui::DrawIconAtPos(statusPos, statusIcon, statusIconColor, false, 1.0f);
+	}
+	if(actionIcon) {
+		if(cltype == kChangelistType_Submitted) {
+			ImVec2 actionPos(pos.x - size.x * 0.25f, pos.y);
+			ImGui::DrawIconAtPos(actionPos, actionIcon, actionIconColor, false, 0.5f);
+		} else if(cltype == kChangelistType_PendingLocal) {
+			ImVec2 actionPos(pos.x - size.x * 0.25f, pos.y);
+			ImGui::DrawIconAtPos(actionPos, actionIcon, actionIconColor, false, 0.5f);
+		} else {
+			ImVec2 actionPos(pos.x + size.x * 0.75f, pos.y);
+			ImGui::DrawIconAtPos(actionPos, actionIcon, actionIconColor, false, 0.5f);
+		}
 	}
 }
 
@@ -307,6 +354,8 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, float in
 	}
 	ImGui::NewLine();
 
+	p4ChangelistType cltype = p4_get_changelist_type(&cl->normal);
+
 	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 	for(u32 i = 0; i < files->count; ++i) {
 		float start = ImGui::GetIconPosForText().x - ImGui::GetStyle().ItemSpacing.x;
@@ -317,7 +366,7 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, float in
 
 		ImGui::SameLine(start);
 		ImGui::PushColumnHeaderClipRect(columnOffsets[0], g_config.uiChangelist.columnWidth[0] * g_config.dpiScale + itemPad);
-		UIChangelist_DrawFileIcon(files, &file);
+		UIChangelist_DrawFileIcon(files, &file, cltype);
 		ImGui::PopClipRect();
 		ImGui::DrawColumnHeaderText(columnOffsets[0], g_config.uiChangelist.columnWidth[0] * g_config.dpiScale + itemPad, va("%s%s", UIIcons_GetIconSpaces(ICON_FK_FILE), file.fields.str[0]));
 		ImGui::DrawColumnHeaderText(columnOffsets[1], g_config.uiChangelist.columnWidth[1] * g_config.dpiScale + itemPad, file.fields.str[1]);
@@ -347,7 +396,7 @@ void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl,
 		}
 
 		ImGui::SameLine(0.0f, indent);
-		UIChangelist_DrawFileIcon(files, &file);
+		UIChangelist_DrawFileIcon(files, &file, cltype);
 		ImGui::SameLine();
 		if(cltype == kChangelistType_Submitted) {
 			ImGui::Text("%s#%s", file.fields.field.depotPath, file.fields.field.rev);

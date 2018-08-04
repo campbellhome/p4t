@@ -95,7 +95,7 @@ namespace ImGui
 	void Icon(const char *icon);
 	void IconColored(ImColor color, const char *icon);
 
-	void DrawIconAtPos(ImVec2 pos, const char *icon, ImColor color);
+	void DrawIconAtPos(ImVec2 pos, const char *icon, ImColor color, bool align = false, float scale = 1.0f);
 	ImVec2 GetIconPosForButton();
 	ImVec2 GetIconPosForText();
 

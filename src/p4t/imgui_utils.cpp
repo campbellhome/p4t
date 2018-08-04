@@ -237,7 +237,7 @@ namespace ImGui
 		if(ret && !isActive) {
 			*active = id;
 		}
-		DrawIconAtPos(iconPos, icon, iconColor);
+		DrawIconAtPos(iconPos, icon, iconColor, true);
 		return ret;
 	}
 	void EndTabButtons(void)
@@ -412,15 +412,24 @@ namespace ImGui
 		IconColored(textColor, icon);
 	}
 
-	void DrawIconAtPos(ImVec2 pos, const char *icon, ImColor color)
+	void DrawIconAtPos(ImVec2 pos, const char *icon, ImColor color, bool align, float scale)
 	{
+		ImFont *font = ImGui::GetFont();
+		float fontSize = ImGui::GetFontSize();
+		fontSize *= scale;
+
+		if(align) {
+			ImVec2 size = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, icon);
+			float lineHeight = ImGui::GetTextLineHeightWithSpacing();
+			float deltaY = lineHeight - size.y;
+			pos.y += deltaY;
+		}
+
 		ImDrawList *drawList = ImGui::GetWindowDrawList();
-		ImVec2 size = ImGui::CalcTextSize(icon);
-		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
-		float deltaY = lineHeight - size.y;
-		pos.y += deltaY;
-		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), icon);
-		drawList->AddText(ImVec2(pos.x + 0, pos.y + 0), color, icon);
+		if(color.Value.x > 0.0f || color.Value.y > 0.0f || color.Value.z > 0.0f) {
+			drawList->AddText(font, fontSize, ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), icon);
+		}
+		drawList->AddText(font, fontSize, ImVec2(pos.x + 0, pos.y + 0), color, icon);
 	}
 
 	ImVec2 GetIconPosForButton()
