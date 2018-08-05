@@ -68,10 +68,10 @@ const char *UIIcons_ClassifyFile(const char *depotPath, const char *filetype)
 	const char *ext = depotPath ? strrchr(depotPath, '.') : nullptr;
 	if(ext) {
 		++ext;
-	}
-	for(u32 i = 0; i < BB_ARRAYSIZE(s_exts); ++i) {
-		if(!strcmp(s_exts[i].extension, ext))
-			return s_exts[i].icon;
+		for(u32 i = 0; i < BB_ARRAYSIZE(s_exts); ++i) {
+			if(!strcmp(s_exts[i].extension, ext))
+				return s_exts[i].icon;
+		}
 	}
 	return ICON_FK_FILE;
 }
@@ -90,7 +90,8 @@ const char *UIIcons_GetIconSpaces(const char *icon)
 	float width = ImGui::CalcTextSize(icon).x;
 	float spaceWidth = ImGui::CalcTextSize(" ").x;
 	int numSpaces = (int)ceilf(width / spaceWidth);
-	bb_snprintf(s_spacingBuffer, sizeof(s_spacingBuffer), "%*s", numSpaces, " ");
-	s_spacingBuffer[sizeof(s_spacingBuffer) - 1] = '\0';
+	if(bb_snprintf(s_spacingBuffer, sizeof(s_spacingBuffer), "%*s", numSpaces, " ") < 0) {
+		s_spacingBuffer[sizeof(s_spacingBuffer) - 1] = '\0';
+	}
 	return s_spacingBuffer;
 }

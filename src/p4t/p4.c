@@ -169,11 +169,13 @@ void p4_shutdown(void)
 
 void p4_update(void)
 {
-	for(u32 i = p4.uiChangelists.count - 1; i < p4.uiChangelists.count; --i) {
+	for(u32 i = 0; i < p4.uiChangelists.count;) {
 		p4UIChangelist *uicl = p4.uiChangelists.data + i;
 		if(uicl->id == 0) {
 			p4_reset_uichangelist(uicl);
 			bba_erase(p4.uiChangelists, i);
+		} else {
+			++i;
 		}
 	}
 }

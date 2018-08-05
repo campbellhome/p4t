@@ -48,11 +48,13 @@ void UITabs_Update(tabs *ts)
 		ts->activeTab = 0;
 	}
 
-	for(u32 i = ts->count - 1; i < ts->count; --i) {
+	for(u32 i = 0; i < ts->count;) {
 		tab *t = ts->data + i;
 		b32 hasPtr = (t->type == kTabType_Changelist && p4_find_uichangelist(t->id) != nullptr) ||
 		             (t->type == kTabType_Changeset && p4_find_uichangeset(t->id) != nullptr);
-		if(!hasPtr) {
+		if(hasPtr) {
+			++i;
+		} else {
 			bba_erase(*ts, i);
 		}
 	}

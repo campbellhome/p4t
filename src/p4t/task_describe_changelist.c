@@ -154,22 +154,24 @@ static void task_describe_default_changelist_statechanged(task *t)
 			cl->number = 0;
 			cl->parity = 1;
 		}
-		p4_reset_changelist(cl);
-		p4_build_default_changelist(&cl->normal, sdict_find_safe(&t->extraData, "user"), client);
-		sdicts_move(&cl->normalFiles, &p->dicts);
-		for(u32 fileIdx = 0; fileIdx < cl->normalFiles.count; ++fileIdx) {
-			sdict_t *f = cl->normalFiles.data + fileIdx;
-			const char *depotFile = sdict_find_safe(f, "depotFile");
-			const char *action = sdict_find_safe(f, "action");
-			const char *type = sdict_find_safe(f, "type");
-			const char *rev = sdict_find(f, "rev");
-			if(!rev) {
-				rev = sdict_find_safe(f, "haveRev");
+		if(cl) {
+			p4_reset_changelist(cl);
+			p4_build_default_changelist(&cl->normal, sdict_find_safe(&t->extraData, "user"), client);
+			sdicts_move(&cl->normalFiles, &p->dicts);
+			for(u32 fileIdx = 0; fileIdx < cl->normalFiles.count; ++fileIdx) {
+				sdict_t *f = cl->normalFiles.data + fileIdx;
+				const char *depotFile = sdict_find_safe(f, "depotFile");
+				const char *action = sdict_find_safe(f, "action");
+				const char *type = sdict_find_safe(f, "type");
+				const char *rev = sdict_find(f, "rev");
+				if(!rev) {
+					rev = sdict_find_safe(f, "haveRev");
+				}
+				sdict_add_raw(&cl->normal, va("depotFile%u", fileIdx), depotFile);
+				sdict_add_raw(&cl->normal, va("action%u", fileIdx), action);
+				sdict_add_raw(&cl->normal, va("type%u", fileIdx), type);
+				sdict_add_raw(&cl->normal, va("rev%u", fileIdx), rev);
 			}
-			sdict_add_raw(&cl->normal, va("depotFile%u", fileIdx), depotFile);
-			sdict_add_raw(&cl->normal, va("action%u", fileIdx), action);
-			sdict_add_raw(&cl->normal, va("type%u", fileIdx), type);
-			sdict_add_raw(&cl->normal, va("rev%u", fileIdx), rev);
 		}
 	}
 	if(task_done(t)) {

@@ -50,15 +50,17 @@ task p4_task_create(Task_StateChanged *statechanged, const char *dir, sdict_t *e
 	t.userdata = malloc(sizeof(task_p4));
 
 	task_p4 *p = t.userdata;
-	memset(p, 0, sizeof(*p));
-	sb_append(&p->base.dir, dir);
-	if(extraData) {
-		sdict_move(&p->extraData, extraData);
+	if(p) {
+		memset(p, 0, sizeof(*p));
+		sb_append(&p->base.dir, dir);
+		if(extraData) {
+			sdict_move(&p->extraData, extraData);
+		}
+		va_list args;
+		va_start(args, cmdlineFmt);
+		sb_va_list(&p->base.cmdline, cmdlineFmt, args);
+		va_end(args);
+		p->base.spawnType = kProcessSpawn_Tracked;
 	}
-	va_list args;
-	va_start(args, cmdlineFmt);
-	sb_va_list(&p->base.cmdline, cmdlineFmt, args);
-	va_end(args);
-	p->base.spawnType = kProcessSpawn_Tracked;
 	return t;
 }

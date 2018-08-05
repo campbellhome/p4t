@@ -62,3 +62,34 @@ p4 print -o C:\Users\Matt\AppData\Local\Temp\p4v\MattWin7_MattWin7_1666\depot\pe
 //////////////////////////////////////////////////////////////////////////
 
 
+changeset changelist:
+View Changelist
+Pending:
+* Diff Files against Have Revisions
+* Local:
+  * Submit
+  * Revert Unchanged Files
+  * Revert Files
+  * Resolve files
+  * Move all files to another changelist
+  * Shelve files
+  * Unshelve files
+  * Delete shelved files
+  * New Pending Changelist
+  * Edit Pending Changelist
+* Submitted:
+  * Get Revision...
+  * Merge/Integrate using changelist...
+  * Branch Files...
+  * Rollback...
+  * Back out submitted changelist
+  * Diff files against previous revisions...
+  * Diff files against...
+  * Edit submitted changelist...
+
+
+
+
+
+
+
