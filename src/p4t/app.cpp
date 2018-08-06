@@ -222,6 +222,9 @@ void App_Update()
 				BB_LOG("UI::Menu::Preferences", "Preferences_Open");
 				UIConfig_Open(&g_config);
 			}
+			ImGui::EndMenu();
+		}
+		if(ImGui::BeginMenu("View")) {
 			if(ImGui::BeginMenu("DPI Scale Override")) {
 				void QueueUpdateDpiDependentResources();
 				if(ImGui::MenuItem("1")) {
