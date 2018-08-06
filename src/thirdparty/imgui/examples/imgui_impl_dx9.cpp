@@ -259,7 +259,7 @@ void ImGui_ImplDX9_InvalidateDeviceObjects()
 
     // At this point note that we set ImGui::GetIO().Fonts->TexID to be == g_FontTexture, so clear both.
     ImGuiIO& io = ImGui::GetIO();
-    IM_ASSERT(g_FontTexture == io.Fonts->TexID);
+    IM_ASSERT(g_FontTexture == io.Fonts->TexID || io.Fonts->TexID == NULL);
     if (g_FontTexture)
         g_FontTexture->Release();
     g_FontTexture = NULL;

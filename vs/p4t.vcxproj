@@ -109,6 +109,8 @@
   <ItemGroup>
     <ClInclude Include="..\src\p4t\app.h" />
     <ClInclude Include="..\src\p4t\config.h" />
+    <ClInclude Include="..\src\p4t\fonts.h" />
+    <ClInclude Include="..\src\p4t\fonts_generated.h" />
     <ClInclude Include="..\src\p4t\imgui_themes.h" />
     <ClInclude Include="..\src\p4t\imgui_utils.h" />
     <ClInclude Include="..\src\p4t\json_generated.h" />
@@ -144,6 +146,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\p4t\app.cpp" />
     <ClCompile Include="..\src\p4t\config.c" />
+    <ClCompile Include="..\src\p4t\fonts.cpp" />
     <ClCompile Include="..\src\p4t\imgui_themes.cpp" />
     <ClCompile Include="..\src\p4t\imgui_utils.cpp" />
     <ClCompile Include="..\src\p4t\json_generated.c" />
@@ -194,7 +197,7 @@
   <Import Project="..\..\bb\vs\bbcommon_internals.props" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(BBCommonPropsDir)..\src\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BBCommonPropsDir)..\src\common;$(ProjectDir)..\src\thirdparty\imgui;$(ProjectDir)..\src\thirdparty\freetype\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy $(OutDir)$(TargetName).exe $(OutDir)p4cl_d.exe
@@ -204,5 +207,11 @@ copy $(OutDir)$(TargetName).pdb $(OutDir)p4cl_d.pdb</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy $(OutDir)$(TargetName).exe $(OutDir)p4cl.exe
 copy $(OutDir)$(TargetName).pdb $(OutDir)p4cl.pdb</Command>
     </PostBuildEvent>
+    <Link>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)..\src\thirdparty\freetype\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Link>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)..\src\thirdparty\freetype\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
   </ItemDefinitionGroup>
 </Project>

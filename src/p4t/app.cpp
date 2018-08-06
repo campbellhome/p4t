@@ -6,8 +6,9 @@
 #include "cmdline.h"
 #include "config.h"
 #include "env_utils.h"
-#include "imgui_utils.h"
+#include "fonts.h"
 #include "imgui_themes.h"
+#include "imgui_utils.h"
 #include "message_box.h"
 #include "output.h"
 #include "p4.h"
@@ -245,6 +246,7 @@ void App_Update()
 				}
 				ImGui::EndMenu();
 			}
+			Fonts_Menu();
 			ImGui::EndMenu();
 		}
 		//if(ImGui::BeginMenu("Help")) {

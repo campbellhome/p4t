@@ -5,6 +5,7 @@
 
 #include "app.h"
 #include "config.h"
+#include "fonts.h"
 #include "imgui_themes.h"
 #include "imgui_utils.h"
 #include "keys.h"
@@ -87,6 +88,8 @@ static void InitFonts()
 		io.Fonts->AddFontDefault();
 		MergeIconFont(12.0f);
 	}
+
+	Fonts_MarkAtlasForRebuild();
 }
 
 void UpdateDpiDependentResources()
@@ -308,6 +311,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	UpdateWindow(globals.hwnd);
 	Time_StartNewFrame();
 	while(msg.message != WM_QUIT && !App_IsShuttingDown()) {
+		ImGuiIO &io = ImGui::GetIO();
 		if(PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -317,6 +321,19 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 			g_needUpdateDpiDependentResources = false;
 			UpdateDpiDependentResources();
 		}
+
+		//// See ImGuiFreeType::RasterizationFlags
+		//unsigned int flags = ImGuiFreeType::NoHinting;
+		//ImGuiFreeType::BuildFontAtlas(io.Fonts, flags);
+		//unsigned char *atlasPixels;
+		//int atlasWidth;
+		//int atlasHeight;
+		//io.Fonts->GetTexDataAsRGBA32(&atlasPixels, &atlasWidth, &atlasHeight);
+		if(Fonts_UpdateAtlas())
+		{
+			ResetD3D();
+		}
+
 		ImGui_ImplDX9_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
@@ -325,7 +342,6 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 
 		ImGui::EndFrame();
 
-		ImGuiIO &io = ImGui::GetIO();
 		bool requestRender = App_GetAndClearRequestRender() || key_is_any_down_or_released_this_frame();
 		if(g_hasFocus) {
 			if(io.InputCharacters[0]) {
