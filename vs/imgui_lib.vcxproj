@@ -47,12 +47,12 @@
     <ProjectGuid>{B7C212E2-07F8-4CD1-9D51-26F1D106AC90}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>imgui_lib</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <OutDir>..\libs\$(PlatformToolset)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\obj\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>

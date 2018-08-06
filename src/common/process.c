@@ -135,23 +135,24 @@ processSpawnResult_t process_spawn(const char *dir, const char *cmdline, process
 								if(result.success) {
 									BB_LOG("process", "Created tracked process: %s\n", cmdline);
 									result.process = malloc(sizeof(win32Process_t));
-
 									win32Process_t *process = (win32Process_t *)result.process;
-									memset(process, 0, sizeof(*process));
+									if(process) {
+										memset(process, 0, sizeof(*process));
 
-									process->base.command = _strdup(cmdline);
-									process->base.dir = _strdup(dir);
-									DLIST_INSERT_AFTER(&sentinelSubprocess, process);
+										process->base.command = _strdup(cmdline);
+										process->base.dir = _strdup(dir);
+										DLIST_INSERT_AFTER(&sentinelSubprocess, process);
 
-									process->startMS = GetTickCount64();
-									GetLocalTime(&process->startLocalTime);
-									GetTimeFormatA(LOCALE_USER_DEFAULT, 0, &process->startLocalTime, "h':'mm':'ss tt",
-									               process->startLocalTimeStr, sizeof(process->startLocalTimeStr));
+										process->startMS = GetTickCount64();
+										GetLocalTime(&process->startLocalTime);
+										GetTimeFormatA(LOCALE_USER_DEFAULT, 0, &process->startLocalTime, "h':'mm':'ss tt",
+										               process->startLocalTimeStr, sizeof(process->startLocalTimeStr));
 
-									process->hProcess = pi.hProcess;
-									process->hOutputRead = hOutputRead;
-									process->hInputWrite = hInputWrite;
-									process->hErrorRead = hErrorRead;
+										process->hProcess = pi.hProcess;
+										process->hOutputRead = hOutputRead;
+										process->hInputWrite = hInputWrite;
+										process->hErrorRead = hErrorRead;
+									}
 								} else {
 									process_report_error("CreateProcess", cmdline);
 								}

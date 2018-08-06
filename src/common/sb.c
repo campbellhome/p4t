@@ -24,9 +24,10 @@ u32 sb_len(sb_t *sb)
 
 b32 sb_reserve(sb_t *sb, u32 len)
 {
-	if(sb->allocated < len) {
+	if(sb->allocated < len && len > 0) {
 		sb_t tmp = { 0 };
-		if(bba_add_noclear(tmp, len)) {
+		bba_add_noclear(tmp, len);
+		if(tmp.data) {
 			if(sb->count) {
 				memcpy(tmp.data, sb->data, sb->count + 1);
 			} else {

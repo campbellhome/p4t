@@ -14,12 +14,12 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{01A852AC-56AD-4E41-88B1-BAF7A71783A2}</ProjectGuid>
     <RootNamespace>p4t_preproc</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <OutDir>..\obj\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\obj\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>

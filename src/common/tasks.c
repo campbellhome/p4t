@@ -106,7 +106,7 @@ void task_tick_subtasks(task *t)
 void tasks_tick(void)
 {
 	u32 active = 0;
-	for(u32 i = s_tasks.count - 1; i < s_tasks.count; --i) {
+	for(u32 i = 0; i < s_tasks.count;) {
 		task *t = s_tasks.data + i;
 		if(task_started(t)) {
 			if(task_done(t)) {
@@ -115,7 +115,10 @@ void tasks_tick(void)
 			} else {
 				t->tick(t);
 				++active;
+				++i;
 			}
+		} else {
+			++i;
 		}
 	}
 

@@ -54,14 +54,15 @@ task process_task_create(processSpawnType_t spawnType, const char *dir, const ch
 	t.stateChanged = task_process_statechanged;
 	t.reset = task_process_reset;
 	t.userdata = malloc(sizeof(task_process));
-
-	task_process *p = t.userdata;
-	memset(p, 0, sizeof(*p));
-	sb_append(&p->dir, dir);
-	va_list args;
-	va_start(args, cmdlineFmt);
-	sb_va_list(&p->cmdline, cmdlineFmt, args);
-	va_end(args);
-	p->spawnType = spawnType;
+	if(t.userdata) {
+		task_process *p = t.userdata;
+		memset(p, 0, sizeof(*p));
+		sb_append(&p->dir, dir);
+		va_list args;
+		va_start(args, cmdlineFmt);
+		sb_va_list(&p->cmdline, cmdlineFmt, args);
+		va_end(args);
+		p->spawnType = spawnType;
+	}
 	return t;
 }
