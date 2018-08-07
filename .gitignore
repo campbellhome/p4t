@@ -1,3 +1,9 @@
+# generated files
+/src/*/*generated.*
+
+# freetype
+/src/thirdparty/freetype/
+
 # output files
 /linux/
 /windows/
