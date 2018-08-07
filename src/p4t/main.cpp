@@ -363,7 +363,6 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 				}
 			}
 		}
-		requestRender = true;
 
 		// ImGui Rendering
 		if(requestRender) {
