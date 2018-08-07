@@ -91,12 +91,20 @@ b32 passes_filter_tokens(filterTokens *tokens, sdict_t *sd, const char **keys, u
 		const char *key = sb_get(&token->category);
 		if(*key) {
 			const char *value = sdict_find_safe(sd, key);
-			found = bb_stristr(value, sb_get(&token->text)) != NULL;
+			if(token->exact) {
+				found = _stricmp(value, sb_get(&token->text)) == 0;
+			} else {
+				found = bb_stristr(value, sb_get(&token->text)) != NULL;
+			}
 		} else if(keys) {
 			for(u32 keyIdx = 0; keyIdx < numKeys; ++keyIdx) {
 				key = keys[keyIdx];
 				const char *value = sdict_find_safe(sd, key);
-				found = bb_stristr(value, sb_get(&token->text)) != NULL;
+				if(token->exact) {
+					found = _stricmp(value, sb_get(&token->text)) == 0;
+				} else {
+					found = bb_stristr(value, sb_get(&token->text)) != NULL;
+				}
 				if(found) {
 					break;
 				}

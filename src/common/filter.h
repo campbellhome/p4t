@@ -17,6 +17,8 @@ typedef struct tag_filterToken {
 	sb_t text;
 	b32 prohibited;
 	b32 required;
+	b32 exact;
+	u8 pad[4];
 } filterToken;
 
 typedef struct tag_filterTokens {

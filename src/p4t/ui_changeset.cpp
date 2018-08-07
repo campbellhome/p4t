@@ -306,6 +306,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			if(filterToken *t = add_filter_token(&tokens, "user", user)) {
 				t->required = true;
 				t->prohibited = false;
+				t->exact = true;
 			}
 		}
 		const char *clientspec = sb_get(&uics->clientspec);
@@ -316,6 +317,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			if(filterToken *t = add_filter_token(&tokens, "client", clientspec)) {
 				t->required = true;
 				t->prohibited = false;
+				t->exact = true;
 			}
 		}
 
