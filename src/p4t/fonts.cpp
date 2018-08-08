@@ -101,7 +101,7 @@ bool Fonts_UpdateAtlas()
 void Fonts_Menu()
 {
 #if BB_USING(FEATURE_FREETYPE)
-	if(ImGui::Checkbox("Use FreeType for fonts", &s_fonts.useFreeType)) {
+	if(ImGui::Checkbox("DEBUG Use FreeType", &s_fonts.useFreeType)) {
 		Fonts_MarkAtlasForRebuild();
 	}
 #endif // #if BB_USING(FEATURE_FREETYPE)

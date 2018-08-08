@@ -15,7 +15,7 @@ namespace ImGui
 	bool Checkbox(const char *label, b8 *v)
 	{
 		bool b = *v != 0;
-		bool ret = ImGui::Checkbox(label, &b);
+		bool ret = Checkbox(label, &b);
 		if(ret) {
 			*v = b;
 		}
@@ -25,7 +25,7 @@ namespace ImGui
 	bool Checkbox(const char *label, b32 *v)
 	{
 		bool b = *v != 0;
-		bool ret = ImGui::Checkbox(label, &b);
+		bool ret = Checkbox(label, &b);
 		if(ret) {
 			*v = b;
 		}
@@ -37,11 +37,11 @@ namespace ImGui
 		bool b = *v != 0;
 		bool open;
 		if(ptr_id) {
-			open = ImGui::TreeNodeEx(ptr_id, flags | (b ? ImGuiTreeNodeFlags_Selected : 0), "%s", label);
+			open = TreeNodeEx(ptr_id, flags | (b ? ImGuiTreeNodeFlags_Selected : 0), "%s", label);
 		} else {
-			open = ImGui::TreeNodeEx(label, flags | (b ? ImGuiTreeNodeFlags_Selected : 0));
+			open = TreeNodeEx(label, flags | (b ? ImGuiTreeNodeFlags_Selected : 0));
 		}
-		if(ImGui::IsItemClicked()) {
+		if(IsItemClicked()) {
 			*v = !*v;
 		}
 		return open;
@@ -50,10 +50,10 @@ namespace ImGui
 	bool MenuItem(const char *label, const char *shortcut, b32 *p_selected, bool enabled)
 	{
 		if(!p_selected) {
-			return ImGui::MenuItem(label, shortcut, (bool *)nullptr, enabled);
+			return MenuItem(label, shortcut, (bool *)nullptr, enabled);
 		}
 		bool b = *p_selected != 0;
-		bool ret = ImGui::MenuItem(label, shortcut, &b, enabled);
+		bool ret = MenuItem(label, shortcut, &b, enabled);
 		*p_selected = b;
 		return ret;
 	}
@@ -61,10 +61,10 @@ namespace ImGui
 	bool Begin(const char *name, b32 *p_open, ImGuiWindowFlags flags)
 	{
 		if(!p_open) {
-			return ImGui::Begin(name, (bool *)nullptr, flags);
+			return Begin(name, (bool *)nullptr, flags);
 		}
 		bool b = *p_open != 0;
-		bool ret = ImGui::Begin(name, &b, flags);
+		bool ret = Begin(name, &b, flags);
 		*p_open = b;
 		return ret;
 	}
@@ -102,17 +102,17 @@ namespace ImGui
 
 	verticalScrollDir_e GetVerticalScrollDir()
 	{
-		if(ImGui::IsKeyPressed(ImGuiKey_PageUp)) {
+		if(IsKeyPressed(ImGuiKey_PageUp)) {
 			return kVerticalScroll_PageUp;
-		} else if(ImGui::IsKeyPressed(ImGuiKey_PageDown)) {
+		} else if(IsKeyPressed(ImGuiKey_PageDown)) {
 			return kVerticalScroll_PageDown;
-		} else if(ImGui::IsKeyPressed(ImGuiKey_UpArrow)) {
+		} else if(IsKeyPressed(ImGuiKey_UpArrow)) {
 			return kVerticalScroll_Up;
-		} else if(ImGui::IsKeyPressed(ImGuiKey_DownArrow)) {
+		} else if(IsKeyPressed(ImGuiKey_DownArrow)) {
 			return kVerticalScroll_Down;
-		} else if(ImGui::IsKeyPressed(ImGuiKey_Home)) {
+		} else if(IsKeyPressed(ImGuiKey_Home)) {
 			return kVerticalScroll_Start;
-		} else if(ImGui::IsKeyPressed(ImGuiKey_End)) {
+		} else if(IsKeyPressed(ImGuiKey_End)) {
 			return kVerticalScroll_End;
 		} else {
 			return kVerticalScroll_None;
@@ -249,7 +249,7 @@ namespace ImGui
 		if(strcmp(sb_get(active), str_id)) {
 			return false;
 		}
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4 * g_config.dpiScale);
+		SetCursorPosY(GetCursorPosY() - 4 * g_config.dpiScale);
 		return BeginChild(str_id, size, border, extra_flags);
 	}
 
@@ -258,7 +258,7 @@ namespace ImGui
 		if(*active != id) {
 			return false;
 		}
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4 * g_config.dpiScale);
+		SetCursorPosY(GetCursorPosY() - 4 * g_config.dpiScale);
 		return BeginChild(str_id, size, border, extra_flags);
 	}
 
@@ -269,7 +269,7 @@ namespace ImGui
 
 	void PushColumnHeaderClipRect(float offset, float width)
 	{
-		float windowX = ImGui::GetWindowPos().x;
+		float windowX = GetWindowPos().x;
 		float x1 = floorf(0.5f + windowX + offset - 1.0f);
 		float x2 = floorf(0.5f + windowX + offset + width - 1.0f);
 		PushClipRect(ImVec2(x1, -FLT_MAX), ImVec2(x2, +FLT_MAX), true);
@@ -281,7 +281,7 @@ namespace ImGui
 		float width = h.columnWidths[columnIndex] * g_config.dpiScale;
 		PushColumnHeaderClipRect(offset, width);
 		if(columnIndex) {
-			ImGui::SameLine(offset);
+			SameLine(offset);
 		}
 		TextUnformatted(text, end);
 		PopClipRect();
@@ -305,12 +305,12 @@ namespace ImGui
 		float *width = h.columnWidths + columnIndex;
 		bool last = columnIndex + 1 == h.numColumns;
 		if(last) {
-			*width = ImGui::GetContentRegionAvailWidth();
+			*width = GetContentRegionAvailWidth();
 		} else if(*width <= 0.0f) {
-			*width = h.columnScales[columnIndex] * ImGui::CalcTextSize(text).x + ImGui::CalcTextSize(" " ICON_SORT_UP).x + ImGui::GetStyle().ItemSpacing.x * 2.0f;
+			*width = h.columnScales[columnIndex] * CalcTextSize(text).x + CalcTextSize(" " ICON_SORT_UP).x + GetStyle().ItemSpacing.x * 2.0f;
 		}
 		float scale = (g_config.dpiScale <= 0.0f) ? 1.0f : g_config.dpiScale;
-		float startOffset = ImGui::GetCursorPosX();
+		float startOffset = GetCursorPosX();
 
 		if(Button(va("###%s", text), kButton_ColumnHeader, ImVec2(*width * scale, 0.0f))) {
 			res.sortChanged = true;
@@ -322,40 +322,40 @@ namespace ImGui
 			}
 		}
 
-		res.active = res.active || ImGui::IsItemActive();
-		float endOffset = startOffset + *width * scale + ImGui::GetStyle().ItemSpacing.x;
+		res.active = res.active || IsItemActive();
+		float endOffset = startOffset + *width * scale + GetStyle().ItemSpacing.x;
 		const char *columnText = (*h.sortColumn == columnIndex) ? va("%s %s", *h.sortDescending ? ICON_SORT_DOWN : ICON_SORT_UP, text) : text;
-		const float itemPad = ImGui::GetStyle().ItemSpacing.x;
-		DrawColumnHeaderText(startOffset + ImGui::GetStyle().ItemInnerSpacing.x, *width * scale - itemPad, columnText);
+		const float itemPad = GetStyle().ItemSpacing.x;
+		DrawColumnHeaderText(startOffset + GetStyle().ItemInnerSpacing.x, *width * scale - itemPad, columnText);
 		SameLine(endOffset);
 		if(!last) {
 			Button(va("|###sep%s", text), kButton_ResizeBar, ImVec2(2.0f * g_config.dpiScale, 0.0f));
-			if(ImGui::IsItemActive()) {
+			if(IsItemActive()) {
 				res.active = true;
-				*width += ImGui::GetIO().MouseDelta.x / scale;
+				*width += GetIO().MouseDelta.x / scale;
 			}
-			ImGui::SameLine();
+			SameLine();
 		}
 
-		h.columnOffsets[columnIndex + 1] = ImGui::GetCursorPosX();
+		h.columnOffsets[columnIndex + 1] = GetCursorPosX();
 		return res;
 	}
 
 	void PushSelectableColors(b32 selected, b32 viewActive)
 	{
 		if(selected && !viewActive) {
-			ImVec4 col = ImGui::GetStyle().Colors[ImGuiCol_Header];
+			ImVec4 col = GetStyle().Colors[ImGuiCol_Header];
 			col.x *= 0.5f;
 			col.y *= 0.5f;
 			col.z *= 0.5f;
-			ImGui::PushStyleColor(ImGuiCol_Header, col);
+			PushStyleColor(ImGuiCol_Header, col);
 		}
 	}
 
 	void PopSelectableColors(b32 selected, b32 viewActive)
 	{
 		if(selected && !viewActive) {
-			ImGui::PopStyleColor();
+			PopStyleColor();
 		}
 	}
 
@@ -378,9 +378,9 @@ namespace ImGui
 		IconColored(iconColor, icon);
 		float end = pos.x + CalcTextSize(icon).x;
 		pos.x = pos.x + (end - pos.x) / 2;
-		ImDrawList *drawList = ImGui::GetWindowDrawList();
-		ImVec2 size = ImGui::CalcTextSize(overlay);
-		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
+		ImDrawList *drawList = GetWindowDrawList();
+		ImVec2 size = CalcTextSize(overlay);
+		float lineHeight = GetTextLineHeightWithSpacing();
 		float deltaY = lineHeight - size.y + 2 * g_config.dpiScale;
 		pos.y += deltaY;
 		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), overlay);
@@ -396,10 +396,10 @@ namespace ImGui
 	void IconColored(ImColor color, const char *icon)
 	{
 		ImVec2 pos = GetIconPosForText();
-		ImGui::TextColored(ImColor(0, 0, 0, 0), "%s", icon);
-		ImDrawList *drawList = ImGui::GetWindowDrawList();
-		ImVec2 size = ImGui::CalcTextSize(icon);
-		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
+		TextColored(ImColor(0, 0, 0, 0), "%s", icon);
+		ImDrawList *drawList = GetWindowDrawList();
+		ImVec2 size = CalcTextSize(icon);
+		float lineHeight = GetTextLineHeightWithSpacing();
 		float deltaY = lineHeight - size.y;
 		pos.y += deltaY;
 		drawList->AddText(ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), icon);
@@ -414,18 +414,18 @@ namespace ImGui
 
 	void DrawIconAtPos(ImVec2 pos, const char *icon, ImColor color, bool align, float scale)
 	{
-		ImFont *font = ImGui::GetFont();
-		float fontSize = ImGui::GetFontSize();
+		ImFont *font = GetFont();
+		float fontSize = GetFontSize();
 		fontSize *= scale;
 
 		if(align) {
 			ImVec2 size = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, icon);
-			float lineHeight = ImGui::GetTextLineHeightWithSpacing();
+			float lineHeight = GetTextLineHeightWithSpacing();
 			float deltaY = lineHeight - size.y;
 			pos.y += deltaY;
 		}
 
-		ImDrawList *drawList = ImGui::GetWindowDrawList();
+		ImDrawList *drawList = GetWindowDrawList();
 		if(color.Value.x > 0.0f || color.Value.y > 0.0f || color.Value.z > 0.0f) {
 			drawList->AddText(font, fontSize, ImVec2(pos.x + 1, pos.y + 1), ImColor(0, 0, 0), icon);
 		}
@@ -434,19 +434,19 @@ namespace ImGui
 
 	ImVec2 GetIconPosForButton()
 	{
-		ImVec2 windowPos = ImGui::GetWindowPos();
-		ImVec2 cursorPos = ImGui::GetCursorPos();
-		ImVec2 framePadding = ImGui::GetStyle().FramePadding;
+		ImVec2 windowPos = GetWindowPos();
+		ImVec2 cursorPos = GetCursorPos();
+		ImVec2 framePadding = GetStyle().FramePadding;
 		ImVec2 textPos(windowPos.x + cursorPos.x + framePadding.x + GetScrollX(), windowPos.y + cursorPos.y - framePadding.y * 0.5f + 1 - GetScrollY());
 		return textPos;
 	}
 
 	ImVec2 GetIconPosForText()
 	{
-		ImVec2 windowPos = ImGui::GetWindowPos();
-		ImVec2 cursorPos = ImGui::GetCursorPos();
-		float lineHeight = ImGui::GetTextLineHeightWithSpacing();
-		float fontHeight = ImGui::CalcTextSize(nullptr).y;
+		ImVec2 windowPos = GetWindowPos();
+		ImVec2 cursorPos = GetCursorPos();
+		float lineHeight = GetTextLineHeightWithSpacing();
+		float fontHeight = CalcTextSize(nullptr).y;
 		ImVec2 textPos(windowPos.x + cursorPos.x + GetScrollX(), windowPos.y + cursorPos.y - lineHeight + fontHeight - GetScrollY());
 		return textPos;
 	}

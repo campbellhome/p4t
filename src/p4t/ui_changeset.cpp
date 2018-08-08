@@ -224,6 +224,22 @@ static bool sdictCombo(const char *label, sb_t *current, sdicts *sds, const char
 	return ret;
 }
 
+struct changesetDebug
+{
+	float startY;
+	float requiredEndY;
+	u32 visibleEndIndex;
+	float endY;
+	bool drawFromStart;
+	bool showChangesetOptimizations;
+	u8 pad[6];
+};
+static changesetDebug s_debug;
+void UIChangeset_Menu()
+{
+	ImGui::Checkbox("DEBUG Changeset Optimizations", &s_debug.showChangesetOptimizations);
+}
+
 void UIChangeset_Update(p4UIChangeset *uics)
 {
 	ImGui::PushID(uics);
@@ -253,6 +269,19 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		uics->parity = 0;
 	}
 	ImGui::PopItemWidth();
+
+	if(s_debug.showChangesetOptimizations) {
+		ImGui::SameLine();
+		ImGui::Checkbox("drawAll", &s_debug.drawFromStart);
+		ImGui::SameLine();
+		u32 startCL = (uics->lastStartIndex < uics->count) ? uics->data[uics->lastStartIndex].changelist : 0;
+		u32 endCL = (s_debug.visibleEndIndex < uics->count) ? uics->data[s_debug.visibleEndIndex].changelist : 0;
+		ImGui::Text("%.0f/%.0f(%.0f) range:%u(%u)-%u(%u) numValid:%u",
+		            s_debug.startY, s_debug.requiredEndY, s_debug.endY,
+		            uics->lastStartIndex, startCL,
+		            s_debug.visibleEndIndex, endCL,
+		            uics->numValidStartY, uics->lastStartIndex);
+	}
 
 	ImGui::TextUnformatted("Filter:");
 	ImGui::SameLine();
@@ -337,6 +366,9 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		}
 		p4_sort_uichangeset(uics);
 		uics->lastClickIndex = ~0u;
+		uics->numValidStartY = 0;
+		uics->lastStartIndex = 0;
+		uics->lastStartY = 0.0f;
 		reset_filter_tokens(&tokens);
 		UIChangeset_SetWindowTitle(uics);
 	}
@@ -360,6 +392,9 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			if(res.sortChanged) {
 				p4_sort_uichangeset(uics);
 				uics->lastClickIndex = ~0u;
+				uics->numValidStartY = 0;
+				uics->lastStartIndex = 0;
+				uics->lastStartY = 0.0f;
 			}
 		} else {
 			columnOffsets[i + 1] = columnOffsets[i];
@@ -368,8 +403,47 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	ImGui::NewLine();
 
 	if(ImGui::BeginChild("##changelists", ImVec2(0, 0), false, ImGuiWindowFlags_None)) {
-		for(u32 i = 0; i < uics->count; ++i) {
+		u32 startIndex = 0;
+		float startY = 0.0f;
+		const float scrollY = ImGui::GetScrollY();
+		s_debug.startY = scrollY;
+		if(!s_debug.drawFromStart) {
+			startIndex = uics->lastStartIndex;
+			startY = uics->lastStartY;
+			while(startY < scrollY) {
+				if(startIndex + 1 >= uics->count)
+					break;
+				p4UIChangesetEntry *e = uics->data + startIndex + 1;
+				if(e->startY < scrollY) {
+					++startIndex;
+					startY = e->startY;
+				} else {
+					break;
+				}
+			}
+			while(startY > scrollY) {
+				if(!startIndex)
+					break;
+				p4UIChangesetEntry *e = uics->data + startIndex;
+				if(e->startY < scrollY)
+					break;
+				--startIndex;
+				e = uics->data + startIndex;
+				startY = e->startY;
+			}
+		}
+		uics->lastStartIndex = startIndex;
+		uics->lastStartY = startY;
+
+		float visibleEndY = ImGui::GetWindowHeight() + ImGui::GetScrollY();
+
+		if(startY) {
+			ImGui::Button("##spacerstart", ImVec2(0, startY - ImGui::GetStyle().ItemSpacing.y));
+		}
+		for(u32 i = startIndex; i < uics->count; ++i) {
 			p4UIChangesetEntry *e = uics->data + i;
+			e->startY = ImGui::GetCursorPosY();
+			uics->numValidStartY = BB_MAX(uics->numValidStartY, i);
 			sdict_t *c = p4_find_changelist_in_changeset(cs, e->changelist, sb_get(&e->client));
 			if(c) {
 				b32 expanded = ImGui::TreeNode(va("###node%u%s", e->changelist, sb_get(&e->client)));
@@ -466,6 +540,19 @@ void UIChangeset_Update(p4UIChangeset *uics)
 					}
 				}
 			}
+			e->endY = ImGui::GetCursorPosY();
+			s_debug.visibleEndIndex = i;
+			if(!s_debug.drawFromStart && e->startY > visibleEndY && uics->numValidStartY == uics->count - 1)
+				break;
+		}
+		if(uics->count) {
+			float requiredY = bba_last(*uics).endY;
+			float curY = ImGui::GetCursorPosY() + ImGui::GetStyle().ItemSpacing.y;
+			if(requiredY > curY) {
+				ImGui::Button("##spacerend", ImVec2(0, requiredY - curY));
+			}
+			s_debug.requiredEndY = requiredY;
+			s_debug.endY = ImGui::GetCursorPosY();
 		}
 	}
 	ImGui::EndChild();

@@ -32,6 +32,7 @@
 
 globals_t globals;
 bool g_shuttingDown;
+static bool s_forceRender;
 
 static appSpecificData s_appSpecific[] = {
 	{ "p4t", "p4t", "p4t", true, kAppType_Normal },
@@ -155,7 +156,7 @@ bool App_Init(const char *cmdline)
 		}
 		uics = p4_add_uichangeset(false);
 		if(uics) {
-			UITabs_AddTab(kTabType_Changeset, uics->id, false);
+			UITabs_AddTab(kTabType_Changeset, uics->id, true);
 		}
 	}
 
@@ -225,7 +226,7 @@ void App_Update()
 			ImGui::EndMenu();
 		}
 		if(ImGui::BeginMenu("View")) {
-			if(ImGui::BeginMenu("DPI Scale Override")) {
+			if(ImGui::BeginMenu("DEBUG Scale")) {
 				void QueueUpdateDpiDependentResources();
 				if(ImGui::MenuItem("1")) {
 					g_config.dpiScale = 1.0f;
@@ -250,6 +251,10 @@ void App_Update()
 				ImGui::EndMenu();
 			}
 			Fonts_Menu();
+			UIChangeset_Menu();
+			if(ImGui::Checkbox("DEBUG force render", &s_forceRender)) {
+				//ImGui::CloseCurrentPopup();
+			}
 			ImGui::EndMenu();
 		}
 		//if(ImGui::BeginMenu("Help")) {
@@ -262,6 +267,10 @@ void App_Update()
 		UIClientspec_MenuBar();
 
 		ImGui::EndMainMenuBar();
+	}
+
+	if(s_forceRender) {
+		App_RequestRender();
 	}
 
 	if(s_showDemo) {

@@ -79,6 +79,8 @@ typedef struct tag_p4UIChangesetEntry {
 	b32 described;
 	u32 parity;
 	sb_t client;
+	float startY;
+	float endY;
 	uiChangelistFiles normalFiles;
 	uiChangelistFiles shelvedFiles;
 } p4UIChangesetEntry;
@@ -96,7 +98,9 @@ typedef struct tag_p4UIChangeset {
 	b32 filterEnabled;
 	u32 id;
 	u32 lastClickIndex;
-	u8 pad[4];
+	u32 numValidStartY;
+	u32 lastStartIndex;
+	float lastStartY;
 } p4UIChangeset;
 
 typedef struct tag_p4UIChangesets {
