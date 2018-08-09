@@ -43,6 +43,22 @@ float s_columnScales[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_columnScales) == BB_ARRAYSIZE(g_config.uiPendingChangesets.columnWidth));
 
+static sb_t UIChangeset_SingleLineFromMultiline(const char *src)
+{
+	sb_t sb = { 0 };
+	char ch;
+	while((ch = *src++) != '\0') {
+		if(ch == '\r') {
+			// do nothing
+		} else if(ch == '\n' || ch == '\t') {
+			sb_append_char(&sb, ' ');
+		} else {
+			sb_append_char(&sb, ch);
+		}
+	}
+	return sb;
+}
+
 static void UIChangeset_CopySelectedToClipboard(p4UIChangeset *uics, p4Changeset *cs, ImGui::columnDrawData *data, bool /*extraInfo*/)
 {
 	u32 i;
@@ -57,14 +73,20 @@ static void UIChangeset_CopySelectedToClipboard(p4UIChangeset *uics, p4Changeset
 					if(data->columnNames[col]) {
 						const changesetColumnField *field = p4.changesetColumnFields + col;
 						const char *value = sdict_find_safe(c, field->key);
-						if(field->time) {
+						if(field->type == kChangesetColumn_Time) {
 							u32 time = strtou32(value);
 							value = time ? Time_StringFromEpochTime(time) : "";
+						}
+						sb_t singleLine = { 0 };
+						if(field->type == kChangesetColumn_TextMultiline) {
+							singleLine = UIChangeset_SingleLineFromMultiline(value);
+							value = sb_get(&singleLine);
 						}
 						if(col) {
 							sb_append_char(&sb, '\t');
 						}
 						sb_append(&sb, value);
+						sb_reset(&singleLine);
 					}
 				}
 				sb_append_char(&sb, '\n');
@@ -134,7 +156,7 @@ static void UIChangeset_HandleClick(p4UIChangeset *uics, u32 index)
 	}
 }
 
-// change, time, user, client, status, changeType (public), path (submitted only?), desc, desc_oneline
+// change, time, user, client, status, changeType (public), path (submitted only?), desc
 static const char *s_filterKeys[] = {
 	"user",
 	"client",
@@ -224,8 +246,7 @@ static bool sdictCombo(const char *label, sb_t *current, sdicts *sds, const char
 	return ret;
 }
 
-struct changesetDebug
-{
+struct changesetDebug {
 	float startY;
 	float requiredEndY;
 	u32 visibleEndIndex;
@@ -492,9 +513,14 @@ void UIChangeset_Update(p4UIChangeset *uics)
 					if(data.columnNames[col]) {
 						const changesetColumnField *field = p4.changesetColumnFields + col;
 						const char *value = sdict_find_safe(c, field->key);
-						if(field->time) {
+						if(field->type == kChangesetColumn_Time) {
 							u32 time = strtou32(value);
 							value = time ? Time_StringFromEpochTime(time) : "";
+						}
+						sb_t singleLine = { 0 };
+						if(field->type == kChangesetColumn_TextMultiline) {
+							singleLine = UIChangeset_SingleLineFromMultiline(value);
+							value = sb_get(&singleLine);
 						}
 						if(!col) {
 							value = va("  %s", value);
@@ -505,6 +531,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 						} else {
 							ImGui::DrawColumnText(data, col, value);
 						}
+						sb_reset(&singleLine);
 					}
 				}
 				if(expanded) {
@@ -557,7 +584,8 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	}
 	ImGui::EndChild();
 
-	// Request more (older) changes if we have reached the end of our current set
+#if 0
+	// #TODO: Request more (older) changes if we have reached the end of our current set
 	float windowHeight = ImGui::GetWindowHeight();
 	float cursorY = ImGui::GetCursorPosY() - ImGui::GetScrollY();
 	if(cursorY <= windowHeight) {
@@ -566,6 +594,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			p4_request_older_changes(cs);
 		}
 	}
+#endif
 
 	if(anyActive) {
 		ImGui::SetActiveSelectables(uics);
@@ -584,7 +613,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		} else if(ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_Escape])) {
 			UIChangeset_ClearSelection(uics);
 		} else if(key_is_pressed_this_frame(Key_F5) && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt) {
-			p4_refresh_changeset(cs);
+			p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
 		}
 	}
 

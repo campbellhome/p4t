@@ -4,6 +4,7 @@
 #include "p4.h"
 
 #include "app.h"
+#include "appdata.h"
 #include "bb.h"
 #include "bb_array.h"
 #include "config.h"
@@ -22,11 +23,11 @@ p4_t p4;
 p4Changeset *p4_add_changeset(b32 pending);
 
 const changesetColumnField s_changesetColumnFields[] = {
-	{ "change", false, true },
-	{ "time", true, false },
-	{ "client", false, false },
-	{ "user", false, false },
-	{ "desc_oneline", false, false },
+	{ "change", kChangesetColumn_Numeric },
+	{ "time", kChangesetColumn_Time },
+	{ "client", kChangesetColumn_Text },
+	{ "user", kChangesetColumn_Text },
+	{ "desc", kChangesetColumn_TextMultiline },
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_changesetColumnFields) == BB_ARRAYSIZE(g_config.uiPendingChangesets.columnWidth));
 
@@ -319,7 +320,6 @@ void p4_build_default_changelist(sdict_t *sd, const char *owner, const char *cli
 	sdict_add_raw(sd, "status", "pending");
 	sdict_add_raw(sd, "changeType", "public");
 	sdict_add_raw(sd, "desc", "");
-	sdict_add_raw(sd, "desc_oneline", "");
 }
 
 p4Changeset *p4_find_or_add_changeset(b32 pending)
@@ -338,12 +338,62 @@ p4Changeset *p4_add_changeset(b32 pending)
 		p4Changeset *cs = &bba_last(p4.changesets);
 		cs->pending = pending;
 		cs->highestReceived = 0;
-		cs->lowestRequested = INT_MAX;
 		cs->refreshed = false;
 		cs->updating = false;
 		return cs;
 	}
 	return NULL;
+}
+
+static void p4_save_submitted_changeset(p4Changeset *cs)
+{
+	sb_t path = appdata_get();
+	sb_va(&path, "\\%s_submitted_changesets.bin", globals.appSpecific.configName);
+
+	pyWriter pw = { 0 };
+	if(py_write_sdicts(&pw, &cs->changelists)) {
+		fileData_t fd = { 0 };
+		fd.buffer = pw.data;
+		fd.bufferSize = pw.count;
+		if(fd.buffer && path.data) {
+			fileData_writeIfChanged(path.data, NULL, fd);
+		}
+	}
+	bba_free(pw);
+	sb_reset(&path);
+}
+
+static void p4_load_submitted_changeset(p4Changeset *cs)
+{
+	sb_t path = appdata_get();
+	sb_va(&path, "\\%s_submitted_changesets.bin", globals.appSpecific.configName);
+	fileData_t fd = fileData_read(sb_get(&path));
+	if(fd.buffer) {
+		sdicts dicts = { 0 };
+		pyParser parser = { 0 };
+		parser.data = fd.buffer;
+		parser.count = fd.bufferSize;
+		while(py_parser_tick(&parser, &dicts)) {
+			// do nothing
+		}
+		if(dicts.count) {
+			p4_reset_changeset(cs);
+			++cs->parity;
+			cs->refreshed = true;
+			sdicts_move(&cs->changelists, &dicts);
+			for(u32 i = 0; i < cs->changelists.count; ++i) {
+				sdict_t *sd = cs->changelists.data + i;
+				u32 number = strtou32(sdict_find(sd, "change"));
+				cs->highestReceived = BB_MAX(cs->highestReceived, number);
+			}
+		}
+		// don't bba_free(parser) because the memory is borrowed from fd
+		sdict_reset(&parser.dict);
+		sdicts_reset(&dicts);
+	}
+	fileData_reset(&fd);
+	sb_reset(&path);
+	BB_LOG("p4", "%u submitted changelists loaded - highest is %u", cs->changelists.count, cs->highestReceived);
 }
 
 static void task_p4changes_refresh_statechanged(task *t)
@@ -363,24 +413,7 @@ static void task_p4changes_refresh_statechanged(task *t)
 				for(u32 i = 0; i < cs->changelists.count; ++i) {
 					sdict_t *sd = cs->changelists.data + i;
 					u32 number = strtou32(sdict_find(sd, "change"));
-					cs->lowestRequested = BB_MIN(cs->lowestRequested, number);
 					cs->highestReceived = BB_MAX(cs->highestReceived, number);
-					const char *desc = sdict_find(sd, "desc");
-					if(desc) {
-						char ch;
-						sb_t sb = { 0 };
-						while((ch = *desc++) != '\0') {
-							if(ch == '\r') {
-								// do nothing
-							} else if(ch == '\n' || ch == '\t') {
-								sb_append_char(&sb, ' ');
-							} else {
-								sb_append_char(&sb, ch);
-							}
-						}
-						sdict_add_raw(sd, "desc_oneline", sb_get(&sb));
-						sb_reset(&sb);
-					}
 				}
 				if(pending) {
 					for(u32 clientIdx = 0; clientIdx < p4.allClients.count; ++clientIdx) {
@@ -394,6 +427,8 @@ static void task_p4changes_refresh_statechanged(task *t)
 							}
 						}
 					}
+				} else {
+					p4_save_submitted_changeset(cs);
 				}
 			}
 		}
@@ -407,91 +442,93 @@ void p4_refresh_changeset(p4Changeset *cs)
 		if(cs->pending) {
 			task *t = task_queue(
 			    p4_task_create(task_p4changes_refresh_statechanged, p4_dir(), NULL,
-			                   "\"%s\" -G changes -s pending -L", p4_exe()));
+			                   "\"%s\" -G changes -s pending -l", p4_exe()));
 			if(t) {
 				cs->updating = true;
-				cs->lowestRequested = 1;
 				sdict_add_raw(&t->extraData, "pending", "1");
 			}
 		} else {
+			if(!cs->refreshed) {
+				p4_load_submitted_changeset(cs);
+				if(cs->refreshed) {
+					p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
+					return;
+				}
+			}
 			task *t = task_queue(
 			    p4_task_create(task_p4changes_refresh_statechanged, p4_dir(), NULL,
-			                   "\"%s\" -G changes -s submitted -L%s", p4_exe(),
-			                   g_config.p4.changelistBlockSize ? va(" -m %u", g_config.p4.changelistBlockSize) : ""));
+			                   "\"%s\" -G changes -s submitted -l", p4_exe()));
 			if(t) {
 				cs->updating = true;
-				cs->lowestRequested = INT_MAX;
 				sdict_add_raw(&t->extraData, "pending", "0");
 			}
 		}
 	}
 }
 
-static void task_p4changes_older_statechanged(task *t)
+static void task_p4changes_newer_statechanged(task *t)
 {
 	task_process_statechanged(t);
 	if(task_done(t)) {
-		b32 pending = strtos32(sdict_find_safe(&t->extraData, "pending"));
-		p4Changeset *cs = p4_find_or_add_changeset(pending);
+		u32 blockSize = strtou32(sdict_find_safe(&t->extraData, "blockSize"));
+		p4Changeset *cs = p4_find_or_add_changeset(false);
 		if(cs) {
 			cs->updating = false;
 			if(t->state == kTaskState_Succeeded) {
-				++cs->parity;
+				b32 complete = false;
 				task_p4 *p = (task_p4 *)t->userdata;
 				for(u32 i = 0; i < p->dicts.count; ++i) {
-					if(bba_add(cs->changelists, 1)) {
-						sdict_t *src = p->dicts.data + i;
-						sdict_t *sd = &bba_last(cs->changelists);
-						*sd = *src;
-						memset(src, 0, sizeof(*src));
+					sdict_t *sd = p->dicts.data + i;
+					u32 number = strtou32(sdict_find(sd, "change"));
+					if(number == cs->highestReceived) {
+						complete = true;
+						break;
+					}
+				}
+				if(complete) {
+					b32 added = false;
+					u32 highestReceived = cs->highestReceived;
+					for(u32 i = 0; i < p->dicts.count; ++i) {
+						sdict_t *sd = p->dicts.data + i;
 						u32 number = strtou32(sdict_find(sd, "change"));
-						cs->lowestRequested = BB_MIN(cs->lowestRequested, number);
-						const char *desc = sdict_find(sd, "desc");
-						if(desc) {
-							char ch;
-							sb_t sb = { 0 };
-							while((ch = *desc++) != '\0') {
-								if(ch == '\r') {
-									// do nothing
-								} else if(ch == '\n' || ch == '\t') {
-									sb_append_char(&sb, ' ');
-								} else {
-									sb_append_char(&sb, ch);
-								}
+						if(number > cs->highestReceived) {
+							if(bba_add(cs->changelists, 1)) {
+								sdict_t *target = &bba_last(cs->changelists);
+								sdict_move(target, sd);
+								added = true;
+								highestReceived = BB_MAX(highestReceived, number);
 							}
-							sdict_add_raw(sd, "desc_oneline", sb_get(&sb));
-							sb_reset(&sb);
 						}
 					}
+					if(added) {
+						++cs->parity;
+						cs->highestReceived = highestReceived;
+						p4_save_submitted_changeset(cs);
+					}
+				} else {
+					p4_request_newer_changes(cs, blockSize * 2);
 				}
 			}
 		}
 	}
 }
-void p4_request_older_changes(p4Changeset *cs)
+void p4_request_newer_changes(p4Changeset *cs, u32 blockSize)
 {
-	if(!cs->updating && cs->lowestRequested > 1 && cs->highestReceived && !cs->pending) {
-		if(g_config.p4.changelistBlockSize) {
-			task *t = task_queue(
-			    p4_task_create(task_p4changes_older_statechanged, p4_dir(), NULL,
-			                   "\"%s\" -G changes -s submitted -L -m %u //...@0,%u", p4_exe(),
-			                   g_config.p4.changelistBlockSize, cs->lowestRequested - 1));
-			if(t) {
-				cs->updating = true;
-				u32 target = cs->lowestRequested - g_config.p4.changelistBlockSize;
-				cs->lowestRequested = (target < cs->lowestRequested) ? target : 1;
-				sdict_add_raw(&t->extraData, "pending", va("%d", cs->pending));
-			}
+	if(!cs->updating) {
+		if(cs->pending) {
+			p4_refresh_changeset(cs);
 		} else {
-			// should only happen if someone changes g_config.p4.changelistBlockSize to 0 after initial refresh
-			task *t = task_queue(
-			    p4_task_create(task_p4changes_older_statechanged, p4_dir(), NULL,
-			                   "\"%s\" -G changes -s submitted -L //...@0,%u", p4_exe(),
-			                   cs->lowestRequested - 1));
-			if(t) {
-				cs->updating = true;
-				cs->lowestRequested = 1;
-				sdict_add_raw(&t->extraData, "pending", va("%d", cs->pending));
+			BB_LOG("p4", "requesting newer submitted changelists - blockSize is %u", blockSize);
+			if(blockSize) {
+				task *t = task_queue(
+				    p4_task_create(task_p4changes_newer_statechanged, p4_dir(), NULL,
+				                   "\"%s\" -G changes -s submitted -l -m %u", p4_exe(), blockSize));
+				if(t) {
+					cs->updating = true;
+					sdict_add_raw(&t->extraData, "blockSize", va("%u", blockSize));
+				}
+			} else {
+				p4_refresh_changeset(cs);
 			}
 		}
 	}
@@ -526,7 +563,7 @@ static int p4_changeset_compare(const void *_a, const void *_b)
 	const char *astr = sdict_find_safe(a, field->key);
 	const char *bstr = sdict_find_safe(b, field->key);
 	int val;
-	if(field->numeric) {
+	if(field->type == kChangesetColumn_Numeric) {
 		int aint = atoi(astr);
 		int bint = atoi(bstr);
 		if(aint < bint) {
