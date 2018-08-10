@@ -349,16 +349,26 @@ static void p4_save_submitted_changeset(p4Changeset *cs)
 {
 	sb_t path = appdata_get();
 	sb_va(&path, "\\%s_submitted_changesets.bin", globals.appSpecific.configName);
+	BB_LOG("p4::cache", "begin save submitted changelists - path:%s", sb_get(&path));
+	BB_FLUSH();
 
 	pyWriter pw = { 0 };
-	if(py_write_sdicts(&pw, &cs->changelists)) {
+	b32 built = py_write_sdicts(&pw, &cs->changelists);
+	b32 wrote = false;
+	if(built) {
 		fileData_t fd = { 0 };
 		fd.buffer = pw.data;
 		fd.bufferSize = pw.count;
 		if(fd.buffer && path.data) {
-			fileData_writeIfChanged(path.data, NULL, fd);
+			wrote = fileData_writeIfChanged(path.data, NULL, fd);
 		}
 	}
+	if(wrote) {
+		BB_LOG("p4::cache", "end save submitted changelists - count:%u highest:%u built:%u wrote:%u", cs->changelists.count, cs->highestReceived, built, wrote);
+	} else {
+		BB_ERROR("p4::cache", "end save submitted changelists - count:%u highest:%u built:%u wrote:%u", cs->changelists.count, cs->highestReceived, built, wrote);
+	}
+	BB_FLUSH();
 	bba_free(pw);
 	sb_reset(&path);
 }
@@ -367,10 +377,14 @@ static void p4_load_submitted_changeset(p4Changeset *cs)
 {
 	sb_t path = appdata_get();
 	sb_va(&path, "\\%s_submitted_changesets.bin", globals.appSpecific.configName);
+	BB_LOG("p4::cache", "begin load submitted changelists - path:%s", sb_get(&path));
+	BB_FLUSH();
+
 	fileData_t fd = fileData_read(sb_get(&path));
 	if(fd.buffer) {
 		sdicts dicts = { 0 };
 		pyParser parser = { 0 };
+		parser.cmdline = sb_get(&path);
 		parser.data = fd.buffer;
 		parser.count = fd.bufferSize;
 		while(py_parser_tick(&parser, &dicts)) {
@@ -390,10 +404,13 @@ static void p4_load_submitted_changeset(p4Changeset *cs)
 		// don't bba_free(parser) because the memory is borrowed from fd
 		sdict_reset(&parser.dict);
 		sdicts_reset(&dicts);
+		BB_LOG("p4::cache", "end load submitted changelists - count:%u highest:%u", cs->changelists.count, cs->highestReceived);
+	} else {
+		BB_LOG("p4::cache", "end load submitted changelists - no data");
 	}
+	BB_FLUSH();
 	fileData_reset(&fd);
 	sb_reset(&path);
-	BB_LOG("p4", "%u submitted changelists loaded - highest is %u", cs->changelists.count, cs->highestReceived);
 }
 
 static void task_p4changes_refresh_statechanged(task *t)

@@ -8,6 +8,7 @@ extern "C" {
 double Time_GetCurrentTime(void);
 void Time_StartNewFrame(void);
 float Time_GetDT(void);
+float Time_GetCurrentFrameElapsed(void);
 u64 Time_GetFrameNumber(void);
 const char *Time_StringFromEpochTime(u32 epochTime);
 

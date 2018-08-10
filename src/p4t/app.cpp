@@ -109,7 +109,7 @@ bool App_Init(const char *cmdline)
 	ImGui::Style_Init();
 
 	const char *applicationName = globals.appSpecific.configName;
-#ifdef _DEBUG
+#if defined(_DEBUG) || 1
 	BB_INIT_WITH_FLAGS(applicationName, 0);
 #else
 	BB_INIT_WITH_FLAGS(applicationName, kBBInitFlag_NoOpenView);

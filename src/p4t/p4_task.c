@@ -2,11 +2,11 @@
 // MIT license (see License.txt)
 
 #include "p4_task.h"
-
 #include "app.h"
-#include "output.h"
-
+#include "appdata.h"
 #include "bb_array.h"
+#include "file_utils.h"
+#include "output.h"
 
 void task_p4_tick(task *_t)
 {
@@ -35,6 +35,24 @@ void task_p4_reset(task *_t)
 {
 	task_p4 *t = (task_p4 *)_t->userdata;
 	sdicts_reset(&t->dicts);
+	if(t->parser.state == kParser_Error) {
+		sb_t path = appdata_get();
+		sb_va(&path, "\\%s_error.bin", globals.appSpecific.configName);
+		fileData_t fd = { 0 };
+		fd.buffer = t->parser.data;
+		fd.bufferSize = t->parser.count;
+		if(fd.buffer && path.data) {
+			BB_LOG("p4::parser::postmortem", "begin save err data - path:%s", sb_get(&path));
+			BB_FLUSH();
+			b32 wrote = fileData_writeIfChanged(path.data, NULL, fd);
+			if(wrote) {
+				BB_LOG("p4::parser::postmortem", "end save err data - wrote:%u", wrote);
+			} else {
+				BB_ERROR("p4::parser::postmortem", "end save err data");
+			}
+		}
+		sb_reset(&path);
+	}
 	bba_free(t->parser);
 	sdict_reset(&t->parser.dict);
 	sdict_reset(&t->extraData);

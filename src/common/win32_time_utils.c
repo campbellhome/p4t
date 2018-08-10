@@ -37,6 +37,14 @@ void Time_StartNewFrame(void)
 	++s_frameNumber;
 }
 
+float Time_GetCurrentFrameElapsed(void)
+{
+	LARGE_INTEGER li;
+	QueryPerformanceCounter(&li);
+	u64 deltaCounter = li.QuadPart - s_frameStartCounter;
+	return (float)(deltaCounter * s_counterToMilliseconds);
+}
+
 float Time_GetDT(void)
 {
 	return s_frameTime;
@@ -47,7 +55,7 @@ u64 Time_GetFrameNumber(void)
 	return s_frameNumber;
 }
 
-static SYSTEMTIME Ttime_SystemTimeFromEpochTime(u32 epochTime)
+static SYSTEMTIME Time_SystemTimeFromEpochTime(u32 epochTime)
 {
 	// Windows uses 100 nanosecond intervals since Jan 1, 1601 UTC
 	// https://support.microsoft.com/en-us/help/167296/how-to-convert-a-unix-time-t-to-a-win32-filetime-or-systemtime
@@ -63,7 +71,7 @@ static SYSTEMTIME Ttime_SystemTimeFromEpochTime(u32 epochTime)
 
 const char *Time_StringFromEpochTime(u32 epochTime)
 {
-	SYSTEMTIME st = Ttime_SystemTimeFromEpochTime(epochTime);
+	SYSTEMTIME st = Time_SystemTimeFromEpochTime(epochTime);
 	char dateBuffer[64] = "";
 	char timeBuffer[64] = "";
 	GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, dateBuffer, sizeof(dateBuffer));

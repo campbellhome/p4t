@@ -2,7 +2,8 @@
 // MIT license (see License.txt)
 
 #include "py_parser.h"
-
+#include "bb.h"
+#include "bb_array.h"
 #include "env_utils.h"
 #include "file_utils.h"
 #include "process.h"
@@ -10,13 +11,12 @@
 #include "span.h"
 #include "va.h"
 
-#include "bb.h"
-#include "bb_array.h"
+#define FEATURE_PY_DEBUG_SDICT_ENTRIES BB_OFF
 
 #define parser_error(parser, msg) parser_error_((parser), (msg), __FILE__, __LINE__)
 static void parser_error_(pyParser *parser, const char *msg, const char *file, int line)
 {
-	BB_ERROR_DYNAMIC(file, line, "p4::parser", "Error parsing output from %s\n  %s\n", parser->cmdline, msg);
+	BB_ERROR_DYNAMIC(file, line, "p4::parser", "Error parsing output from %s after consuming %u/%u bytes:\n  %s\n", parser->cmdline, parser->consumed, parser->count, msg);
 	parser->state = kParser_Error;
 }
 
@@ -98,7 +98,9 @@ b32 py_parser_tick(pyParser *parser, sdicts *dicts)
 										sb_append_range(&entry.key, key, key + keyLen);
 										sb_init(&entry.value);
 										sb_append_range(&entry.value, val, val + valLen);
+#if BB_USING(FEATURE_PY_DEBUG_SDICT_ENTRIES)
 										BB_LOG("p4::parser::dict::entry", "parsed string key/value: %s = %s\n", sb_get(&entry.key), sb_get(&entry.value));
+#endif
 										sdict_add(&parser->dict, &entry);
 									}
 								}
@@ -113,7 +115,9 @@ b32 py_parser_tick(pyParser *parser, sdicts *dicts)
 										sb_append_range(&entry.key, key, key + keyLen);
 										sb_init(&entry.value);
 										sb_va(&entry.value, "%u", n);
+#if BB_USING(FEATURE_PY_DEBUG_SDICT_ENTRIES)
 										BB_LOG("p4::parser::dict::entry", "parsed int key/value: %s = %s\n", sb_get(&entry.key), sb_get(&entry.value));
+#endif
 										sdict_add(&parser->dict, &entry);
 									}
 								}

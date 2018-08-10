@@ -13,7 +13,7 @@ void process_init(void);
 
 typedef struct tag_processIO {
 	DWORD nBytesRead;
-	char lpBuffer[4096];
+	char lpBuffer[16384];
 } processIO;
 
 typedef struct process_s {

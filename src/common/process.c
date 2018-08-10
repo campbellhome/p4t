@@ -2,9 +2,8 @@
 // MIT license (see License.txt)
 
 #include "process.h"
-
 #include "dlist.h"
-
+#include "time_utils.h"
 #include <stdlib.h>
 
 typedef struct win32Process_s {
@@ -190,7 +189,7 @@ processSpawnResult_t process_spawn(const char *dir, const char *cmdline, process
 	return result;
 }
 
-static void process_tick_io_buffer(win32Process_t *process, processIOPtr *ioOut, HANDLE handle, processIO *io)
+static b32 process_tick_io_buffer(win32Process_t *process, processIOPtr *ioOut, HANDLE handle, processIO *io)
 {
 	DWORD nBytesAvailable = 0;
 	BOOL bAnyBytesAvailable = PeekNamedPipe(handle, NULL, 0, NULL, &nBytesAvailable, NULL);
@@ -205,6 +204,7 @@ static void process_tick_io_buffer(win32Process_t *process, processIOPtr *ioOut,
 					ioOut->nBytes = io->nBytesRead;
 					//OutputDebugStringA(ioOut->buffer);
 					io->nBytesRead = 0;
+					return true;
 				} else {
 					process->base.done = true;
 				}
@@ -221,6 +221,7 @@ static void process_tick_io_buffer(win32Process_t *process, processIOPtr *ioOut,
 			process->base.done = true;
 		}
 	}
+	return false;
 }
 
 processTickResult_t process_tick(process_t *base)
@@ -229,7 +230,11 @@ processTickResult_t process_tick(process_t *base)
 	win32Process_t *process = (win32Process_t *)(base);
 	bool wasDone = process->base.done;
 
-	process_tick_io_buffer(process, &result.stdoutIO, process->hOutputRead, &process->base.stdoutBuffer);
+	while(process_tick_io_buffer(process, &result.stdoutIO, process->hOutputRead, &process->base.stdoutBuffer)) {
+		if(Time_GetCurrentFrameElapsed() > 10*0.001f) {
+			break;
+		}
+	}
 	process_tick_io_buffer(process, &result.stderrIO, process->hErrorRead, &process->base.stderrBuffer);
 
 	if(process->base.done && !wasDone) {
