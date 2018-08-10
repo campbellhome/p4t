@@ -236,19 +236,21 @@ static void task_p4clients_statechanged(task *_t)
 		sdicts_reset(&p4.localClients);
 		const char *clientHost = sdict_find_safe(&p4.info, "clientHost");
 		const char *userName = sdict_find(&p4.info, "userName");
-		for(u32 i = 0; i < p4.allClients.count; ++i) {
-			sdict_t *sd = p4.allClients.data + i;
-			const char *user = sdict_find_safe(sd, "Owner");
-			if(!_stricmp(user, userName)) {
-				if(bba_add(p4.selfClients, 1)) {
-					sdict_t *target = &bba_last(p4.selfClients);
-					sdict_copy(target, sd);
-				}
-				const char *host = sdict_find_safe(sd, "Host");
-				if(!_stricmp(host, clientHost)) {
-					if(bba_add(p4.localClients, 1)) {
-						sdict_t *target = &bba_last(p4.localClients);
+		if(userName) {
+			for(u32 i = 0; i < p4.allClients.count; ++i) {
+				sdict_t *sd = p4.allClients.data + i;
+				const char *user = sdict_find_safe(sd, "Owner");
+				if(!_stricmp(user, userName)) {
+					if(bba_add(p4.selfClients, 1)) {
+						sdict_t *target = &bba_last(p4.selfClients);
 						sdict_copy(target, sd);
+					}
+					const char *host = sdict_find_safe(sd, "Host");
+					if(!_stricmp(host, clientHost)) {
+						if(bba_add(p4.localClients, 1)) {
+							sdict_t *target = &bba_last(p4.localClients);
+							sdict_copy(target, sd);
+						}
 					}
 				}
 			}
@@ -280,25 +282,27 @@ static void task_p4set_statechanged(task *t)
 	task_process_statechanged(t);
 	if(t->state == kTaskState_Succeeded) {
 		task_process *p = t->userdata;
-		const char *cursor = sb_get(&p->stdoutBuf);
-		while(*cursor) {
-			span_t key = tokenize(&cursor, "\r\n=");
-			if(!key.start)
-				break;
-			if(*cursor++ != '=')
-				break;
-			span_t value = tokenize(&cursor, "\r\n");
-			if(!value.end)
-				break;
-			while(value.end > value.start && *value.end != '(')
+		if(p->process) {
+			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
+			while(*cursor) {
+				span_t key = tokenize(&cursor, "\r\n=");
+				if(!key.start)
+					break;
+				if(*cursor++ != '=')
+					break;
+				span_t value = tokenize(&cursor, "\r\n");
+				if(!value.end)
+					break;
+				while(value.end > value.start && *value.end != '(')
+					--value.end;
 				--value.end;
-			--value.end;
 
-			sdictEntry_t entry = { 0 };
-			sb_va(&entry.key, "%.*s", (key.end - key.start), key.start);
-			sb_va(&entry.value, "%.*s", (value.end - value.start), value.start);
-			BB_LOG("p4::set", "%s=%s", sb_get(&entry.key), sb_get(&entry.value));
-			sdict_add(&p4.set, &entry);
+				sdictEntry_t entry = { 0 };
+				sb_va(&entry.key, "%.*s", (key.end - key.start), key.start);
+				sb_va(&entry.value, "%.*s", (value.end - value.start), value.start);
+				BB_LOG("p4::set", "%s=%s", sb_get(&entry.key), sb_get(&entry.value));
+				sdict_add(&p4.set, &entry);
+			}
 		}
 	}
 }

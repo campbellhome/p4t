@@ -13,7 +13,6 @@ void task_p4_tick(task *_t)
 	task_p4 *t = (task_p4 *)_t->userdata;
 	processTickResult_t res = process_tick(t->base.process);
 	if(res.stdoutIO.nBytes) {
-		bba_add_array(t->base.stdoutBuf, res.stdoutIO.buffer, res.stdoutIO.nBytes);
 		App_RequestRender();
 		bba_add_array(t->parser, res.stdoutIO.buffer, res.stdoutIO.nBytes);
 		while(py_parser_tick(&t->parser, &t->dicts)) {
@@ -21,12 +20,11 @@ void task_p4_tick(task *_t)
 		}
 	}
 	if(res.stderrIO.nBytes) {
-		bba_add_array(t->base.stderrBuf, res.stderrIO.buffer, res.stderrIO.nBytes);
 		App_RequestRender();
 		output_error("%.*s\n", res.stderrIO.nBytes, res.stderrIO.buffer);
 	}
 	if(res.done) {
-		task_set_state(_t, t->base.stderrBuf.count ? kTaskState_Failed : kTaskState_Succeeded);
+		task_set_state(_t, t->base.process && t->base.process->stderrBuffer.count ? kTaskState_Failed : kTaskState_Succeeded);
 	}
 	task_tick_subtasks(_t);
 }

@@ -2,9 +2,16 @@
 // MIT license (see License.txt)
 
 #include "process.h"
+#include "bb_array.h"
+#include "bb_criticalsection.h"
+#include "bb_thread.h"
+#include "bb_time.h"
 #include "dlist.h"
+#include "sb.h"
 #include "time_utils.h"
 #include <stdlib.h>
+
+static bb_thread_return_t process_io_thread(void *);
 
 typedef struct win32Process_s {
 	process_t base;
@@ -23,6 +30,13 @@ typedef struct win32Process_s {
 	HANDLE hOutputRead;
 	HANDLE hErrorRead;
 	HANDLE hInputWrite;
+
+	bb_critical_section cs;
+	bb_thread_handle_t hThread;
+	processIO stdoutThread;
+	processIO stderrThread;
+	b32 threadWanted;
+	b32 threadDone;
 } win32Process_t;
 win32Process_t sentinelSubprocess;
 
@@ -151,6 +165,10 @@ processSpawnResult_t process_spawn(const char *dir, const char *cmdline, process
 										process->hOutputRead = hOutputRead;
 										process->hInputWrite = hInputWrite;
 										process->hErrorRead = hErrorRead;
+
+										bb_critical_section_init(&process->cs);
+										process->hThread = bbthread_create(process_io_thread, process);
+										process->threadWanted = true;
 									}
 								} else {
 									process_report_error("CreateProcess", cmdline);
@@ -189,39 +207,74 @@ processSpawnResult_t process_spawn(const char *dir, const char *cmdline, process
 	return result;
 }
 
-static b32 process_tick_io_buffer(win32Process_t *process, processIOPtr *ioOut, HANDLE handle, processIO *io)
+static b32 process_thread_tick_io_buffer(win32Process_t *process, HANDLE handle, processIO *io)
 {
 	DWORD nBytesAvailable = 0;
 	BOOL bAnyBytesAvailable = PeekNamedPipe(handle, NULL, 0, NULL, &nBytesAvailable, NULL);
 	if(bAnyBytesAvailable) {
 		if(nBytesAvailable) {
-			DWORD nBytesToRead = (nBytesAvailable < sizeof(io->lpBuffer) - 1) ? nBytesAvailable : sizeof(io->lpBuffer) - 1;
-			BOOL ok = ReadFile(handle, io->lpBuffer, nBytesToRead, &io->nBytesRead, NULL);
-			if(ok) {
-				if(io->nBytesRead) {
-					io->lpBuffer[io->nBytesRead] = 0;
-					ioOut->buffer = io->lpBuffer;
-					ioOut->nBytes = io->nBytesRead;
-					//OutputDebugStringA(ioOut->buffer);
-					io->nBytesRead = 0;
-					return true;
+			bb_critical_section_lock(&process->cs);
+			if(bba_reserve(*io, nBytesAvailable)) {
+				char *buffer = io->data + io->count;
+				DWORD nBytesRead = 0;
+				BOOL ok = ReadFile(handle, buffer, nBytesAvailable, &nBytesRead, NULL);
+				if(ok) {
+					if(nBytesRead) {
+						io->count += nBytesRead;
+						bb_critical_section_unlock(&process->cs);
+						return true;
+					} else {
+						process->threadDone = true;
+					}
 				} else {
-					process->base.done = true;
-				}
-			} else {
-				DWORD err = GetLastError();
-				if(err == ERROR_BROKEN_PIPE) {
-					process->base.done = true;
+					DWORD err = GetLastError();
+					if(err == ERROR_BROKEN_PIPE) {
+						process->threadDone = true;
+					}
 				}
 			}
+			bb_critical_section_unlock(&process->cs);
 		}
 	} else {
 		DWORD err = GetLastError();
 		if(err == ERROR_BROKEN_PIPE) {
-			process->base.done = true;
+			process->threadDone = true;
 		}
 	}
 	return false;
+}
+
+static bb_thread_return_t process_io_thread(void *_process)
+{
+	win32Process_t *process = _process;
+	while(process->threadWanted) {
+		b32 readData = false;
+		readData = readData || process_thread_tick_io_buffer(process, process->hOutputRead, &process->stdoutThread);
+		readData = readData || process_thread_tick_io_buffer(process, process->hErrorRead, &process->stderrThread);
+		if(!readData) {
+			bb_sleep_ms(16);
+		}
+	}
+	process->threadDone = true;
+	return 0;
+}
+
+static void process_tick_io_buffer(win32Process_t *process, processIOPtr *ioOut, processIO *ioMain, processIO *ioThread)
+{
+	if(ioThread->count) {
+		bb_critical_section_lock(&process->cs);
+
+		if(bba_reserve(*ioMain, ioMain->count + ioThread->count + 1)) {
+			memcpy(ioMain->data + ioMain->count, ioThread->data, ioThread->count);
+			ioOut->buffer = ioMain->data + ioMain->count;
+			ioOut->nBytes = ioThread->count;
+			ioMain->count += ioThread->count;
+			ioMain->data[ioMain->count] = '\0';
+			ioThread->count = 0;
+		}
+
+		bb_critical_section_unlock(&process->cs);
+	}
 }
 
 processTickResult_t process_tick(process_t *base)
@@ -229,13 +282,12 @@ processTickResult_t process_tick(process_t *base)
 	processTickResult_t result = { 0, 0, 0 };
 	win32Process_t *process = (win32Process_t *)(base);
 	bool wasDone = process->base.done;
-
-	while(process_tick_io_buffer(process, &result.stdoutIO, process->hOutputRead, &process->base.stdoutBuffer)) {
-		if(Time_GetCurrentFrameElapsed() > 10*0.001f) {
-			break;
-		}
+	if(process->threadDone) {
+		process->base.done = true;
 	}
-	process_tick_io_buffer(process, &result.stderrIO, process->hErrorRead, &process->base.stderrBuffer);
+
+	process_tick_io_buffer(process, &result.stdoutIO, &process->base.stdoutBuffer, &process->stdoutThread);
+	process_tick_io_buffer(process, &result.stderrIO, &process->base.stderrBuffer, &process->stderrThread);
 
 	if(process->base.done && !wasDone) {
 		process->endMS = GetTickCount64();
@@ -251,6 +303,18 @@ processTickResult_t process_tick(process_t *base)
 void process_free(process_t *base)
 {
 	win32Process_t *process = (win32Process_t *)(base);
+
+	if(process->hThread) {
+		process->threadWanted = false;
+		bbthread_join(process->hThread);
+	}
+
+	bb_critical_section_shutdown(&process->cs);
+
+	bba_free(process->stdoutThread);
+	bba_free(process->stderrThread);
+	bba_free(process->base.stdoutBuffer);
+	bba_free(process->base.stderrBuffer);
 
 	CloseHandle(process->hOutputRead);
 	CloseHandle(process->hErrorRead);

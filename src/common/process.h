@@ -12,8 +12,9 @@ extern "C" {
 void process_init(void);
 
 typedef struct tag_processIO {
-	DWORD nBytesRead;
-	char lpBuffer[16384];
+	u32 count;
+	u32 allocated;
+	char *data;
 } processIO;
 
 typedef struct process_s {

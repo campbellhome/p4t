@@ -15,8 +15,6 @@ typedef struct tag_task_process {
 	process_t *process;
 	sb_t dir;
 	sb_t cmdline;
-	sb_t stdoutBuf;
-	sb_t stderrBuf;
 	processSpawnType_t spawnType;
 	u8 pad[4];
 } task_process;
