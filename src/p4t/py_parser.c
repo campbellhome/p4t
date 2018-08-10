@@ -11,7 +11,11 @@
 #include "span.h"
 #include "va.h"
 
+#if defined(_DEBUG)
+#define FEATURE_PY_DEBUG_SDICT_ENTRIES BB_ON
+#else
 #define FEATURE_PY_DEBUG_SDICT_ENTRIES BB_OFF
+#endif
 
 #define parser_error(parser, msg) parser_error_((parser), (msg), __FILE__, __LINE__)
 static void parser_error_(pyParser *parser, const char *msg, const char *file, int line)

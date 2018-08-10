@@ -74,10 +74,12 @@ typedef struct tag_p4Changesets {
 } p4Changesets;
 
 typedef struct tag_p4UIChangesetEntry {
-	u32 changelist;
+	u32 changelistNumber;
+	u32 changelistIndex;
 	b32 selected;
 	b32 described;
 	u32 parity;
+	u8 pad[4];
 	sb_t client;
 	float startY;
 	float endY;
@@ -184,7 +186,6 @@ void p4_info(void);
 p4Changeset *p4_find_or_add_changeset(b32 pending);
 void p4_refresh_changeset(p4Changeset *cs);
 void p4_request_newer_changes(p4Changeset *cs, u32 blockSize);
-sdict_t *p4_find_changelist_in_changeset(p4Changeset *cs, u32 number, const char *client);
 
 p4UIChangeset *p4_add_uichangeset(b32 pending);
 p4UIChangeset *p4_find_uichangeset(u32 id);

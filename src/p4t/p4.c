@@ -558,25 +558,13 @@ void p4_request_newer_changes(p4Changeset *cs, u32 blockSize)
 static p4Changeset *s_sortChangeset;
 static p4UIChangeset *s_sortUIChangeset;
 static uiChangesetConfig *s_sortConfig;
-sdict_t *p4_find_changelist_in_changeset(p4Changeset *cs, u32 number, const char *client)
-{
-	for(u32 i = 0; i < cs->changelists.count; ++i) {
-		sdict_t *sd = cs->changelists.data + i;
-		if(strtou32(sdict_find_safe(sd, "change")) == number) {
-			if(number || !strcmp(sdict_find_safe(sd, "client"), client)) {
-				return sd;
-			}
-		}
-	}
-	return NULL;
-}
 static int p4_changeset_compare(const void *_a, const void *_b)
 {
 	const p4UIChangesetEntry *aEntry = _a;
 	const p4UIChangesetEntry *bEntry = _b;
 
-	sdict_t *a = p4_find_changelist_in_changeset(s_sortChangeset, aEntry->changelist, sb_get(&aEntry->client));
-	sdict_t *b = p4_find_changelist_in_changeset(s_sortChangeset, bEntry->changelist, sb_get(&bEntry->client));
+	sdict_t *a = s_sortChangeset->changelists.data + aEntry->changelistIndex;
+	sdict_t *b = s_sortChangeset->changelists.data + bEntry->changelistIndex;
 
 	int mult = s_sortConfig->sortDescending ? -1 : 1;
 	u32 columnIndex = s_sortConfig->sortColumn;

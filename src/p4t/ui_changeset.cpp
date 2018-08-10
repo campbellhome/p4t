@@ -67,7 +67,7 @@ static void UIChangeset_CopySelectedToClipboard(p4UIChangeset *uics, p4Changeset
 	for(i = 0; i < uics->count; ++i) {
 		p4UIChangesetEntry *e = uics->data + i;
 		if(e->selected) {
-			sdict_t *c = p4_find_changelist_in_changeset(cs, e->changelist, sb_get(&e->client));
+			sdict_t *c = cs->changelists.data + e->changelistIndex;
 			if(c) {
 				for(u32 col = 0; col < data->numColumns; ++col) {
 					if(data->columnNames[col]) {
@@ -295,8 +295,8 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		ImGui::SameLine();
 		ImGui::Checkbox("drawAll", &s_debug.drawFromStart);
 		ImGui::SameLine();
-		u32 startCL = (uics->lastStartIndex < uics->count) ? uics->data[uics->lastStartIndex].changelist : 0;
-		u32 endCL = (s_debug.visibleEndIndex < uics->count) ? uics->data[s_debug.visibleEndIndex].changelist : 0;
+		u32 startCL = (uics->lastStartIndex < uics->count) ? uics->data[uics->lastStartIndex].changelistNumber : 0;
+		u32 endCL = (s_debug.visibleEndIndex < uics->count) ? uics->data[s_debug.visibleEndIndex].changelistNumber : 0;
 		ImGui::Text("%.0f/%.0f(%.0f) range:%u(%u)-%u(%u) numValid:%u",
 		            s_debug.startY, s_debug.requiredEndY, s_debug.endY,
 		            uics->lastStartIndex, startCL,
@@ -379,7 +379,8 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			sdict_t *sd = cs->changelists.data + i;
 			if(UIChangeset_PassesFilter(&tokens, sd)) {
 				p4UIChangesetEntry e = {};
-				e.changelist = strtou32(sdict_find_safe(sd, "change"));
+				e.changelistNumber = strtou32(sdict_find_safe(sd, "change"));
+				e.changelistIndex = i;
 				e.selected = false;
 				sb_append(&e.client, sdict_find_safe(sd, "client"));
 				bba_push(*uics, e);
@@ -465,15 +466,15 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			p4UIChangesetEntry *e = uics->data + i;
 			e->startY = ImGui::GetCursorPosY();
 			uics->numValidStartY = BB_MAX(uics->numValidStartY, i);
-			sdict_t *c = p4_find_changelist_in_changeset(cs, e->changelist, sb_get(&e->client));
+			sdict_t *c = cs->changelists.data + e->changelistIndex;
 			if(c) {
-				b32 expanded = ImGui::TreeNode(va("###node%u%s", e->changelist, sb_get(&e->client)));
+				b32 expanded = ImGui::TreeNode(va("###node%u%s", e->changelistNumber, sb_get(&e->client)));
 				if(expanded) {
 					ImGui::TreePop();
 				}
 				ImGui::SameLine();
 				ImGui::PushSelectableColors(e->selected, ImGui::IsActiveSelectables(uics));
-				ImGui::Selectable(va("###%u%s", e->changelist, sb_get(&e->client)), e->selected != 0);
+				ImGui::Selectable(va("###%u%s", e->changelistNumber, sb_get(&e->client)), e->selected != 0);
 				ImGui::PopSelectableColors(e->selected, ImGui::IsActiveSelectables(uics));
 				if(ImGui::IsItemActive()) {
 					anyActive = true;
@@ -535,7 +536,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 					}
 				}
 				if(expanded) {
-					p4Changelist *cl = e->changelist ? p4_find_changelist(e->changelist) : p4_find_default_changelist(sb_get(&e->client));
+					p4Changelist *cl = e->changelistNumber ? p4_find_changelist(e->changelistNumber) : p4_find_default_changelist(sb_get(&e->client));
 					if(cl) {
 						if(e->parity != cl->parity) {
 							e->parity = cl->parity;
@@ -558,8 +559,8 @@ void UIChangeset_Update(p4UIChangeset *uics)
 					} else {
 						if(!e->described) {
 							e->described = true;
-							if(e->changelist) {
-								p4_describe_changelist(e->changelist);
+							if(e->changelistNumber) {
+								p4_describe_changelist(e->changelistNumber);
 							} else {
 								p4_describe_default_changelist(sb_get(&e->client));
 							}
