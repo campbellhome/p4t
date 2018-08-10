@@ -555,26 +555,39 @@ void p4_request_newer_changes(p4Changeset *cs, u32 blockSize)
 	}
 }
 
-static p4Changeset *s_sortChangeset;
-static p4UIChangeset *s_sortUIChangeset;
 static uiChangesetConfig *s_sortConfig;
+static p4Changeset *s_sortChangeset;
+static inline const char *p4_get_uichangesetentry_sort_key(const p4UIChangesetEntry *e)
+{
+	u32 columnIndex = s_sortConfig->sortColumn;
+	const changesetColumnField *field = s_changesetColumnFields + columnIndex;
+	sdict_t *sd = s_sortChangeset->changelists.data + e->changelistIndex;
+	const char *str = sdict_find_safe(sd, field->key);
+	if(field->type == kChangesetColumn_Numeric) {
+		str = (const char *)(ptrdiff_t)atoi(str);
+	}
+	return str;
+}
 static int p4_changeset_compare(const void *_a, const void *_b)
 {
-	const p4UIChangesetEntry *aEntry = _a;
-	const p4UIChangesetEntry *bEntry = _b;
+	const p4UIChangesetEntry *a = _a;
+	const p4UIChangesetEntry *b = _b;
 
-	sdict_t *a = s_sortChangeset->changelists.data + aEntry->changelistIndex;
-	sdict_t *b = s_sortChangeset->changelists.data + bEntry->changelistIndex;
+#if BB_USING(FEATURE_CHANGESET_ENTRY_SORT_KEY_CACHE)
+	const char *astr = a->sortKey;
+	const char *bstr = b->sortKey;
+#else
+	const char *astr = p4_get_uichangesetentry_sort_key(a);
+	const char *bstr = p4_get_uichangesetentry_sort_key(b);
+#endif
 
 	int mult = s_sortConfig->sortDescending ? -1 : 1;
 	u32 columnIndex = s_sortConfig->sortColumn;
 	const changesetColumnField *field = s_changesetColumnFields + columnIndex;
-	const char *astr = sdict_find_safe(a, field->key);
-	const char *bstr = sdict_find_safe(b, field->key);
 	int val;
 	if(field->type == kChangesetColumn_Numeric) {
-		int aint = atoi(astr);
-		int bint = atoi(bstr);
+		int aint = (int)(ptrdiff_t)astr;
+		int bint = (int)(ptrdiff_t)bstr;
 		if(aint < bint) {
 			val = -1;
 		} else if(aint > bint) {
@@ -588,7 +601,7 @@ static int p4_changeset_compare(const void *_a, const void *_b)
 	if(val) {
 		return val * mult;
 	} else {
-		return s_sortConfig->sortDescending ? (a > b) : (a < b);
+		return s_sortConfig->sortDescending ? (a->changelistIndex > b->changelistIndex) : (a->changelistIndex < b->changelistIndex);
 	}
 }
 void p4_sort_uichangeset(p4UIChangeset *uics)
@@ -603,12 +616,16 @@ void p4_sort_uichangeset(p4UIChangeset *uics)
 	if(!s_sortChangeset) {
 		return;
 	}
-	s_sortUIChangeset = uics;
 	s_sortConfig = s_sortChangeset->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
+#if BB_USING(FEATURE_CHANGESET_ENTRY_SORT_KEY_CACHE)
+	for(u32 i = 0; i < uics->count; ++i) {
+		p4UIChangesetEntry *e = uics->data + i;
+		e->sortKey = p4_get_uichangesetentry_sort_key(e);
+	}
+#endif
 	qsort(uics->data, uics->count, sizeof(p4UIChangesetEntry), &p4_changeset_compare);
 	s_sortConfig = NULL;
 	s_sortChangeset = NULL;
-	s_sortUIChangeset = NULL;
 }
 
 p4UIChangeset *p4_add_uichangeset(b32 pending)
