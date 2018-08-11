@@ -434,6 +434,10 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	ImGui::NewLine();
 
 	if(ImGui::BeginChild("##changelists", ImVec2(0, 0), false, ImGuiWindowFlags_None)) {
+		b32 debug = uics->numValidStartY == 0;
+		if(debug) {
+			BB_LOG("changeset::rebuild_offsets", "start rebuild_offsets");
+		}
 		u32 startIndex = 0;
 		float startY = 0.0f;
 		const float scrollY = ImGui::GetScrollY();
@@ -590,6 +594,9 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			}
 			s_debug.requiredEndY = requiredY;
 			s_debug.endY = ImGui::GetCursorPosY();
+		}
+		if(debug) {
+			BB_LOG("changeset::rebuild_offsets", "end rebuild_offsets");
 		}
 	}
 	ImGui::EndChild();
