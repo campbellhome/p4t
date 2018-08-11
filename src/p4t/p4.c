@@ -618,12 +618,15 @@ void p4_sort_uichangeset(p4UIChangeset *uics)
 	}
 	s_sortConfig = s_sortChangeset->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
 #if BB_USING(FEATURE_CHANGESET_ENTRY_SORT_KEY_CACHE)
+	BB_LOG("p4::sort", "prep changeset sort - entries:%u", s_sortChangeset->changelists.count);
 	for(u32 i = 0; i < uics->count; ++i) {
 		p4UIChangesetEntry *e = uics->data + i;
 		e->sortKey = p4_get_uichangesetentry_sort_key(e);
 	}
 #endif
+	BB_LOG("p4::sort", "start changeset sort - entries:%u", s_sortChangeset->changelists.count);
 	qsort(uics->data, uics->count, sizeof(p4UIChangesetEntry), &p4_changeset_compare);
+	BB_LOG("p4::sort", "end changeset sort");
 	s_sortConfig = NULL;
 	s_sortChangeset = NULL;
 }
