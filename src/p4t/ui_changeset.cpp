@@ -585,18 +585,6 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	}
 	ImGui::EndChild();
 
-#if 0
-	// #TODO: Request more (older) changes if we have reached the end of our current set
-	float windowHeight = ImGui::GetWindowHeight();
-	float cursorY = ImGui::GetCursorPosY() - ImGui::GetScrollY();
-	if(cursorY <= windowHeight) {
-		// don't request more when user is dragging scrollbar - it pops around
-		if(!ImGui::GetIO().MouseDown[0]) {
-			p4_request_older_changes(cs);
-		}
-	}
-#endif
-
 	if(anyActive) {
 		ImGui::SetActiveSelectables(uics);
 	} else if(ImGui::IsAnyItemActive() && ImGui::IsActiveSelectables(uics)) {
