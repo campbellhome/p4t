@@ -169,12 +169,14 @@ b32 py_write_char(pyWriter *pw, char c)
 b32 py_write_data(pyWriter *pw, s8 *data, u32 count)
 {
 	b32 ret = true;
-	if(count && bba_add_noclear(*pw, count)) {
-		s8 *out = &bba_last(*pw);
-		out -= count - 1;
-		memcpy(out, data, count);
-	} else {
-		ret = false;
+	if(count) {
+		if(bba_add_noclear(*pw, count)) {
+			s8 *out = &bba_last(*pw);
+			out -= count - 1;
+			memcpy(out, data, count);
+		} else {
+			ret = false;
+		}
 	}
 	return ret;
 }
