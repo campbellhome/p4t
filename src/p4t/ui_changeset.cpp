@@ -342,6 +342,8 @@ void UIChangeset_Update(p4UIChangeset *uics)
 
 	if(uics->parity != cs->parity) {
 		uics->parity = cs->parity;
+		BB_LOG("changeset::rebuild_changeset", "rebuild tokens");
+
 		//p4UIChangeset old = *uics; // TODO: retain selection when refreshing changelists
 
 		filterTokens tokens = {};
@@ -371,10 +373,12 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			}
 		}
 
+		BB_LOG("changeset::rebuild_changeset", "reset old entries");
 		for(u32 i = 0; i < uics->count; ++i) {
 			p4_reset_uichangesetentry(uics->data + i);
 		}
 		uics->count = 0;
+		BB_LOG("changeset::rebuild_changeset", "adding new entries");
 		for(u32 i = 0; i < cs->changelists.count; ++i) {
 			sdict_t *sd = cs->changelists.data + i;
 			if(UIChangeset_PassesFilter(&tokens, sd)) {
@@ -386,13 +390,16 @@ void UIChangeset_Update(p4UIChangeset *uics)
 				bba_push(*uics, e);
 			}
 		}
+		BB_LOG("changeset::rebuild_changeset", "sort entries");
 		p4_sort_uichangeset(uics);
+		BB_LOG("changeset::rebuild_changeset", "cleanup");
 		uics->lastClickIndex = ~0u;
 		uics->numValidStartY = 0;
 		uics->lastStartIndex = 0;
 		uics->lastStartY = 0.0f;
 		reset_filter_tokens(&tokens);
 		UIChangeset_SetWindowTitle(uics);
+		BB_LOG("changeset::rebuild_changeset", "done");
 	}
 
 	uiChangesetConfig *config = uics->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
@@ -412,7 +419,9 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			ImGui::columnDrawResult res = ImGui::DrawColumnHeader(data, i);
 			anyActive = anyActive || res.active;
 			if(res.sortChanged) {
+				BB_LOG("changeset::sort_changeset", "sort entries");
 				p4_sort_uichangeset(uics);
+				BB_LOG("changeset::sort_changeset", "done");
 				uics->lastClickIndex = ~0u;
 				uics->numValidStartY = 0;
 				uics->lastStartIndex = 0;
