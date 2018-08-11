@@ -100,7 +100,7 @@ processSpawnResult_t process_spawn(const char *dir, const char *cmdline, process
 		sa.bInheritHandle = TRUE;
 
 		// Create the child stdout pipe.
-		if(CreatePipe(&hOutputReadTmp, &hOutputWrite, &sa, 0)) {
+		if(CreatePipe(&hOutputReadTmp, &hOutputWrite, &sa, 16 * 1024 * 1024)) {
 			// Create the child stderr pipe.
 			if(CreatePipe(&hErrorReadTmp, &hErrorWrite, &sa, 0)) {
 				// Create the child input pipe.
