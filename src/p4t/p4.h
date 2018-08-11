@@ -73,8 +73,6 @@ typedef struct tag_p4Changesets {
 	p4Changeset *data;
 } p4Changesets;
 
-#define FEATURE_CHANGESET_ENTRY_SORT_KEY_CACHE BB_ON
-
 typedef struct tag_p4UIChangesetEntry {
 	u32 changelistNumber;
 	u32 changelistIndex;
@@ -82,9 +80,7 @@ typedef struct tag_p4UIChangesetEntry {
 	b32 described;
 	u32 parity;
 	u8 pad[4];
-#if BB_USING(FEATURE_CHANGESET_ENTRY_SORT_KEY_CACHE)
 	const char *sortKey;
-#endif;
 	sb_t client;
 	float startY;
 	float endY;

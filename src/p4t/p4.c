@@ -578,14 +578,8 @@ static int p4_changeset_compare(const void *_a, const void *_b)
 {
 	const p4UIChangesetEntry *a = _a;
 	const p4UIChangesetEntry *b = _b;
-
-#if BB_USING(FEATURE_CHANGESET_ENTRY_SORT_KEY_CACHE)
 	const char *astr = a->sortKey;
 	const char *bstr = b->sortKey;
-#else
-	const char *astr = p4_get_uichangesetentry_sort_key(a);
-	const char *bstr = p4_get_uichangesetentry_sort_key(b);
-#endif
 
 	int mult = s_sortConfig->sortDescending ? -1 : 1;
 	u32 columnIndex = s_sortConfig->sortColumn;
@@ -623,13 +617,11 @@ void p4_sort_uichangeset(p4UIChangeset *uics)
 		return;
 	}
 	s_sortConfig = s_sortChangeset->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
-#if BB_USING(FEATURE_CHANGESET_ENTRY_SORT_KEY_CACHE)
 	BB_LOG("p4::sort", "prep changeset sort - entries:%u", s_sortChangeset->changelists.count);
 	for(u32 i = 0; i < uics->count; ++i) {
 		p4UIChangesetEntry *e = uics->data + i;
 		e->sortKey = p4_get_uichangesetentry_sort_key(e);
 	}
-#endif
 	BB_LOG("p4::sort", "start changeset sort - entries:%u", s_sortChangeset->changelists.count);
 	qsort(uics->data, uics->count, sizeof(p4UIChangesetEntry), &p4_changeset_compare);
 	BB_LOG("p4::sort", "end changeset sort");
