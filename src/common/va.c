@@ -6,7 +6,7 @@
 
 #include "bb_wrap_stdio.h"
 
-enum { kVA_NumSlots = 4 };
+enum { kVA_NumSlots = 16 };
 typedef struct
 {
 	size_t next;

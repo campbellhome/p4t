@@ -22,7 +22,7 @@ typedef struct tag_task_process {
 void task_process_tick(task *);
 void task_process_statechanged(task *);
 void task_process_reset(task *);
-task process_task_create(processSpawnType_t spawnType, const char *dir, const char *cmdlineFmt, ...);
+task process_task_create(const char *name, processSpawnType_t spawnType, const char *dir, const char *cmdlineFmt, ...);
 
 #if defined(__cplusplus)
 }

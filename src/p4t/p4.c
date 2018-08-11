@@ -263,7 +263,7 @@ static void task_p4users_statechanged(task *_t)
 	if(_t->state == kTaskState_Succeeded) {
 		task_p4 *t = (task_p4 *)_t->userdata;
 		sdicts_move(&p4.allUsers, &t->dicts);
-		task_queue(p4_task_create(task_p4clients_statechanged, p4_dir(), NULL, "\"%s\" -G clients", p4_exe()));
+		task_queue(p4_task_create("refresh_clientspecs", task_p4clients_statechanged, p4_dir(), NULL, "\"%s\" -G clients", p4_exe()));
 	}
 }
 static void task_p4info_statechanged(task *_t)
@@ -274,7 +274,7 @@ static void task_p4info_statechanged(task *_t)
 		if(t->dicts.count == 1) {
 			sdict_move(&p4.info, t->dicts.data);
 		}
-		task_queue(p4_task_create(task_p4users_statechanged, p4_dir(), NULL, "\"%s\" -G users", p4_exe()));
+		task_queue(p4_task_create("refresh_users", task_p4users_statechanged, p4_dir(), NULL, "\"%s\" -G users", p4_exe()));
 	}
 }
 static void task_p4set_statechanged(task *t)
@@ -308,8 +308,8 @@ static void task_p4set_statechanged(task *t)
 }
 void p4_info(void)
 {
-	task_queue(p4_task_create(task_p4info_statechanged, p4_dir(), NULL, "\"%s\" -G info", p4_exe()));
-	task setTask = process_task_create(kProcessSpawn_Tracked, p4_dir(), "\"%s\" set", p4_exe());
+	task_queue(p4_task_create("refresh_info", task_p4info_statechanged, p4_dir(), NULL, "\"%s\" -G info", p4_exe()));
+	task setTask = process_task_create("refresh_environment", kProcessSpawn_Tracked, p4_dir(), "\"%s\" set", p4_exe());
 	setTask.stateChanged = task_p4set_statechanged;
 	task_queue(setTask);
 }
@@ -462,8 +462,10 @@ void p4_refresh_changeset(p4Changeset *cs)
 		cs->refreshed = false;
 		if(cs->pending) {
 			task *t = task_queue(
-			    p4_task_create(task_p4changes_refresh_statechanged, p4_dir(), NULL,
-			                   "\"%s\" -G changes -s pending -l", p4_exe()));
+			    p4_task_create(
+			        "refresh_pending_changelists",
+			        task_p4changes_refresh_statechanged, p4_dir(), NULL,
+			        "\"%s\" -G changes -s pending -l", p4_exe()));
 			if(t) {
 				cs->updating = true;
 				sdict_add_raw(&t->extraData, "pending", "1");
@@ -477,8 +479,10 @@ void p4_refresh_changeset(p4Changeset *cs)
 				}
 			}
 			task *t = task_queue(
-			    p4_task_create(task_p4changes_refresh_statechanged, p4_dir(), NULL,
-			                   "\"%s\" -G changes -s submitted -l", p4_exe()));
+			    p4_task_create(
+			        "refresh_submitted_changelists",
+			        task_p4changes_refresh_statechanged, p4_dir(), NULL,
+			        "\"%s\" -G changes -s submitted -l", p4_exe()));
 			if(t) {
 				cs->updating = true;
 				sdict_add_raw(&t->extraData, "pending", "0");
@@ -542,8 +546,10 @@ void p4_request_newer_changes(p4Changeset *cs, u32 blockSize)
 			BB_LOG("p4", "requesting newer submitted changelists - blockSize is %u", blockSize);
 			if(blockSize) {
 				task *t = task_queue(
-				    p4_task_create(task_p4changes_newer_statechanged, p4_dir(), NULL,
-				                   "\"%s\" -G changes -s submitted -l -m %u", p4_exe(), blockSize));
+				    p4_task_create(
+				        "find_newer_changelists",
+				        task_p4changes_newer_statechanged, p4_dir(), NULL,
+				        "\"%s\" -G changes -s submitted -l -m %u", p4_exe(), blockSize));
 				if(t) {
 					cs->updating = true;
 					sdict_add_raw(&t->extraData, "blockSize", va("%u", blockSize));

@@ -39,9 +39,10 @@ void task_process_reset(task *_t)
 	_t->userdata = NULL;
 }
 
-task process_task_create(processSpawnType_t spawnType, const char *dir, const char *cmdlineFmt, ...)
+task process_task_create(const char *name, processSpawnType_t spawnType, const char *dir, const char *cmdlineFmt, ...)
 {
 	task t = { 0 };
+	sb_append(&t.name, name);
 	t.tick = task_process_tick;
 	t.stateChanged = task_process_statechanged;
 	t.reset = task_process_reset;

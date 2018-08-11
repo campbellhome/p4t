@@ -63,10 +63,11 @@ void p4_diff_against_local(const char *depotPath, const char *rev, const char *l
 
 	task t = { 0 };
 	t.tick = task_tick_subtasks;
-	bba_push(t.subtasks, p4_task_create(task_process_statechanged, p4dir, NULL,
+	sb_append(&t.name, "diff_against_local");
+	bba_push(t.subtasks, p4_task_create(va("diff_fetch_%s%s", depotPath, rev), task_process_statechanged, p4dir, NULL,
 	                                    "\"%s\" -G print -o %s %s%s",
 	                                    p4exe, sb_get(&target), depotPath, rev));
-	bba_push(t.subtasks, process_task_create(kProcessSpawn_OneShot, p4dir,
+	bba_push(t.subtasks, process_task_create("diff", kProcessSpawn_OneShot, p4dir,
 	                                         "\"%s\" \"%s\" \"%s\"",
 	                                         diffExe, sb_get(&target), localPath));
 	task_queue(t);
@@ -110,14 +111,15 @@ void p4_diff_against_depot(const char *depotPathA, const char *revA, const char 
 	const char *diffExe = diff_exe();
 
 	task t = { 0 };
+	sb_append(&t.name, "diff_against_depot");
 	t.tick = task_tick_subtasks;
-	bba_push(t.subtasks, p4_task_create(task_process_statechanged, p4dir, NULL,
+	bba_push(t.subtasks, p4_task_create(va("diff_fetch_%s%s", depotPathA, revA), task_process_statechanged, p4dir, NULL,
 	                                    "\"%s\" -G print -o %s %s%s",
 	                                    p4exe, sb_get(&targetA), depotPathA, revA));
-	bba_push(t.subtasks, p4_task_create(task_process_statechanged, p4dir, NULL,
+	bba_push(t.subtasks, p4_task_create(va("diff_fetch_%s%s", depotPathB, revB), task_process_statechanged, p4dir, NULL,
 	                                    "\"%s\" -G print -o %s %s%s",
 	                                    p4exe, sb_get(&targetB), depotPathB, revB));
-	bba_push(t.subtasks, process_task_create(kProcessSpawn_OneShot, p4dir,
+	bba_push(t.subtasks, process_task_create("diff", kProcessSpawn_OneShot, p4dir,
 	                                         "\"%s\" \"%s\" \"%s\"",
 	                                         diffExe, sb_get(&targetA), sb_get(&targetB)));
 	task_queue(t);

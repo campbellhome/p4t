@@ -56,6 +56,7 @@ static void task_describe_changelist_statechanged_desc_shelved(task *t)
 				if(cl) {
 					const char *clientName = sdict_find_safe(&cl->normal, "client");
 					task_queue(p4_task_create(
+					    "describe_changelist_shelved_files",
 					    task_describe_changelist_statechanged_fstat_shelved, p4_dir(), &p->extraData,
 					    "\"%s\" -G fstat -Op -Rs -e %u //%s/...", p4_exe(), changeNumber, clientName));
 				}
@@ -66,6 +67,7 @@ static void task_describe_changelist_statechanged_desc_shelved(task *t)
 static void spawn_describe_shelved(p4Changelist *cl, task_p4 *p)
 {
 	task_queue(p4_task_create(
+	    "describe_changelist_shelved",
 	    task_describe_changelist_statechanged_desc_shelved, p4_dir(), &p->extraData,
 	    "\"%s\" -G describe -s -S %u", p4_exe(), cl->number));
 }
@@ -91,6 +93,7 @@ static void spawn_fstat_normal(p4Changelist *cl, task_p4 *p)
 {
 	const char *clientName = sdict_find_safe(&cl->normal, "client");
 	task_queue(p4_task_create(
+	    "describe_changelist_files",
 	    task_describe_changelist_statechanged_fstat_normal, p4_dir(), &p->extraData,
 	    "\"%s\" -G fstat -Olhp -Rco -e %u //%s/...", p4_exe(), cl->number, clientName));
 }
@@ -133,6 +136,7 @@ static void task_describe_changelist_statechanged_desc(task *t)
 void p4_describe_changelist(u32 cl)
 {
 	task *t = task_queue(p4_task_create(
+	    "describe_changelist",
 	    task_describe_changelist_statechanged_desc, p4_dir(), NULL,
 	    "\"%s\" -G describe -s %u", p4_exe(), cl));
 	if(t) {
@@ -191,10 +195,12 @@ void p4_describe_default_changelist(const char *client)
 			if(!_stricmp(user, localUser) && !_stricmp(host, localHost)) {
 				// default changelist for a local clientspec
 				t = task_queue(p4_task_create(
+				    "describe_default_local",
 				    task_describe_default_changelist_statechanged, p4_dir(), NULL,
 				    "\"%s\" -G -c %s fstat -Olhp -Rco -e default //%s/...", p4_exe(), client, client));
 			} else {
 				t = task_queue(p4_task_create(
+				    "describe_default_remote",
 				    task_describe_default_changelist_statechanged, p4_dir(), NULL,
 				    "\"%s\" -G opened -C %s -c default", p4_exe(), client));
 			}

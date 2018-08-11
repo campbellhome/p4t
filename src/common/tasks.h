@@ -40,6 +40,7 @@ typedef struct tag_tasks {
 } tasks;
 
 typedef struct tag_task {
+	sb_t name;
 	taskId id;
 	taskState state;
 	taskState prevState;

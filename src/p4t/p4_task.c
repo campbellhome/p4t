@@ -57,9 +57,10 @@ void task_p4_reset(task *_t)
 	task_process_reset(_t);
 }
 
-task p4_task_create(Task_StateChanged *statechanged, const char *dir, sdict_t *extraData, const char *cmdlineFmt, ...)
+task p4_task_create(const char *name, Task_StateChanged *statechanged, const char *dir, sdict_t *extraData, const char *cmdlineFmt, ...)
 {
 	task t = { 0 };
+	sb_append(&t.name, name);
 	t.tick = task_p4_tick;
 	t.stateChanged = statechanged;
 	t.reset = task_p4_reset;
