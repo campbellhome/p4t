@@ -246,13 +246,22 @@ static b32 process_thread_tick_io_buffer(win32Process_t *process, HANDLE handle,
 
 static bb_thread_return_t process_io_thread(void *_process)
 {
+	u32 delayCur = 16;
+	u32 delayMin = 1;
+	u32 delayIncrement = 1;
+	u32 delayMax = 16;
+
 	win32Process_t *process = _process;
 	while(process->threadWanted) {
-		b32 readData = false;
-		readData = readData || process_thread_tick_io_buffer(process, process->hOutputRead, &process->stdoutThread);
-		readData = readData || process_thread_tick_io_buffer(process, process->hErrorRead, &process->stderrThread);
-		if(!readData) {
-			bb_sleep_ms(16);
+		b32 readData = process_thread_tick_io_buffer(process, process->hOutputRead, &process->stdoutThread);
+		if(readData) {
+			delayCur = delayMin;
+		} else {
+			readData = readData || process_thread_tick_io_buffer(process, process->hErrorRead, &process->stderrThread);
+			if(!readData) {
+				delayCur = BB_MIN(delayCur + delayIncrement, delayMax);
+				bb_sleep_ms(delayCur);
+			}
 		}
 	}
 	process->threadDone = true;
