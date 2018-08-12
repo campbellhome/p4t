@@ -64,8 +64,9 @@ static void UIChangeset_CopySelectedToClipboard(p4UIChangeset *uics, p4Changeset
 	u32 i;
 	sb_t sb;
 	sb_init(&sb);
-	for(i = 0; i < uics->count; ++i) {
-		p4UIChangesetEntry *e = uics->data + i;
+	for(i = 0; i < uics->sorted.count; ++i) {
+		p4UIChangesetSortKey *s = uics->sorted.data + i;
+		p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
 		if(e->selected) {
 			sdict_t *c = cs->changelists.data + e->changelistIndex;
 			if(c) {
@@ -101,29 +102,31 @@ static void UIChangeset_CopySelectedToClipboard(p4UIChangeset *uics, p4Changeset
 static void UIChangeset_ClearSelection(p4UIChangeset *uics)
 {
 	uics->lastClickIndex = ~0U;
-	for(u32 i = 0; i < uics->count; ++i) {
-		uics->data[i].selected = false;
+	for(u32 i = 0; i < uics->entries.count; ++i) {
+		uics->entries.data[i].selected = false;
 	}
 }
 
 static void UIChangeset_SelectAll(p4UIChangeset *uics)
 {
 	uics->lastClickIndex = ~0U;
-	for(u32 i = 0; i < uics->count; ++i) {
-		uics->data[i].selected = true;
+	for(u32 i = 0; i < uics->entries.count; ++i) {
+		uics->entries.data[i].selected = true;
 	}
 }
 
 static void UIChangeset_AddSelection(p4UIChangeset *uics, u32 index)
 {
-	p4UIChangesetEntry *e = uics->data + index;
+	p4UIChangesetSortKey *s = uics->sorted.data + index;
+	p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
 	e->selected = true;
 	uics->lastClickIndex = index;
 }
 
 static void UIChangeset_ToggleSelection(p4UIChangeset *uics, u32 index)
 {
-	p4UIChangesetEntry *e = uics->data + index;
+	p4UIChangesetSortKey *s = uics->sorted.data + index;
+	p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
 	e->selected = !e->selected;
 	uics->lastClickIndex = (e->selected) ? index : ~0U;
 }
@@ -137,7 +140,7 @@ static void UIChangeset_HandleClick(p4UIChangeset *uics, u32 index)
 	if(io.KeyCtrl) {
 		UIChangeset_ToggleSelection(uics, index);
 	} else if(io.KeyShift) {
-		if(uics->lastClickIndex < uics->count) {
+		if(uics->lastClickIndex < uics->entries.count) {
 			u32 startIndex = uics->lastClickIndex;
 			u32 endIndex = index;
 			uics->lastClickIndex = endIndex;
@@ -147,7 +150,9 @@ static void UIChangeset_HandleClick(p4UIChangeset *uics, u32 index)
 				startIndex = tmp;
 			}
 			for(u32 i = startIndex; i <= endIndex; ++i) {
-				uics->data[i].selected = true;
+				p4UIChangesetSortKey *s = uics->sorted.data + i;
+				p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
+				e->selected = true;
 			}
 		}
 	} else {
@@ -261,6 +266,23 @@ void UIChangeset_Menu()
 	ImGui::Checkbox("DEBUG Changeset Optimizations", &s_debug.showChangesetOptimizations);
 }
 
+static bool UIChangeset_TryAddChangelist(p4UIChangeset *uics, p4Changeset *cs, u32 index)
+{
+	sdict_t *sd = cs->changelists.data + index;
+	if(UIChangeset_PassesFilter(&uics->filterTokens, sd)) {
+		p4UIChangesetEntry e = {};
+		e.changelistNumber = strtou32(sdict_find_safe(sd, "change"));
+		e.changelistIndex = index;
+		e.selected = false;
+		sb_append(&e.client, sdict_find_safe(sd, "client"));
+		if(bba_add_noclear(uics->entries, 1)) {
+			bba_last(uics->entries) = e;
+			return true;
+		}
+	}
+	return false;
+}
+
 void UIChangeset_Update(p4UIChangeset *uics)
 {
 	ImGui::PushID(uics);
@@ -295,8 +317,8 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		ImGui::SameLine();
 		ImGui::Checkbox("drawAll", &s_debug.drawFromStart);
 		ImGui::SameLine();
-		u32 startCL = (uics->lastStartIndex < uics->count) ? uics->data[uics->lastStartIndex].changelistNumber : 0;
-		u32 endCL = (s_debug.visibleEndIndex < uics->count) ? uics->data[s_debug.visibleEndIndex].changelistNumber : 0;
+		u32 startCL = (uics->lastStartIndex < uics->sorted.count) ? uics->entries.data[uics->sorted.data[uics->lastStartIndex].entryIndex].changelistNumber : 0;
+		u32 endCL = (s_debug.visibleEndIndex < uics->sorted.count) ? uics->entries.data[uics->sorted.data[s_debug.visibleEndIndex].entryIndex].changelistNumber : 0;
 		ImGui::Text("%.0f/%.0f(%.0f) range:%u(%u)-%u(%u) numValid:%u",
 		            s_debug.startY, s_debug.requiredEndY, s_debug.endY,
 		            uics->lastStartIndex, startCL,
@@ -340,8 +362,12 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		p4_refresh_changeset(cs);
 	}
 
+	u32 paritySort = cs->parity;
+
 	if(uics->parity != cs->parity) {
 		uics->parity = cs->parity;
+		uics->numChangelistsAppended = cs->changelists.count;
+		paritySort = 0;
 		BB_LOG("changeset::rebuild_changeset", "rebuild tokens");
 
 		//p4UIChangeset old = *uics; // TODO: retain selection when refreshing changelists
@@ -374,10 +400,11 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		}
 
 		BB_LOG("changeset::rebuild_changeset", "reset old entries");
-		for(u32 i = 0; i < uics->count; ++i) {
-			p4_reset_uichangesetentry(uics->data + i);
+		for(u32 i = 0; i < uics->entries.count; ++i) {
+			p4_reset_uichangesetentry(uics->entries.data + i);
 		}
-		uics->count = 0;
+		uics->entries.count = 0;
+		uics->sorted.count = 0;
 		BB_LOG("changeset::rebuild_changeset", "adding new entries");
 		for(u32 i = 0; i < cs->changelists.count; ++i) {
 			sdict_t *sd = cs->changelists.data + i;
@@ -387,17 +414,14 @@ void UIChangeset_Update(p4UIChangeset *uics)
 				e.changelistIndex = i;
 				e.selected = false;
 				sb_append(&e.client, sdict_find_safe(sd, "client"));
-				bba_push(*uics, e);
+				if(bba_add_noclear(uics->entries, 1)) {
+					bba_last(uics->entries) = e;
+					p4UIChangesetSortKey s = {};
+					s.entryIndex = uics->sorted.count;
+					bba_push(uics->sorted, s);
+				}
 			}
 		}
-		BB_LOG("changeset::rebuild_changeset", "sort entries");
-		p4_sort_uichangeset(uics);
-		BB_LOG("changeset::rebuild_changeset", "cleanup");
-		uics->lastClickIndex = ~0u;
-		uics->numValidStartY = 0;
-		uics->lastStartIndex = 0;
-		uics->lastStartY = 0.0f;
-		reset_filter_tokens(&tokens);
 		UIChangeset_SetWindowTitle(uics);
 		BB_LOG("changeset::rebuild_changeset", "done");
 	}
@@ -419,18 +443,35 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			ImGui::columnDrawResult res = ImGui::DrawColumnHeader(data, i);
 			anyActive = anyActive || res.active;
 			if(res.sortChanged) {
-				BB_LOG("changeset::sort_changeset", "sort entries");
-				p4_sort_uichangeset(uics);
-				BB_LOG("changeset::sort_changeset", "done");
-				uics->lastClickIndex = ~0u;
-				uics->numValidStartY = 0;
-				uics->lastStartIndex = 0;
-				uics->lastStartY = 0.0f;
+				paritySort = 0;
 			}
 		} else {
 			columnOffsets[i + 1] = columnOffsets[i];
 		}
 	}
+
+	if(uics->numChangelistsAppended < cs->changelists.count) {
+		BB_LOG("changeset::append_changeset", "start append");
+		for(u32 i = uics->numChangelistsAppended; i < cs->changelists.count; ++i) {
+			if(UIChangeset_TryAddChangelist(uics, cs, i)) {
+				paritySort = 0;
+			}
+		}
+		uics->numChangelistsAppended = cs->changelists.count;
+		BB_LOG("changeset::append_changeset", "end append");
+	}
+
+	if(paritySort != cs->parity) {
+		paritySort = cs->parity;
+		BB_LOG("changeset::sort_changeset", "start sort");
+		p4_sort_uichangeset(uics);
+		uics->lastClickIndex = ~0u;
+		uics->numValidStartY = 0;
+		uics->lastStartIndex = 0;
+		uics->lastStartY = 0.0f;
+		BB_LOG("changeset::sort_changeset", "end sort");
+	}
+
 	ImGui::NewLine();
 
 	if(ImGui::BeginChild("##changelists", ImVec2(0, 0), false, ImGuiWindowFlags_None)) {
@@ -446,9 +487,10 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			startIndex = uics->lastStartIndex;
 			startY = uics->lastStartY;
 			while(startY < scrollY) {
-				if(startIndex + 1 >= uics->count)
+				if(startIndex + 1 >= uics->sorted.count)
 					break;
-				p4UIChangesetEntry *e = uics->data + startIndex + 1;
+				p4UIChangesetSortKey *s = uics->sorted.data + startIndex + 1;
+				p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
 				if(e->startY < scrollY) {
 					++startIndex;
 					startY = e->startY;
@@ -459,11 +501,13 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			while(startY > scrollY) {
 				if(!startIndex)
 					break;
-				p4UIChangesetEntry *e = uics->data + startIndex;
+				p4UIChangesetSortKey *s = uics->sorted.data + startIndex;
+				p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
 				if(e->startY < scrollY)
 					break;
 				--startIndex;
-				e = uics->data + startIndex;
+				s = uics->sorted.data + startIndex;
+				e = uics->entries.data + s->entryIndex;
 				startY = e->startY;
 			}
 		}
@@ -475,8 +519,9 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		if(startY) {
 			ImGui::Button("##spacerstart", ImVec2(0, startY - ImGui::GetStyle().ItemSpacing.y));
 		}
-		for(u32 i = startIndex; i < uics->count; ++i) {
-			p4UIChangesetEntry *e = uics->data + i;
+		for(u32 i = startIndex; i < uics->sorted.count; ++i) {
+			p4UIChangesetSortKey *s = uics->sorted.data + i;
+			p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
 			e->startY = ImGui::GetCursorPosY();
 			uics->numValidStartY = BB_MAX(uics->numValidStartY, i);
 			sdict_t *c = cs->changelists.data + e->changelistIndex;
@@ -583,11 +628,11 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			}
 			e->endY = ImGui::GetCursorPosY();
 			s_debug.visibleEndIndex = i;
-			if(!s_debug.drawFromStart && e->startY > visibleEndY && uics->numValidStartY == uics->count - 1)
+			if(!s_debug.drawFromStart && e->startY > visibleEndY && uics->numValidStartY == uics->sorted.count - 1)
 				break;
 		}
-		if(uics->count) {
-			float requiredY = bba_last(*uics).endY;
+		if(uics->sorted.count) {
+			float requiredY = uics->entries.data[bba_last(uics->sorted).entryIndex].endY;
 			float curY = ImGui::GetCursorPosY() + ImGui::GetStyle().ItemSpacing.y;
 			if(requiredY > curY) {
 				ImGui::Button("##spacerend", ImVec2(0, requiredY - curY));

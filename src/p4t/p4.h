@@ -4,6 +4,7 @@
 #pragma once
 
 #include "common.h"
+#include "filter.h"
 #include "sdict.h"
 
 #if defined(__cplusplus)
@@ -88,16 +89,36 @@ typedef struct tag_p4UIChangesetEntry {
 	uiChangelistFiles shelvedFiles;
 } p4UIChangesetEntry;
 
-typedef struct tag_p4UIChangeset {
-	b32 pending;
-	u32 parity;
+typedef struct tag_p4UIChangesetEntries {
 	u32 count;
 	u32 allocated;
 	p4UIChangesetEntry *data;
+} p4UIChangesetEntries;
+
+typedef struct tag_p4UIChangesetSortKey {
+	u32 entryIndex;
+	u8 pad[4];
+	const char *sortKey;
+} p4UIChangesetSortKey;
+
+typedef struct tag_p4UIChangesetSortKeys {
+	u32 count;
+	u32 allocated;
+	p4UIChangesetSortKey *data;
+} p4UIChangesetSortKeys;
+
+typedef struct tag_p4UIChangeset {
+	b32 pending;
+	u32 parity;
+	u32 numChangelistsAppended;
+	u8 pad[4];
+	p4UIChangesetEntries entries;
+	p4UIChangesetSortKeys sorted;
 	sb_t user;
 	sb_t clientspec;
 	sb_t filter;
 	sb_t filterInput;
+	filterTokens filterTokens;
 	b32 filterEnabled;
 	u32 id;
 	u32 lastClickIndex;

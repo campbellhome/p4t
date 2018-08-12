@@ -129,10 +129,12 @@ static void p4_reset_uichangeset(p4UIChangeset *uics)
 	sb_reset(&uics->clientspec);
 	sb_reset(&uics->filter);
 	sb_reset(&uics->filterInput);
-	for(u32 i = 0; i < uics->count; ++i) {
-		p4_reset_uichangesetentry(uics->data + i);
+	reset_filter_tokens(&uics->filterTokens);
+	for(u32 i = 0; i < uics->entries.count; ++i) {
+		p4_reset_uichangesetentry(uics->entries.data + i);
 	}
-	bba_free(*uics);
+	bba_free(uics->entries);
+	bba_free(uics->sorted);
 }
 
 void p4_reset_uichangelist(p4UIChangelist *uicl)
@@ -576,8 +578,8 @@ static inline const char *p4_get_uichangesetentry_sort_key(const p4UIChangesetEn
 }
 static int p4_changeset_compare(const void *_a, const void *_b)
 {
-	const p4UIChangesetEntry *a = _a;
-	const p4UIChangesetEntry *b = _b;
+	const p4UIChangesetSortKey *a = _a;
+	const p4UIChangesetSortKey *b = _b;
 	const char *astr = a->sortKey;
 	const char *bstr = b->sortKey;
 
@@ -601,7 +603,7 @@ static int p4_changeset_compare(const void *_a, const void *_b)
 	if(val) {
 		return val * mult;
 	} else {
-		return s_sortConfig->sortDescending ? (a->changelistIndex > b->changelistIndex) : (a->changelistIndex < b->changelistIndex);
+		return s_sortConfig->sortDescending ? (a->entryIndex > b->entryIndex) : (a->entryIndex < b->entryIndex);
 	}
 }
 void p4_sort_uichangeset(p4UIChangeset *uics)
@@ -618,12 +620,16 @@ void p4_sort_uichangeset(p4UIChangeset *uics)
 	}
 	s_sortConfig = s_sortChangeset->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
 	BB_LOG("p4::sort", "prep changeset sort - entries:%u", s_sortChangeset->changelists.count);
-	for(u32 i = 0; i < uics->count; ++i) {
-		p4UIChangesetEntry *e = uics->data + i;
-		e->sortKey = p4_get_uichangesetentry_sort_key(e);
+	uics->sorted.count = 0;
+	for(u32 i = 0; i < uics->entries.count; ++i) {
+		p4UIChangesetEntry *e = uics->entries.data + i;
+		p4UIChangesetSortKey s = { 0 };
+		s.entryIndex = i;
+		s.sortKey = p4_get_uichangesetentry_sort_key(e);
+		bba_push(uics->sorted, s);
 	}
-	BB_LOG("p4::sort", "start changeset sort - entries:%u", s_sortChangeset->changelists.count);
-	qsort(uics->data, uics->count, sizeof(p4UIChangesetEntry), &p4_changeset_compare);
+	BB_LOG("p4::sort", "start changeset sort - entries:%u sorted:%u", uics->entries.count, uics->sorted.count);
+	qsort(uics->sorted.data, uics->sorted.count, sizeof(p4UIChangesetSortKey), &p4_changeset_compare);
 	BB_LOG("p4::sort", "end changeset sort");
 	s_sortConfig = NULL;
 	s_sortChangeset = NULL;
