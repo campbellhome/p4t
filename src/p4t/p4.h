@@ -84,7 +84,7 @@ typedef struct tag_p4UIChangesetEntry {
 	const char *sortKey;
 	sb_t client;
 	float startY;
-	float endY;
+	float height;
 	uiChangelistFiles normalFiles;
 	uiChangelistFiles shelvedFiles;
 } p4UIChangesetEntry;

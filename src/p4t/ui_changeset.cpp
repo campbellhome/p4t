@@ -479,6 +479,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		if(debug) {
 			BB_LOG("changeset::rebuild_offsets", "start rebuild_offsets");
 		}
+
 		u32 startIndex = 0;
 		float startY = 0.0f;
 		const float scrollY = ImGui::GetScrollY();
@@ -515,6 +516,25 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		uics->lastStartY = startY;
 
 		float visibleEndY = ImGui::GetWindowHeight() + ImGui::GetScrollY();
+
+		const ImGuiStyle &style = ImGui::GetStyle();
+		const float fontSize = ImGui::GetFontSize();
+
+		if(uics->numValidStartY < startIndex) {
+			BB_LOG("changeset::rebuild_offsets_pre", "start rebuild_offsets_pre");
+			float y = 0.0f;
+			for(u32 i = 0; i < startIndex; ++i) {
+				p4UIChangesetSortKey *s = uics->sorted.data + i;
+				p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
+				e->startY = y;
+				if(!e->height) {
+					e->height = fontSize + style.FramePadding.y * 2;
+				}
+				y += e->height + style.ItemSpacing.y;
+			}
+			uics->numValidStartY = startIndex;
+			BB_LOG("changeset::rebuild_offsets_pre", "start rebuild_offsets_pre");
+		}
 
 		if(startY) {
 			ImGui::Button("##spacerstart", ImVec2(0, startY - ImGui::GetStyle().ItemSpacing.y));
@@ -626,13 +646,33 @@ void UIChangeset_Update(p4UIChangeset *uics)
 					}
 				}
 			}
-			e->endY = ImGui::GetCursorPosY();
+			e->height = ImGui::GetCursorPosY() - e->startY;
 			s_debug.visibleEndIndex = i;
-			if(!s_debug.drawFromStart && e->startY > visibleEndY && uics->numValidStartY == uics->sorted.count - 1)
+			if(!s_debug.drawFromStart && e->startY > visibleEndY /*&& uics->numValidStartY == uics->sorted.count - 1*/)
 				break;
 		}
+
+		if(uics->numValidStartY < uics->sorted.count && uics->numValidStartY > 0) {
+			BB_LOG("changeset::rebuild_offsets_post", "start rebuild_offsets_post");
+			p4UIChangesetSortKey *lastS = uics->sorted.data + uics->numValidStartY - 1;
+			p4UIChangesetEntry *lastE = uics->entries.data + lastS->entryIndex;
+			float y = lastE->startY + lastE->height + style.ItemSpacing.y;
+			for(u32 i = uics->numValidStartY; i < uics->sorted.count; ++i) {
+				p4UIChangesetSortKey *s = uics->sorted.data + i;
+				p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
+				e->startY = y;
+				if(!e->height) {
+					e->height = fontSize + style.FramePadding.y * 2;
+				}
+				y += e->height + style.ItemSpacing.y;
+			}
+			uics->numValidStartY = uics->sorted.count;
+			BB_LOG("changeset::rebuild_offsets_post", "start rebuild_offsets_post");
+		}
+
 		if(uics->sorted.count) {
-			float requiredY = uics->entries.data[bba_last(uics->sorted).entryIndex].endY;
+			p4UIChangesetEntry &e = uics->entries.data[bba_last(uics->sorted).entryIndex];
+			float requiredY = e.startY + e.height;
 			float curY = ImGui::GetCursorPosY() + ImGui::GetStyle().ItemSpacing.y;
 			if(requiredY > curY) {
 				ImGui::Button("##spacerend", ImVec2(0, requiredY - curY));
