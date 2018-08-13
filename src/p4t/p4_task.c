@@ -15,7 +15,7 @@ void task_p4_tick(task *_t)
 	if(res.stdoutIO.nBytes) {
 		App_RequestRender();
 		bba_add_array(t->parser, res.stdoutIO.buffer, res.stdoutIO.nBytes);
-		while(py_parser_tick(&t->parser, &t->dicts)) {
+		while(py_parser_tick(&t->parser, &t->parsedDicts)) {
 			// do nothing
 		}
 	}
@@ -32,7 +32,7 @@ void task_p4_tick(task *_t)
 void task_p4_reset(task *_t)
 {
 	task_p4 *t = (task_p4 *)_t->userdata;
-	sdicts_reset(&t->dicts);
+	sdicts_reset(&t->parsedDicts);
 	if(t->parser.state == kParser_Error) {
 		sb_t path = appdata_get();
 		sb_va(&path, "\\%s_error.bin", globals.appSpecific.configName);

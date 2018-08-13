@@ -13,7 +13,7 @@ extern "C" {
 
 typedef struct tag_task_p4 {
 	task_process base;
-	sdicts dicts;
+	sdicts parsedDicts;
 	pyParser parser;
 	sdict_t extraData;
 } task_p4;

@@ -372,16 +372,15 @@ void UIChangeset_Update(p4UIChangeset *uics)
 
 		//p4UIChangeset old = *uics; // TODO: retain selection when refreshing changelists
 
-		filterTokens tokens = {};
 		if(uics->filterEnabled) {
-			build_filter_tokens(&tokens, sb_get(&uics->filter));
+			build_filter_tokens(&uics->filterTokens, sb_get(&uics->filter));
 		}
 		const char *user = sb_get(&uics->user);
 		if(*user) {
 			if(!strcmp(user, "Current User")) {
 				user = sdict_find_safe(&p4.info, "userName");
 			}
-			if(filterToken *t = add_filter_token(&tokens, "user", user)) {
+			if(filterToken *t = add_filter_token(&uics->filterTokens, "user", user)) {
 				t->required = true;
 				t->prohibited = false;
 				t->exact = true;
@@ -392,7 +391,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			if(!strcmp(clientspec, "Current Client")) {
 				clientspec = p4_clientspec();
 			}
-			if(filterToken *t = add_filter_token(&tokens, "client", clientspec)) {
+			if(filterToken *t = add_filter_token(&uics->filterTokens, "client", clientspec)) {
 				t->required = true;
 				t->prohibited = false;
 				t->exact = true;
@@ -408,7 +407,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		BB_LOG("changeset::rebuild_changeset", "adding new entries");
 		for(u32 i = 0; i < cs->changelists.count; ++i) {
 			sdict_t *sd = cs->changelists.data + i;
-			if(UIChangeset_PassesFilter(&tokens, sd)) {
+			if(UIChangeset_PassesFilter(&uics->filterTokens, sd)) {
 				p4UIChangesetEntry e = {};
 				e.changelistNumber = strtou32(sdict_find_safe(sd, "change"));
 				e.changelistIndex = i;

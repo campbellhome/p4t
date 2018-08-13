@@ -34,7 +34,7 @@ const char *diff_exe(void)
 	return "";
 }
 
-void p4_diff_against_local(const char *depotPath, const char *rev, const char *localPath)
+void p4_diff_against_local(const char *depotPath, const char *rev, const char *localPath, bool depotFirst)
 {
 	const char *filename = strrchr(depotPath, '/');
 	if(!filename++)
@@ -69,7 +69,8 @@ void p4_diff_against_local(const char *depotPath, const char *rev, const char *l
 	                                    p4exe, sb_get(&target), depotPath, rev));
 	bba_push(t.subtasks, process_task_create("diff", kProcessSpawn_OneShot, p4dir,
 	                                         "\"%s\" \"%s\" \"%s\"",
-	                                         diffExe, sb_get(&target), localPath));
+	                                         diffExe, (depotFirst) ? sb_get(&target) : localPath,
+	                                         (depotFirst) ? localPath : sb_get(&target)));
 	task_queue(t);
 
 	bba_push(s_diffDirs, diffDir);

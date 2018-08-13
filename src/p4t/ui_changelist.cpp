@@ -90,6 +90,49 @@ static void UIChangelist_Files_CopySelectedToClipboard(uiChangelistFiles *files,
 	sb_reset(&sb);
 }
 
+typedef enum tag_uiChangelistDiffType {
+	kUIChangelistDiff_Local,
+	kUIChangelistDiff_Shelved,
+	kUIChangelistDiff_DepotCurrent,
+	kUIChangelistDiff_DepotPrevious,
+} uiChangelistDiffType;
+static const char *UIChangelist_GetDiffRevision(p4Changelist *cl, u32 rev, uiChangelistDiffType type)
+{
+	switch(type) {
+	case kUIChangelistDiff_Local:
+		return "";
+	case kUIChangelistDiff_Shelved:
+		return va("@=%u", cl->number);
+	case kUIChangelistDiff_DepotCurrent:
+		return va("#%u", rev);
+	case kUIChangelistDiff_DepotPrevious:
+		return va("#%u", rev - 1);
+	default:
+		BB_ASSERT(false);
+		return "";
+	}
+}
+static void UIChangelist_Diff(uiChangelistFiles *files, p4Changelist *cl, bool selectedOnly, uiChangelistDiffType src, uiChangelistDiffType dst)
+{
+	for(u32 i = 0; i < files->count; ++i) {
+		uiChangelistFile *file = files->data + i;
+		if(file->selected || !selectedOnly) {
+			u32 rev = strtou32(file->fields.field.rev);
+			if(src == kUIChangelistDiff_Local) {
+				if(*file->fields.field.localPath) {
+					p4_diff_against_local(file->fields.field.depotPath, UIChangelist_GetDiffRevision(cl, rev, dst), file->fields.field.localPath, false);
+				}
+			} else if(dst == kUIChangelistDiff_Local) {
+				if(*file->fields.field.localPath) {
+					p4_diff_against_local(file->fields.field.depotPath, UIChangelist_GetDiffRevision(cl, rev, src), file->fields.field.localPath, true);
+				}
+			} else {
+				p4_diff_against_depot(file->fields.field.depotPath, UIChangelist_GetDiffRevision(cl, rev, src), file->fields.field.depotPath, UIChangelist_GetDiffRevision(cl, rev, dst));
+			}
+		}
+	}
+}
+
 static void UIChangelist_Files_DiffSelected(uiChangelistFiles *files, p4Changelist *cl)
 {
 	const char *infoClientName = p4_clientspec();
@@ -100,24 +143,14 @@ static void UIChangelist_Files_DiffSelected(uiChangelistFiles *files, p4Changeli
 	b32 pending = !strcmp(status, "pending");
 	b32 shelved = files->shelved;
 
-	for(u32 i = 0; i < files->count; ++i) {
-		uiChangelistFile *file = files->data + i;
-		if(file->selected) {
-			u32 rev = strtou32(file->fields.field.rev);
-			if(pending) {
-				if(shelved) {
-					p4_diff_against_depot(file->fields.field.depotPath, va("#%u", rev), file->fields.field.depotPath, va("@=%u", cl->number));
-				} else if(localClient) {
-					if(*file->fields.field.localPath) {
-						p4_diff_against_local(file->fields.field.depotPath, va("#%u", rev), file->fields.field.localPath);
-					}
-				}
-			} else {
-				if(rev) {
-					p4_diff_against_depot(file->fields.field.depotPath, va("#%u", rev - 1), file->fields.field.depotPath, va("#%u", rev));
-				}
-			}
+	if(pending) {
+		if(shelved) {
+			UIChangelist_Diff(files, cl, true, kUIChangelistDiff_DepotCurrent, kUIChangelistDiff_Shelved);
+		} else if(localClient) {
+			UIChangelist_Diff(files, cl, true, kUIChangelistDiff_DepotCurrent, kUIChangelistDiff_Local);
 		}
+	} else {
+		UIChangelist_Diff(files, cl, true, kUIChangelistDiff_DepotPrevious, kUIChangelistDiff_DepotCurrent);
 	}
 }
 
@@ -276,7 +309,7 @@ static const char *s_columnNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_columnNames) == BB_ARRAYSIZE(g_config.uiChangelist.columnWidth));
 
-b32 UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file, u32 index)
+b32 UIChangelist_FileSelectable(p4Changelist *cl, p4ChangelistType cltype, uiChangelistFiles *files, uiChangelistFile &file, u32 index)
 {
 	b32 anyActive = false;
 	ImGui::PushSelectableColors(file.selected, ImGui::IsActiveSelectables(files));
@@ -290,14 +323,35 @@ b32 UIChangelist_FileSelectable(uiChangelistFiles *files, uiChangelistFile &file
 			anyActive = true;
 			UIChangelist_HandleClick(files, index);
 		}
-		if(ImGui::BeginContextMenu(va("context_%p_%d", files, index))) {
-			anyActive = true;
-			if(!file.selected) {
-				UIChangelist_Files_ClearSelection(files);
-				UIChangelist_Logs_AddSelection(files, index);
-			}
-			ImGui::EndContextMenu();
+	}
+	if(ImGui::BeginContextMenu(va("context_%p_%d", files, index))) {
+		BB_LOG("popup", "context_%p_%d", files, index);
+		anyActive = true;
+		if(!file.selected) {
+			UIChangelist_Files_ClearSelection(files);
+			UIChangelist_Logs_AddSelection(files, index);
 		}
+
+		if(files->shelved || cltype != kChangelistType_PendingOther) {
+			if(ImGui::MenuItem("Diff against depot")) {
+				if(files->shelved) {
+					UIChangelist_Diff(files, cl, true, kUIChangelistDiff_DepotCurrent, kUIChangelistDiff_Shelved);
+				} else if(cltype == kChangelistType_PendingLocal) {
+					UIChangelist_Diff(files, cl, true, kUIChangelistDiff_DepotCurrent, kUIChangelistDiff_Local);
+				} else {
+					UIChangelist_Diff(files, cl, true, kUIChangelistDiff_DepotPrevious, kUIChangelistDiff_DepotCurrent);
+				}
+			}
+		}
+		if(cltype == kChangelistType_PendingLocal) {
+			if(files->shelved) {
+				if(ImGui::MenuItem("Diff against workspace")) {
+					UIChangelist_Diff(files, cl, true, kUIChangelistDiff_Local, kUIChangelistDiff_Shelved);
+				}
+			}
+		}
+
+		ImGui::EndContextMenu();
 	}
 	return anyActive;
 }
@@ -360,7 +414,7 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, float in
 	for(u32 i = 0; i < files->count; ++i) {
 		float start = ImGui::GetIconPosForText().x - ImGui::GetStyle().ItemSpacing.x;
 		uiChangelistFile &file = files->data[i];
-		if(UIChangelist_FileSelectable(files, file, i)) {
+		if(UIChangelist_FileSelectable(cl, cltype, files, file, i)) {
 			anyActive = true;
 		}
 
@@ -391,7 +445,7 @@ void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl,
 	const float itemPad = ImGui::GetStyle().ItemSpacing.x;
 	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile &file = files->data[i];
-		if(UIChangelist_FileSelectable(files, file, i)) {
+		if(UIChangelist_FileSelectable(cl, cltype, files, file, i)) {
 			anyActive = true;
 		}
 
@@ -498,23 +552,21 @@ void UIChangelist_Update(p4UIChangelist *uicl)
 	if(!cl) {
 		cl = &empty;
 	}
-	if(cl) {
-		if(!uicl->displayed || uicl->parity != cl->parity) {
-			uicl->displayed = uicl->requested;
-			uicl->parity = cl->parity;
-			p4_build_changelist_files(cl, &uicl->normalFiles, &uicl->shelvedFiles);
-			ImGui::SetActiveSelectables(uicl->shelvedFiles.count == 0 ? &uicl->normalFiles : &uicl->shelvedFiles);
-			UIChangelist_SetWindowTitle(uicl);
-		}
-		UIChangelist_DrawInformation(&cl->normal);
-		UIChangelist_DrawFilesAndHeaders(cl, &uicl->normalFiles, &uicl->shelvedFiles, true);
-
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-		if(ImGui::Button("###blank", ImGui::GetContentRegionAvail()) || ImGui::IsItemActive()) {
-			ImGui::SetActiveSelectables(uicl->shelvedFiles.count == 0 ? &uicl->normalFiles : &uicl->shelvedFiles);
-		}
-		ImGui::PopStyleColor(3);
+	if(!uicl->displayed || uicl->parity != cl->parity) {
+		uicl->displayed = uicl->requested;
+		uicl->parity = cl->parity;
+		p4_build_changelist_files(cl, &uicl->normalFiles, &uicl->shelvedFiles);
+		ImGui::SetActiveSelectables(uicl->shelvedFiles.count == 0 ? &uicl->normalFiles : &uicl->shelvedFiles);
+		UIChangelist_SetWindowTitle(uicl);
 	}
+	UIChangelist_DrawInformation(&cl->normal);
+	UIChangelist_DrawFilesAndHeaders(cl, &uicl->normalFiles, &uicl->shelvedFiles, true);
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	if(ImGui::Button("###blank", ImGui::GetContentRegionAvail()) || ImGui::IsItemActive()) {
+		ImGui::SetActiveSelectables(uicl->shelvedFiles.count == 0 ? &uicl->normalFiles : &uicl->shelvedFiles);
+	}
+	ImGui::PopStyleColor(3);
 }

@@ -25,7 +25,7 @@ static void task_describe_changelist_statechanged_fstat_shelved(task *t)
 		if(changeNumber) {
 			p4Changelist *cl = p4_find_changelist(changeNumber);
 			if(cl) {
-				sdicts_move(&cl->shelvedFiles, &p->dicts);
+				sdicts_move(&cl->shelvedFiles, &p->parsedDicts);
 				++cl->parity;
 			}
 		}
@@ -36,8 +36,8 @@ static void task_describe_changelist_statechanged_desc_shelved(task *t)
 	task_process_statechanged(t);
 	if(t->state == kTaskState_Succeeded) {
 		task_p4 *p = t->userdata;
-		if(p->dicts.count == 1) {
-			u32 changeNumber = strtou32(sdict_find_safe(p->dicts.data, "change"));
+		if(p->parsedDicts.count == 1) {
+			u32 changeNumber = strtou32(sdict_find_safe(p->parsedDicts.data, "change"));
 			if(changeNumber) {
 				sdictEntry_t e = { 0 };
 				sb_append(&e.key, "change");
@@ -45,13 +45,13 @@ static void task_describe_changelist_statechanged_desc_shelved(task *t)
 				sdict_add(&p->extraData, &e);
 				p4Changelist *cl = p4_find_changelist(changeNumber);
 				if(cl) {
-					sdict_move(&cl->shelved, p->dicts.data);
+					sdict_move(&cl->shelved, p->parsedDicts.data);
 					++cl->parity;
 				} else if(bba_add(p4.changelists, 1)) {
 					cl = &bba_last(p4.changelists);
 					cl->number = changeNumber;
 					cl->parity = 1;
-					sdict_move(&cl->shelved, p->dicts.data);
+					sdict_move(&cl->shelved, p->parsedDicts.data);
 				}
 				if(cl) {
 					const char *clientName = sdict_find_safe(&cl->normal, "client");
@@ -80,7 +80,7 @@ static void task_describe_changelist_statechanged_fstat_normal(task *t)
 		if(changeNumber) {
 			p4Changelist *cl = p4_find_changelist(changeNumber);
 			if(cl) {
-				sdicts_move(&cl->normalFiles, &p->dicts);
+				sdicts_move(&cl->normalFiles, &p->parsedDicts);
 				++cl->parity;
 				if(sdict_find(&cl->normal, "shelved")) {
 					spawn_describe_shelved(cl, p);
@@ -102,8 +102,8 @@ static void task_describe_changelist_statechanged_desc(task *t)
 	task_process_statechanged(t);
 	if(t->state == kTaskState_Succeeded) {
 		task_p4 *p = t->userdata;
-		if(p->dicts.count == 1) {
-			u32 changeNumber = strtou32(sdict_find_safe(p->dicts.data, "change"));
+		if(p->parsedDicts.count == 1) {
+			u32 changeNumber = strtou32(sdict_find_safe(p->parsedDicts.data, "change"));
 			if(changeNumber) {
 				sdictEntry_t e = { 0 };
 				sb_append(&e.key, "change");
@@ -111,13 +111,13 @@ static void task_describe_changelist_statechanged_desc(task *t)
 				sdict_add(&p->extraData, &e);
 				p4Changelist *cl = p4_find_changelist(changeNumber);
 				if(cl) {
-					sdict_move(&cl->normal, p->dicts.data);
+					sdict_move(&cl->normal, p->parsedDicts.data);
 					++cl->parity;
 				} else if(bba_add(p4.changelists, 1)) {
 					cl = &bba_last(p4.changelists);
 					cl->number = changeNumber;
 					cl->parity = 1;
-					sdict_move(&cl->normal, p->dicts.data);
+					sdict_move(&cl->normal, p->parsedDicts.data);
 				}
 				if(cl) {
 					if(sdict_find(&cl->normal, "depotFile0")) {
@@ -161,7 +161,7 @@ static void task_describe_default_changelist_statechanged(task *t)
 		if(cl) {
 			p4_reset_changelist(cl);
 			p4_build_default_changelist(&cl->normal, sdict_find_safe(&t->extraData, "user"), client);
-			sdicts_move(&cl->normalFiles, &p->dicts);
+			sdicts_move(&cl->normalFiles, &p->parsedDicts);
 			for(u32 fileIdx = 0; fileIdx < cl->normalFiles.count; ++fileIdx) {
 				sdict_t *f = cl->normalFiles.data + fileIdx;
 				const char *depotFile = sdict_find_safe(f, "depotFile");

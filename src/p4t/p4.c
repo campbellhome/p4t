@@ -233,7 +233,7 @@ static void task_p4clients_statechanged(task *_t)
 	task_process_statechanged(_t);
 	if(_t->state == kTaskState_Succeeded) {
 		task_p4 *t = (task_p4 *)_t->userdata;
-		sdicts_move(&p4.allClients, &t->dicts);
+		sdicts_move(&p4.allClients, &t->parsedDicts);
 		sdicts_reset(&p4.selfClients);
 		sdicts_reset(&p4.localClients);
 		const char *clientHost = sdict_find_safe(&p4.info, "clientHost");
@@ -264,7 +264,7 @@ static void task_p4users_statechanged(task *_t)
 	task_process_statechanged(_t);
 	if(_t->state == kTaskState_Succeeded) {
 		task_p4 *t = (task_p4 *)_t->userdata;
-		sdicts_move(&p4.allUsers, &t->dicts);
+		sdicts_move(&p4.allUsers, &t->parsedDicts);
 		task_queue(p4_task_create("refresh_clientspecs", task_p4clients_statechanged, p4_dir(), NULL, "\"%s\" -G clients", p4_exe()));
 	}
 }
@@ -273,8 +273,8 @@ static void task_p4info_statechanged(task *_t)
 	task_process_statechanged(_t);
 	if(_t->state == kTaskState_Succeeded) {
 		task_p4 *t = (task_p4 *)_t->userdata;
-		if(t->dicts.count == 1) {
-			sdict_move(&p4.info, t->dicts.data);
+		if(t->parsedDicts.count == 1) {
+			sdict_move(&p4.info, t->parsedDicts.data);
 		}
 		task_queue(p4_task_create("refresh_users", task_p4users_statechanged, p4_dir(), NULL, "\"%s\" -G users", p4_exe()));
 	}
@@ -432,7 +432,7 @@ static void task_p4changes_refresh_statechanged(task *t)
 				cs->refreshed = true;
 				p4_reset_changeset(cs);
 				task_p4 *p = (task_p4 *)t->userdata;
-				sdicts_move(&cs->changelists, &p->dicts);
+				sdicts_move(&cs->changelists, &p->parsedDicts);
 				for(u32 i = 0; i < cs->changelists.count; ++i) {
 					sdict_t *sd = cs->changelists.data + i;
 					u32 number = strtou32(sdict_find(sd, "change"));
@@ -504,8 +504,8 @@ static void task_p4changes_newer_statechanged(task *t)
 			if(t->state == kTaskState_Succeeded) {
 				b32 complete = false;
 				task_p4 *p = (task_p4 *)t->userdata;
-				for(u32 i = 0; i < p->dicts.count; ++i) {
-					sdict_t *sd = p->dicts.data + i;
+				for(u32 i = 0; i < p->parsedDicts.count; ++i) {
+					sdict_t *sd = p->parsedDicts.data + i;
 					u32 number = strtou32(sdict_find(sd, "change"));
 					if(number == cs->highestReceived) {
 						complete = true;
@@ -515,8 +515,8 @@ static void task_p4changes_newer_statechanged(task *t)
 				if(complete) {
 					b32 added = false;
 					u32 highestReceived = cs->highestReceived;
-					for(u32 i = 0; i < p->dicts.count; ++i) {
-						sdict_t *sd = p->dicts.data + i;
+					for(u32 i = 0; i < p->parsedDicts.count; ++i) {
+						sdict_t *sd = p->parsedDicts.data + i;
 						u32 number = strtou32(sdict_find(sd, "change"));
 						if(number > cs->highestReceived) {
 							if(bba_add(cs->changelists, 1)) {

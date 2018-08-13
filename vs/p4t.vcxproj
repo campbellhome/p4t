@@ -121,6 +121,7 @@
     <ClInclude Include="..\src\p4t\py_parser.h" />
     <ClInclude Include="..\src\p4t\task_describe_changelist.h" />
     <ClInclude Include="..\src\p4t\task_diff_file.h" />
+    <ClInclude Include="..\src\p4t\thread_task.h" />
     <ClInclude Include="..\src\p4t\ui_changelist.h" />
     <ClInclude Include="..\src\p4t\ui_changeset.h" />
     <ClInclude Include="..\src\p4t\ui_clientspec.h" />
@@ -160,6 +161,7 @@
     <ClCompile Include="..\src\p4t\sdict_json.c" />
     <ClCompile Include="..\src\p4t\task_describe_changelist.c" />
     <ClCompile Include="..\src\p4t\task_diff_file.c" />
+    <ClCompile Include="..\src\p4t\thread_task.c" />
     <ClCompile Include="..\src\p4t\ui_changelist.cpp" />
     <ClCompile Include="..\src\p4t\ui_changeset.cpp" />
     <ClCompile Include="..\src\p4t\ui_clientspec.cpp" />
