@@ -184,6 +184,7 @@ const char *p4_exe(void);
 const char *p4_dir(void);
 const char *p4_clientspec(void);
 const char *p4_clientspec_arg(void);
+void p4_set_clientspec(const char *client);
 
 //////////////////////////////////////////////////////////////////////////
 

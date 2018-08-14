@@ -1,11 +1,11 @@
 // Copyright (c) 2012-2018 Matt Campbell
 // MIT license (see License.txt)
 
-#include "ui_clientspec.h"
 #include "config.h"
 #include "imgui_utils.h"
 #include "p4.h"
 #include "sdict.h"
+#include "ui_clientspec.h"
 #include "va.h"
 
 const char *UIClientspec_DefaultClientspecName()
@@ -43,13 +43,12 @@ void UIClientspec_MenuBar()
 
 	if(ImGui::BeginMenu(UIClientspec_ActiveClientspecName())) {
 		if(ImGui::MenuItem(UIClientspec_DefaultClientspecName())) {
-			sb_reset(&g_config.p4.clientspec);
+			p4_set_clientspec(nullptr);
 		}
 		for(u32 i = 0; i < p4.localClients.count; ++i) {
 			const char *clientspec = sdict_find_safe(p4.localClients.data + i, "client");
 			if(ImGui::MenuItem(clientspec)) {
-				sb_reset(&g_config.p4.clientspec);
-				sb_append(&g_config.p4.clientspec, clientspec);
+				p4_set_clientspec(clientspec);
 			}
 		}
 		ImGui::EndMenu();

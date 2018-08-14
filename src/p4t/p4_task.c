@@ -1,12 +1,24 @@
 // Copyright (c) 2012-2018 Matt Campbell
 // MIT license (see License.txt)
 
-#include "p4_task.h"
 #include "app.h"
 #include "appdata.h"
 #include "bb_array.h"
 #include "file_utils.h"
+#include "message_box.h"
 #include "output.h"
+#include "p4_task.h"
+#include "str.h"
+
+static void mb_error_report(const char *title, const char *text)
+{
+	messageBox mb = { 0 };
+	//mb.callback = UIChangelist_MessageBoxCallback;
+	sdict_add_raw(&mb.data, "title", title);
+	sdict_add_raw(&mb.data, "text", text);
+	sdict_add_raw(&mb.data, "button1", "ok");
+	mb_queue(mb);
+}
 
 void task_p4_tick(task *_t)
 {
@@ -24,7 +36,20 @@ void task_p4_tick(task *_t)
 		output_error("%.*s\n", res.stderrIO.nBytes, res.stderrIO.buffer);
 	}
 	if(res.done) {
-		task_set_state(_t, t->base.process && t->base.process->stderrBuffer.count ? kTaskState_Failed : kTaskState_Succeeded);
+		taskState state = kTaskState_Succeeded;
+		if(t->base.process && t->base.process->stderrBuffer.count) {
+			state = kTaskState_Failed;
+			mb_error_report("p4 error", t->base.process->stderrBuffer.data);
+		} else if(t->parsedDicts.count) {
+			sdict_t *sd = t->parsedDicts.data;
+			if(!strcmp(sdict_find_safe(sd, "code"), "error")) {
+				state = kTaskState_Failed;
+				if(strtou32(sdict_find_safe(sd, "severity")) > 2) {
+					mb_error_report("p4 error", sdict_find_safe(sd, "data"));
+				}
+			}
+		}
+		task_set_state(_t, state);
 	}
 	task_tick_subtasks(_t);
 }

@@ -120,7 +120,8 @@ static void task_describe_changelist_statechanged_desc(task *t)
 					sdict_move(&cl->normal, p->parsedDicts.data);
 				}
 				if(cl) {
-					if(sdict_find(&cl->normal, "depotFile0")) {
+					p4ChangelistType cltype = p4_get_changelist_type(&cl->normal);
+					if(cltype == kChangelistType_PendingLocal && sdict_find(&cl->normal, "depotFile0")) {
 						spawn_fstat_normal(cl, p);
 					} else if(sdict_find(&cl->normal, "shelved")) {
 						spawn_describe_shelved(cl, p);

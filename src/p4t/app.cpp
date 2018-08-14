@@ -156,7 +156,7 @@ bool App_Init(const char *cmdline)
 		}
 		uics = p4_add_uichangeset(false);
 		if(uics) {
-			UITabs_AddTab(kTabType_Changeset, uics->id, true);
+			UITabs_AddTab(kTabType_Changeset, uics->id, false);
 		}
 	}
 

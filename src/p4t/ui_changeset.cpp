@@ -1,7 +1,6 @@
 // Copyright (c) 2012-2018 Matt Campbell
 // MIT license (see License.txt)
 
-#include "ui_changeset.h"
 #include "app.h"
 #include "bb_array.h"
 #include "config.h"
@@ -13,6 +12,7 @@
 #include "str.h"
 #include "time_utils.h"
 #include "ui_changelist.h"
+#include "ui_changeset.h"
 #include "ui_icons.h"
 #include "va.h"
 
@@ -188,7 +188,7 @@ struct sdictComboData {
 	const char *option1;
 };
 
-bool sdictComboEntry(void *_data, int idx, const char **out_text)
+static bool sdictComboEntry(void *_data, int idx, const char **out_text)
 {
 	sdictComboData *data = (sdictComboData *)_data;
 	if(idx == 0) {
@@ -251,6 +251,43 @@ static bool sdictCombo(const char *label, sb_t *current, sdicts *sds, const char
 	return ret;
 }
 
+static bool sbsComboEntry(void *_data, int idx, const char **out_text)
+{
+	sbs_t *sbs = (sbs_t*)_data;
+	if(idx >= 0 && (u32)idx < sbs->count) {
+		sb_t *sb = sbs->data + idx;
+		*out_text = sb_get(sb);
+		return true;
+	}
+	return false;
+}
+static bool sbsCombo(const char *label, sb_t *current, sbs_t *sbs)
+{
+	const char *currentText = sb_get(current);
+	int currentIndex = -1;
+	for(u32 i = 0; i < sbs->count; ++i) {
+		sb_t *sb = sbs->data + i;
+		const char *value = sb_get(sb);
+		if(!_stricmp(currentText, value)) {
+			currentIndex = (int)i;
+			break;
+		}
+	}
+	bool ret = ImGui::Combo(label, &currentIndex, sbsComboEntry, sbs, (int)sbs->count);
+	if(ret) {
+		const char *out = nullptr;
+		if(currentIndex >= 0 && (u32)currentIndex < sbs->count) {
+			sb_t *sb = sbs->data + currentIndex;
+			out = sb_get(sb);
+		}
+		if(out) {
+			sb_reset(current);
+			sb_append(current, out);
+		}
+	}
+	return ret;
+}
+
 struct changesetDebug {
 	float startY;
 	float requiredEndY;
@@ -304,14 +341,36 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	}
 	ImGui::PopItemWidth();
 
+	const char *user = sb_get(&uics->user);
+	if(*user) {
+		if(!strcmp(user, "Current User")) {
+			user = sdict_find_safe(&p4.info, "userName");
+		}
+	}
+	sbs_t clientspecs = {};
+	sb_t emptyClientspec = {};
+	sb_t currentClientspec = {};
+	sb_append(&currentClientspec, "Current Client");
+	bba_push(clientspecs, emptyClientspec);
+	bba_push(clientspecs, currentClientspec);
+	for(u32 i = 0; i < p4.allClients.count; ++i) {
+		sdict_t *sd = p4.allClients.data + i;
+		const char *clientUser = sdict_find_safe(sd, "Owner");
+		if(*user && _stricmp(user, clientUser))
+			continue;
+		sb_t clientspec = {};
+		sb_append(&clientspec, sdict_find_safe(sd, "client"));
+		bba_push(clientspecs, clientspec);
+	}
 	ImGui::SameLine();
 	ImGui::TextUnformatted("  Client:");
 	ImGui::SameLine();
 	ImGui::PushItemWidth(140.0f * g_config.dpiScale);
-	if(sdictCombo("###clientspec", &uics->clientspec, &p4.allClients, "client", "", "Current Client")) {
+	if(sbsCombo("###clientspec", &uics->clientspec, &clientspecs)) {
 		uics->parity = 0;
 	}
 	ImGui::PopItemWidth();
+	sbs_reset(&clientspecs);
 
 	if(s_debug.showChangesetOptimizations) {
 		ImGui::SameLine();
@@ -374,12 +433,11 @@ void UIChangeset_Update(p4UIChangeset *uics)
 
 		if(uics->filterEnabled) {
 			build_filter_tokens(&uics->filterTokens, sb_get(&uics->filter));
+		} else {
+			reset_filter_tokens(&uics->filterTokens);
 		}
-		const char *user = sb_get(&uics->user);
+
 		if(*user) {
-			if(!strcmp(user, "Current User")) {
-				user = sdict_find_safe(&p4.info, "userName");
-			}
 			if(filterToken *t = add_filter_token(&uics->filterTokens, "user", user)) {
 				t->required = true;
 				t->prohibited = false;
@@ -474,7 +532,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	ImGui::NewLine();
 
 	if(ImGui::BeginChild("##changelists", ImVec2(0, 0), false, ImGuiWindowFlags_None)) {
-		b32 debug = uics->numValidStartY == 0;
+		b32 debug = uics->numValidStartY == 0 && uics->entries.count > 0;
 		if(debug) {
 			BB_LOG("changeset::rebuild_offsets", "start rebuild_offsets");
 		}

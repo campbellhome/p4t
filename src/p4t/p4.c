@@ -73,6 +73,18 @@ const char *p4_clientspec_arg(void)
 	}
 }
 
+void p4_set_clientspec(const char *client)
+{
+	sb_reset(&g_config.p4.clientspec);
+	if(client && *client) {
+		sb_append(&g_config.p4.clientspec, client);
+	}
+	for(u32 i = 0; i < p4.changesets.count; ++i) {
+		p4Changeset *cs = p4.changesets.data + i;
+		++cs->parity;
+	}
+}
+
 b32 p4_init(void)
 {
 	p4.changesetColumnFields = s_changesetColumnFields;
