@@ -58,7 +58,7 @@ static void task_describe_changelist_statechanged_desc_shelved(task *t)
 					task_queue(p4_task_create(
 					    "describe_changelist_shelved_files",
 					    task_describe_changelist_statechanged_fstat_shelved, p4_dir(), &p->extraData,
-					    "\"%s\" -G fstat -Op -Rs -e %u //%s/...", p4_exe(), changeNumber, clientName));
+					    "\"%s\" -G -c %s fstat -Op -Rs -e %u //%s/...", p4_exe(), clientName, changeNumber, clientName));
 				}
 			}
 		}
@@ -95,7 +95,7 @@ static void spawn_fstat_normal(p4Changelist *cl, task_p4 *p)
 	task_queue(p4_task_create(
 	    "describe_changelist_files",
 	    task_describe_changelist_statechanged_fstat_normal, p4_dir(), &p->extraData,
-	    "\"%s\" -G fstat -Olhp -Rco -e %u //%s/...", p4_exe(), cl->number, clientName));
+	    "\"%s\" -G -c %s fstat -Olhp -Rco -e %u //%s/...", p4_exe(), clientName, cl->number, clientName));
 }
 static void task_describe_changelist_statechanged_desc(task *t)
 {

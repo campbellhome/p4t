@@ -378,7 +378,7 @@ void UIChangelist_FinishFiles(uiChangelistFiles *files, p4Changelist *cl, b32 an
 	}
 }
 
-void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, float indent)
+b32 UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, float indent)
 {
 	// Columns: File Name, Revision, Action, Filetype, In Folder
 
@@ -432,9 +432,10 @@ void UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, float in
 	UIChangelist_FinishFiles(files, cl, anyActive);
 
 	ImGui::PopID();
+	return anyActive;
 }
 
-void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl, float indent)
+b32 UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl, float indent)
 {
 	ImGui::PushID(files);
 
@@ -462,6 +463,7 @@ void UIChangelist_DrawFilesNoColumns(uiChangelistFiles *files, p4Changelist *cl,
 	UIChangelist_FinishFiles(files, cl, anyActive);
 
 	ImGui::PopID();
+	return anyActive;
 }
 
 //////////////////////////////////////////////////////////////////////////

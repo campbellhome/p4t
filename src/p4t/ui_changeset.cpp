@@ -1,6 +1,7 @@
 // Copyright (c) 2012-2018 Matt Campbell
 // MIT license (see License.txt)
 
+#include "ui_changeset.h"
 #include "app.h"
 #include "bb_array.h"
 #include "config.h"
@@ -12,7 +13,6 @@
 #include "str.h"
 #include "time_utils.h"
 #include "ui_changelist.h"
-#include "ui_changeset.h"
 #include "ui_icons.h"
 #include "va.h"
 
@@ -253,7 +253,7 @@ static bool sdictCombo(const char *label, sb_t *current, sdicts *sds, const char
 
 static bool sbsComboEntry(void *_data, int idx, const char **out_text)
 {
-	sbs_t *sbs = (sbs_t*)_data;
+	sbs_t *sbs = (sbs_t *)_data;
 	if(idx >= 0 && (u32)idx < sbs->count) {
 		sb_t *sb = sbs->data + idx;
 		*out_text = sb_get(sb);
@@ -325,6 +325,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	ImGui::PushID(uics);
 
 	b32 anyActive = false;
+	b32 anyChangelistFileActive = false;
 
 	ImGui::TextUnformatted("Pending:");
 	ImGui::SameLine();
@@ -679,6 +680,9 @@ void UIChangeset_Update(p4UIChangeset *uics)
 						}
 
 						UIChangelist_DrawFilesNoColumns(&e->normalFiles, cl, 30.0f * g_config.dpiScale);
+						if(ImGui::IsActiveSelectables(&e->normalFiles)) {
+							anyChangelistFileActive = true;
+						}
 						if(e->shelvedFiles.count) {
 							ImGui::TextUnformatted("");
 							ImGui::SameLine(0.0f, 20.0f * g_config.dpiScale);
@@ -687,10 +691,12 @@ void UIChangeset_Update(p4UIChangeset *uics)
 							bool shelvedExpanded = ImGui::TreeNodeEx(va("%s###shelved%u%s", title, cl->number, sdict_find_safe(&cl->normal, "client")), shelvedOpenByDefault ? ImGuiTreeNodeFlags_DefaultOpen : 0);
 							if(shelvedExpanded) {
 								UIChangelist_DrawFilesNoColumns(&e->shelvedFiles, cl, 40.0f * g_config.dpiScale);
+								if(ImGui::IsActiveSelectables(&e->shelvedFiles)) {
+									anyChangelistFileActive = true;
+								}
 								ImGui::TreePop();
 							}
 						}
-						//UIChangelist_DrawFilesAndHeaders(cl, &e->normalFiles, &e->shelvedFiles, false, 20.0f * g_config.dpiScale);
 					} else {
 						if(!e->described) {
 							e->described = true;
@@ -749,8 +755,8 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		ImGui::SetActiveSelectables(nullptr);
 	}
 
+	ImGuiIO &io = ImGui::GetIO();
 	if(ImGui::IsActiveSelectables(uics)) {
-		ImGuiIO &io = ImGui::GetIO();
 		if(ImGui::IsKeyPressed('A') && io.KeyCtrl) {
 			UIChangeset_SelectAll(uics);
 		} else if(ImGui::IsKeyPressed('C') && io.KeyCtrl) {
@@ -758,6 +764,12 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		} else if(ImGui::IsKeyPressed('D') && io.KeyCtrl) {
 			//UIChangeset_DiffSelectedFiles(files, cl);
 		} else if(ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_Escape])) {
+			UIChangeset_ClearSelection(uics);
+		} else if(key_is_pressed_this_frame(Key_F5) && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt) {
+			p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
+		}
+	} else if(anyChangelistFileActive || !ImGui::IsAnyItemActive()) {
+		if(ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_Escape])) {
 			UIChangeset_ClearSelection(uics);
 		} else if(key_is_pressed_this_frame(Key_F5) && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt) {
 			p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
