@@ -2,11 +2,11 @@ in progress:
 
 short list:
 * double click changelist
-* if 2 files selected, diff selected
-* if 1 file selected, select left side for compare, select right side for compare
 * drag file between changelists in p4v, then refresh p4t - file is in both changelists
 
 todo:
+* if 2 files selected, diff selected
+* if 1 file selected, select left side for compare, select right side for compare
 * F5 on changelist files doesn't refresh
 * read cached changesets on separate thread
 * drag and drop tabs
