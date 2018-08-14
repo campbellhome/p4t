@@ -208,6 +208,7 @@ void p4_info(void);
 
 p4Changeset *p4_find_or_add_changeset(b32 pending);
 void p4_refresh_changeset(p4Changeset *cs);
+void p4_refresh_changelist_no_cache(p4Changeset *cs);
 void p4_request_newer_changes(p4Changeset *cs, u32 blockSize);
 
 p4UIChangeset *p4_add_uichangeset(b32 pending);

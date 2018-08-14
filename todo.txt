@@ -1,10 +1,14 @@
 in progress:
 
 short list:
-* right click menus for different diff options, other commands
 * double click changelist
+* if 2 files selected, diff selected
+* if 1 file selected, select left side for compare, select right side for compare
+* drag file between changelists in p4v, then refresh p4t - file is in both changelists
+* F5 on changelist files doesn't refresh
 
 todo:
+* read cached changesets on separate thread
 * drag and drop tabs
 * save/restore open tabs
 * status bar showing # processes?
@@ -15,6 +19,7 @@ todo:
 * remove p4cl.exe?  dunno
 
 done:
+* right click menus for different diff options, other commands
 * icons for add/edit/delete/integrate, out of date/unresolved
 * user/client changeset input should be combo boxes with defaults
 * unified tab list

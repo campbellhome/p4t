@@ -14,6 +14,7 @@
 #include "p4_task.h"
 #include "span.h"
 #include "str.h"
+#include "thread_task.h"
 #include "tokenize.h"
 #include "va.h"
 #include <stdlib.h>
@@ -390,45 +391,66 @@ static void p4_save_submitted_changeset(p4Changeset *cs)
 	bba_free(pw);
 	sb_reset(&path);
 }
-
-static void p4_load_submitted_changeset(p4Changeset *cs)
+typedef struct tag_cachedChangesetLoad {
+	sb_t path;
+	sdicts dicts;
+} cachedChangesetLoad;
+bb_thread_return_t p4_load_cached_changeset_thread(void *args)
 {
-	sb_t path = appdata_get();
-	sb_va(&path, "\\%s_submitted_changesets.bin", globals.appSpecific.configName);
-	BB_LOG("p4::cache", "begin load submitted changelists - path:%s", sb_get(&path));
-	BB_FLUSH();
-
-	fileData_t fd = fileData_read(sb_get(&path));
-	if(fd.buffer) {
-		sdicts dicts = { 0 };
-		pyParser parser = { 0 };
-		parser.cmdline = sb_get(&path);
+	task_thread *th = args;
+	cachedChangesetLoad *data = th->data;
+	pyParser parser = { 0 };
+	fileData_t fd = fileData_read(sb_get(&data->path));
+	if(fd.buffer && !th->shouldTerminate) {
+		parser.cmdline = sb_get(&data->path);
 		parser.data = fd.buffer;
 		parser.count = fd.bufferSize;
-		while(py_parser_tick(&parser, &dicts)) {
+		while(py_parser_tick(&parser, &data->dicts) && !th->shouldTerminate) {
 			// do nothing
 		}
-		if(dicts.count) {
-			p4_reset_changeset(cs);
-			++cs->parity;
-			cs->refreshed = true;
-			sdicts_move(&cs->changelists, &dicts);
-			for(u32 i = 0; i < cs->changelists.count; ++i) {
-				sdict_t *sd = cs->changelists.data + i;
-				u32 number = strtou32(sdict_find(sd, "change"));
-				cs->highestReceived = BB_MAX(cs->highestReceived, number);
-			}
-		}
 		// don't bba_free(parser) because the memory is borrowed from fd
-		sdict_reset(&parser.dict);
-		sdicts_reset(&dicts);
-		BB_LOG("p4::cache", "end load submitted changelists - count:%u highest:%u", cs->changelists.count, cs->highestReceived);
-	} else {
-		BB_LOG("p4::cache", "end load submitted changelists - no data");
+		fileData_reset(&fd);
 	}
-	BB_FLUSH();
-	fileData_reset(&fd);
-	sb_reset(&path);
+	sdict_reset(&parser.dict);
+	th->threadDesiredState = th->shouldTerminate ? kTaskState_Canceled : kTaskState_Succeeded;
+	return 0;
+}
+void p4_load_cached_changeset_statechanged(task *t)
+{
+	task_thread_statechanged(t);
+	if(task_done(t)) {
+		p4Changeset *cs = p4_find_or_add_changeset(false);
+		cs->updating = false;
+		task_thread *th = t->userdata;
+		cachedChangesetLoad *data = th->data;
+		if(data->dicts.count && t->state == kTaskState_Succeeded) {
+			if(cs) {
+				p4_reset_changeset(cs);
+				++cs->parity;
+				cs->refreshed = true;
+				sdicts_move(&cs->changelists, &data->dicts);
+				for(u32 i = 0; i < cs->changelists.count; ++i) {
+					sdict_t *sd = cs->changelists.data + i;
+					u32 number = strtou32(sdict_find(sd, "change"));
+					cs->highestReceived = BB_MAX(cs->highestReceived, number);
+				}
+			}
+			BB_LOG("p4::cache", "end load submitted changelists - count:%u highest:%u", cs->changelists.count, cs->highestReceived);
+		} else {
+			BB_LOG("p4::cache", "end load submitted changelists - no data");
+		}
+		BB_FLUSH();
+		sdicts_reset(&data->dicts);
+		sb_reset(&data->path);
+		free(data);
+		th->data = NULL;
+
+		if(cs->refreshed) {
+			p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
+		} else {
+			p4_refresh_changelist_no_cache(cs);
+		}
+	}
 }
 
 static void task_p4changes_refresh_statechanged(task *t)
@@ -469,37 +491,45 @@ static void task_p4changes_refresh_statechanged(task *t)
 		}
 	}
 }
+void p4_refresh_changelist_no_cache(p4Changeset *cs)
+{
+	if(!cs->updating && p4.allClients.count > 0) {
+		task *t = task_queue(
+		    p4_task_create(
+		        "refresh_changelists",
+		        task_p4changes_refresh_statechanged, p4_dir(), NULL,
+		        "\"%s\" -G changes -s %s -l", p4_exe(), cs->pending ? "pending" : "submitted"));
+		if(t) {
+			cs->updating = true;
+			sdict_add_raw(&t->extraData, "pending", cs->pending ? "1" : "0");
+		}
+	}
+}
 void p4_refresh_changeset(p4Changeset *cs)
 {
 	if(!cs->updating && p4.allClients.count > 0) {
 		cs->highestReceived = 0;
 		cs->refreshed = false;
 		if(cs->pending) {
-			task *t = task_queue(
-			    p4_task_create(
-			        "refresh_pending_changelists",
-			        task_p4changes_refresh_statechanged, p4_dir(), NULL,
-			        "\"%s\" -G changes -s pending -l", p4_exe()));
-			if(t) {
-				cs->updating = true;
-				sdict_add_raw(&t->extraData, "pending", "1");
-			}
+			p4_refresh_changelist_no_cache(cs);
 		} else {
 			if(!cs->refreshed) {
-				p4_load_submitted_changeset(cs);
-				if(cs->refreshed) {
-					p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
-					return;
+				cachedChangesetLoad *data = malloc(sizeof(cachedChangesetLoad));
+				if(data) {
+					memset(data, 0, sizeof(cachedChangesetLoad));
+					data->path = appdata_get();
+					sb_va(&data->path, "\\%s_submitted_changesets.bin", globals.appSpecific.configName);
+					BB_LOG("p4::cache", "begin load submitted changelists - path:%s", sb_get(&data->path));
+					BB_FLUSH();
+					task *t = task_queue(
+					    thread_task_create("load_cached_changelists", p4_load_cached_changeset_statechanged, p4_load_cached_changeset_thread, data));
+					if(t) {
+						cs->updating = true;
+					}
 				}
 			}
-			task *t = task_queue(
-			    p4_task_create(
-			        "refresh_submitted_changelists",
-			        task_p4changes_refresh_statechanged, p4_dir(), NULL,
-			        "\"%s\" -G changes -s submitted -l", p4_exe()));
-			if(t) {
-				cs->updating = true;
-				sdict_add_raw(&t->extraData, "pending", "0");
+			if(!cs->updating) {
+				p4_refresh_changelist_no_cache(cs);
 			}
 		}
 	}

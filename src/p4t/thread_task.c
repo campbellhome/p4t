@@ -25,9 +25,13 @@ void task_thread_statechanged(task *t)
 void task_thread_reset(task *t)
 {
 	task_thread *th = t->userdata;
-	if(th && th->handle) {
-		th->shouldTerminate = true;
-		bbthread_join(th->handle);
+	if(th) {
+		if(th->handle) {
+			th->shouldTerminate = true;
+			bbthread_join(th->handle);
+		}
+		free(th);
+		t->userdata = NULL;
 	}
 }
 
