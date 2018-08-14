@@ -156,6 +156,12 @@ void p4_reset_uichangelist(p4UIChangelist *uicl)
 	p4_free_changelist_files(&uicl->shelvedFiles);
 }
 
+void p4_reset_file_locator(p4FileLocator *locator)
+{
+	sb_reset(&locator->path);
+	sb_reset(&locator->revision);
+}
+
 void p4_shutdown(void)
 {
 	sb_reset(&p4.exe);
@@ -181,6 +187,7 @@ void p4_shutdown(void)
 		p4_reset_uichangelist(p4.uiChangelists.data + i);
 	}
 	bba_free(p4.uiChangelists);
+	p4_reset_file_locator(&p4.diffLeftSide);
 }
 
 void p4_update(void)
@@ -742,6 +749,7 @@ int p4_changelist_files_compare(const void *_a, const void *_b)
 }
 void p4_free_changelist_files(uiChangelistFiles *files)
 {
+	files->selectedCount = 0;
 	for(u32 i = 0; i < files->count; ++i) {
 		for(u32 col = 0; col < BB_ARRAYSIZE(files->data[i].fields.str); ++col) {
 			free(files->data[i].fields.str[col]);

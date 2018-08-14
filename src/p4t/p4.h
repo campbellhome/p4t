@@ -56,6 +56,8 @@ typedef struct tag_uiChangelistFiles {
 	b32 shelved;
 	u32 sortColumn;
 	b32 sortDescending;
+	u32 selectedCount;
+	u8 pad[4];
 } uiChangelistFiles;
 
 typedef struct tag_p4Changeset {
@@ -161,6 +163,14 @@ typedef struct tag_p4UIChangelists {
 	p4UIChangelist *data;
 } p4UIChangelists;
 
+typedef struct tag_p4FileLocator
+{
+	sb_t path;
+	sb_t revision;
+	b32 depotPath;
+	u8 pad[4];
+} p4FileLocator;
+
 typedef struct tag_p4 {
 	sb_t exe;
 
@@ -175,6 +185,7 @@ typedef struct tag_p4 {
 	p4Changesets changesets;
 	p4UIChangesets uiChangesets;
 	const changesetColumnField *changesetColumnFields;
+	p4FileLocator diffLeftSide;
 	u32 lastId;
 	u8 pad[4];
 } p4_t;
@@ -218,6 +229,8 @@ void p4_sort_uichangeset(p4UIChangeset *cs);
 void p4_build_changelist_files(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles);
 void p4_free_changelist_files(uiChangelistFiles *files);
 int p4_changelist_files_compare(const void *_a, const void *_b);
+
+void p4_reset_file_locator(p4FileLocator *locator);
 
 //////////////////////////////////////////////////////////////////////////
 

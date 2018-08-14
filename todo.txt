@@ -5,9 +5,9 @@ short list:
 * if 2 files selected, diff selected
 * if 1 file selected, select left side for compare, select right side for compare
 * drag file between changelists in p4v, then refresh p4t - file is in both changelists
-* F5 on changelist files doesn't refresh
 
 todo:
+* F5 on changelist files doesn't refresh
 * read cached changesets on separate thread
 * drag and drop tabs
 * save/restore open tabs

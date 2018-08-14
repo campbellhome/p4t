@@ -154,9 +154,72 @@ static void UIChangelist_Files_DiffSelected(uiChangelistFiles *files, p4Changeli
 	}
 }
 
+static void UIChangelist_BuildFileLocator(p4FileLocator *locator, p4ChangelistType cltype, uiChangelistFiles *files, p4Changelist *cl, uiChangelistFile *file)
+{
+	p4_reset_file_locator(locator);
+	u32 rev = strtou32(file->fields.field.rev);
+	if(files->shelved) {
+		sb_append(&locator->revision, UIChangelist_GetDiffRevision(cl, rev, kUIChangelistDiff_Shelved));
+		sb_append(&locator->path, file->fields.field.depotPath);
+		locator->depotPath = true;
+	} else if(cltype == kChangelistType_Submitted) {
+		sb_append(&locator->revision, UIChangelist_GetDiffRevision(cl, rev, kUIChangelistDiff_DepotCurrent));
+		sb_append(&locator->path, file->fields.field.depotPath);
+		locator->depotPath = true;
+	} else {
+		if(*file->fields.field.localPath) {
+			sb_reset(&locator->revision);
+			sb_append(&locator->path, file->fields.field.localPath);
+			locator->depotPath = false;
+		}
+	}
+}
+
+static void UIChangelist_DiffSelected(p4ChangelistType cltype, uiChangelistFiles *files, p4Changelist *cl)
+{
+	p4FileLocator locators[2] = { 0 };
+	for(u32 i = 0; i < files->count; ++i) {
+		uiChangelistFile *file = files->data + i;
+		if(file->selected) {
+			p4FileLocator *locator = locators[0].path.data ? locators + 1 : locators;
+			UIChangelist_BuildFileLocator(locator, cltype, files, cl, file);
+		}
+	}
+	p4_diff_file_locators(locators, locators + 1);
+
+	p4_reset_file_locator(locators);
+	p4_reset_file_locator(locators + 1);
+}
+
+static void UIChangelist_MarkLeftSideForDiff(p4ChangelistType cltype, uiChangelistFiles *files, p4Changelist *cl)
+{
+	for(u32 i = 0; i < files->count; ++i) {
+		uiChangelistFile *file = files->data + i;
+		if(file->selected) {
+			UIChangelist_BuildFileLocator(&p4.diffLeftSide, cltype, files, cl, file);
+			break;
+		}
+	}
+}
+
+static void UIChangelist_DiffAgainstMarked(p4ChangelistType cltype, uiChangelistFiles *files, p4Changelist *cl)
+{
+	p4FileLocator locator = {};
+	for(u32 i = 0; i < files->count; ++i) {
+		uiChangelistFile *file = files->data + i;
+		if(file->selected) {
+			UIChangelist_BuildFileLocator(&locator, cltype, files, cl, file);
+			break;
+		}
+	}
+	p4_diff_file_locators(&p4.diffLeftSide, &locator);
+	p4_reset_file_locator(&locator);
+}
+
 static void UIChangelist_Files_ClearSelection(uiChangelistFiles *files)
 {
 	files->lastClickIndex = ~0U;
+	files->selectedCount = 0;
 	for(u32 i = 0; i < files->count; ++i) {
 		files->data[i].selected = false;
 	}
@@ -165,6 +228,7 @@ static void UIChangelist_Files_ClearSelection(uiChangelistFiles *files)
 static void UIChangelist_Files_SelectAll(uiChangelistFiles *files)
 {
 	files->lastClickIndex = ~0U;
+	files->selectedCount = files->count;
 	for(u32 i = 0; i < files->count; ++i) {
 		files->data[i].selected = true;
 	}
@@ -173,7 +237,10 @@ static void UIChangelist_Files_SelectAll(uiChangelistFiles *files)
 static void UIChangelist_Logs_AddSelection(uiChangelistFiles *files, u32 index)
 {
 	uiChangelistFile *file = files->data + index;
-	file->selected = true;
+	if(!file->selected) {
+		file->selected = true;
+		++files->selectedCount;
+	}
 	files->lastClickIndex = index;
 }
 
@@ -181,6 +248,11 @@ static void UIChangelist_ToggleSelection(uiChangelistFiles *files, u32 index)
 {
 	uiChangelistFile *file = files->data + index;
 	file->selected = !file->selected;
+	if(file->selected) {
+		++files->selectedCount;
+	} else {
+		--files->selectedCount;
+	}
 	files->lastClickIndex = (file->selected) ? index : ~0U;
 }
 
@@ -203,7 +275,10 @@ static void UIChangelist_HandleClick(uiChangelistFiles *files, u32 index)
 				startIndex = tmp;
 			}
 			for(u32 i = startIndex; i <= endIndex; ++i) {
-				files->data[i].selected = true;
+				if(!files->data[i].selected) {
+					files->data[i].selected = true;
+					++files->selectedCount;
+				}
 			}
 		}
 	} else {
@@ -347,6 +422,21 @@ b32 UIChangelist_FileSelectable(p4Changelist *cl, p4ChangelistType cltype, uiCha
 			if(files->shelved) {
 				if(ImGui::MenuItem("Diff against workspace")) {
 					UIChangelist_Diff(files, cl, true, kUIChangelistDiff_Local, kUIChangelistDiff_Shelved);
+				}
+			}
+		}
+		if(files->selectedCount == 2) {
+			if(ImGui::MenuItem("Diff selected")) {
+				UIChangelist_DiffSelected(cltype, files, cl);
+			}
+		} else if(files->selectedCount == 1) {
+			if(ImGui::MenuItem("Select left side for diff")) {
+				UIChangelist_MarkLeftSideForDiff(cltype, files, cl);
+			}
+			if(p4.diffLeftSide.path.count) {
+				if(ImGui::MenuItem(va("Diff against %s%s", sb_get(&p4.diffLeftSide.path), sb_get(&p4.diffLeftSide.revision)))) {
+					UIChangelist_DiffAgainstMarked(cltype, files, cl);
+					//UIChangelist_Diff(files, cl, true, kUIChangelistDiff_Local, kUIChangelistDiff_Shelved);
 				}
 			}
 		}
