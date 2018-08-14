@@ -765,15 +765,15 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			//UIChangeset_DiffSelectedFiles(files, cl);
 		} else if(ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_Escape])) {
 			UIChangeset_ClearSelection(uics);
-		} else if(key_is_pressed_this_frame(Key_F5) && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt) {
-			p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
 		}
 	} else if(anyChangelistFileActive || !ImGui::IsAnyItemActive()) {
 		if(ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_Escape])) {
 			UIChangeset_ClearSelection(uics);
-		} else if(key_is_pressed_this_frame(Key_F5) && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt) {
-			p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
 		}
+	}
+
+	if(key_is_pressed_this_frame(Key_F5) && !io.KeyCtrl && !io.KeyShift && !io.KeyAlt) {
+		p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
 	}
 
 	ImGui::PopID();
