@@ -38,6 +38,81 @@ tab *UITabs_AddTab(tabType type, u32 id, b32 activate, tabs *ts)
 	return NULL;
 }
 
+void UITabs_AddPendingChangeset()
+{
+	if(p4UIChangeset *uics = p4_add_uichangeset(true)) {
+		UITabs_AddTab(kTabType_Changeset, uics->id);
+		sb_append(&uics->config.user, "Current User");
+		sb_append(&uics->config.clientspec, "Current Client");
+	}
+}
+
+void UITabs_SaveConfig(tabs *ts)
+{
+	if(!ts) {
+		ts = &s_tabs;
+	}
+
+	config_reset_tabs(&g_config.tabs);
+	g_config.activeTab = ts->activeTab;
+	for(u32 i = 0; i < ts->count; ++i) {
+		tab *t = ts->data + i;
+		tabConfig tc = {};
+		switch(t->type) {
+		case kTabType_Changelist: {
+			p4UIChangelist *uicl = p4_find_uichangelist(t->id);
+			if(uicl) {
+				tc.isChangeset = false;
+				tc.cl = uicl->config;
+				memset(&uicl->config, 0, sizeof(uicl->config));
+			}
+		} break;
+		case kTabType_Changeset: {
+			p4UIChangeset *uics = p4_find_uichangeset(t->id);
+			if(uics) {
+				tc.isChangeset = true;
+				tc.cs = uics->config;
+				memset(&uics->config, 0, sizeof(uics->config));
+			}
+		} break;
+		case kTabType_Count:
+			break;
+		}
+		bba_push(g_config.tabs, tc);
+	}
+}
+
+void UITabs_LoadConfig(tabs *ts)
+{
+	if(!ts) {
+		ts = &s_tabs;
+	}
+
+	for(u32 i = 0; i < g_config.tabs.count; ++i) {
+		tabConfig *tc = g_config.tabs.data + i;
+		if(tc->isChangeset) {
+			if(p4UIChangeset *uics = p4_add_uichangeset(tc->cs.pending)) {
+				UITabs_AddTab(kTabType_Changeset, uics->id, (i == g_config.activeTab));
+				uics->config = tc->cs;
+				memset(&tc->cs, 0, sizeof(tc->cs));
+			}
+		} else {
+			if(p4UIChangelist *uicl = p4_add_uichangelist()) {
+				UITabs_AddTab(kTabType_Changelist, uicl->id, (i == g_config.activeTab));
+				uicl->config = tc->cl;
+				memset(&tc->cl, 0, sizeof(tc->cl));
+				if(uicl->config.number) {
+					p4_describe_changelist(uicl->config.number);
+				}
+			}
+		}
+	}
+
+	if(ts->count == 0) {
+		UITabs_AddPendingChangeset();
+	}
+}
+
 void UITabs_Update(tabs *ts)
 {
 	if(!ts) {
@@ -108,24 +183,22 @@ void UITabs_Update(tabs *ts)
 			break;
 		}
 	}
-	u32 dummy = 0;
-	if(ImGui::TabButton("+", &dummy, 1)) {
-		ImGui::OpenPopup("newtab");
-	}
-	if(ImGui::BeginContextMenu("newtab")) {
-		if(ImGui::MenuItem("Pending Changelists")) {
-			if(p4UIChangeset *uics = p4_add_uichangeset(true)) {
-				UITabs_AddTab(kTabType_Changeset, uics->id);
-				sb_append(&uics->config.user, "Current User");
-				sb_append(&uics->config.clientspec, "Current Client");
-			}
+	if(globals.appSpecific.type != kAppType_ChangelistViewer) {
+		u32 dummy = 0;
+		if(ImGui::TabButton("+", &dummy, 1)) {
+			ImGui::OpenPopup("newtab");
 		}
-		if(ImGui::MenuItem("Submitted Changelists")) {
-			if(p4UIChangeset *uics = p4_add_uichangeset(false)) {
-				UITabs_AddTab(kTabType_Changeset, uics->id);
+		if(ImGui::BeginContextMenu("newtab")) {
+			if(ImGui::MenuItem("Pending Changelists")) {
+				UITabs_AddPendingChangeset();
 			}
+			if(ImGui::MenuItem("Submitted Changelists")) {
+				if(p4UIChangeset *uics = p4_add_uichangeset(false)) {
+					UITabs_AddTab(kTabType_Changeset, uics->id);
+				}
+			}
+			ImGui::EndContextMenu();
 		}
-		ImGui::EndContextMenu();
 	}
 	ImGui::EndTabButtons();
 

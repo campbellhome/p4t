@@ -107,6 +107,7 @@ AUTOJSON typedef struct tag_tabsConfig {
 AUTOJSON typedef struct config_s {
 	fontConfig_t logFontConfig;
 	fontConfig_t uiFontConfig;
+	tabsConfig tabs;
 	uiChangelistConfig uiChangelist;
 	uiChangesetConfig uiPendingChangesets;
 	uiChangesetConfig uiSubmittedChangesets;
@@ -119,7 +120,7 @@ AUTOJSON typedef struct config_s {
 	b32 dpiAware;
 	float doubleClickSeconds;
 	float dpiScale;
-	u8 pad[4];
+	u32 activeTab;
 } config_t;
 
 enum { kConfigVersion = 3,
@@ -133,6 +134,8 @@ config_t *config_clone(config_t *config);
 void config_reset(config_t *config);
 void config_free(config_t *config);
 void config_getwindowplacement(HWND hwnd);
+void config_reset_changeset(changesetConfig *csc);
+void config_reset_tabs(tabsConfig *tc);
 
 b32 config_read_apptype(appTypeConfig *config);
 b32 config_write_apptype(appTypeConfig *config);

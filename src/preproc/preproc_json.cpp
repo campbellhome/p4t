@@ -197,7 +197,7 @@ static void GenerateJsonSource(sb_t *srcDir)
 		if(o.members.size() == 3 && m_count && m_allocated && m_data) {
 			sb_va(s, "JSON_Value *json_serialize_%s(const %s *src)\n", o.name.c_str(), o.name.c_str());
 			sb_append(s, "{\n");
-			sb_append(s, "\tJSON_Value *val = json_value_init_object();\n");
+			sb_append(s, "\tJSON_Value *val = json_value_init_array();\n");
 			sb_append(s, "\tJSON_Array *arr = json_value_get_array(val);\n");
 			sb_append(s, "\tif(arr) {\n");
 			sb_append(s, "\t\tfor(u32 i = 0; i < src->count; ++i) {\n");

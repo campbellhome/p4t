@@ -27,3 +27,5 @@ typedef struct tag_tabs {
 void UITabs_Reset(tabs *ts = nullptr);
 tab *UITabs_AddTab(tabType type, u32 id, b32 activate = true, tabs *ts = nullptr);
 void UITabs_Update(tabs *ts = nullptr);
+void UITabs_SaveConfig(tabs *ts = nullptr);
+void UITabs_LoadConfig(tabs *ts = nullptr);

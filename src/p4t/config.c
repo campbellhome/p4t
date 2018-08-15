@@ -48,6 +48,22 @@ config_t *config_clone(config_t *config)
 	return target;
 }
 
+void config_reset_changeset(changesetConfig *csc)
+{
+	sb_reset(&csc->user);
+	sb_reset(&csc->clientspec);
+	sb_reset(&csc->filter);
+	sb_reset(&csc->filterInput);
+}
+
+void config_reset_tabs(tabsConfig *tc)
+{
+	for(u32 i=0; i < tc->count; ++i) {
+		config_reset_changeset(&tc->data[i].cs);
+	}
+	bba_free(*tc);
+}
+
 void config_reset(config_t *config)
 {
 	sb_reset(&config->logFontConfig.path);
@@ -56,6 +72,7 @@ void config_reset(config_t *config)
 	sb_reset(&config->diff.args);
 	sb_reset(&config->p4.clientspec);
 	sb_reset(&config->colorscheme);
+	config_reset_tabs(&config->tabs);
 }
 
 void config_free(config_t *config)

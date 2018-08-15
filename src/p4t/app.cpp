@@ -146,20 +146,8 @@ bool App_Init(const char *cmdline)
 		} else {
 			return false;
 		}
-/*
 	} else {
-		p4UIChangeset *uics;
-		uics = p4_add_uichangeset(true);
-		if(uics) {
-			UITabs_AddTab(kTabType_Changeset, uics->id);
-			sb_append(&uics->user, "Current User");
-			sb_append(&uics->clientspec, "Current Client");
-		}
-		uics = p4_add_uichangeset(false);
-		if(uics) {
-			UITabs_AddTab(kTabType_Changeset, uics->id, false);
-		}
-*/
+		UITabs_LoadConfig();
 	}
 
 	return App_CreateWindow();
@@ -167,6 +155,9 @@ bool App_Init(const char *cmdline)
 
 void App_Shutdown()
 {
+	if(globals.appSpecific.type != kAppType_ChangelistViewer) {
+		UITabs_SaveConfig();
+	}
 	p4_diff_shutdown();
 	UIChangelist_Shutdown();
 	p4_shutdown();
