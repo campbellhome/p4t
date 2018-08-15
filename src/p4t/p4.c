@@ -459,10 +459,12 @@ void p4_load_cached_changeset_statechanged(task *t)
 		free(data);
 		th->data = NULL;
 
-		if(cs->refreshed) {
-			p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
-		} else {
-			p4_refresh_changelist_no_cache(cs);
+		if(cs) {
+			if(cs->refreshed) {
+				p4_request_newer_changes(cs, g_config.p4.changelistBlockSize);
+			} else {
+				p4_refresh_changelist_no_cache(cs);
+			}
 		}
 	}
 }
