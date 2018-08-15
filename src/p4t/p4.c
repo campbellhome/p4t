@@ -138,10 +138,10 @@ void p4_reset_uichangesetentry(p4UIChangesetEntry *e)
 
 static void p4_reset_uichangeset(p4UIChangeset *uics)
 {
-	sb_reset(&uics->user);
-	sb_reset(&uics->clientspec);
-	sb_reset(&uics->filter);
-	sb_reset(&uics->filterInput);
+	sb_reset(&uics->config.user);
+	sb_reset(&uics->config.clientspec);
+	sb_reset(&uics->config.filter);
+	sb_reset(&uics->config.filterInput);
 	reset_filter_tokens(&uics->filterTokens);
 	for(u32 i = 0; i < uics->entries.count; ++i) {
 		p4_reset_uichangesetentry(uics->entries.data + i);
@@ -197,6 +197,15 @@ void p4_update(void)
 		if(uicl->id == 0) {
 			p4_reset_uichangelist(uicl);
 			bba_erase(p4.uiChangelists, i);
+		} else {
+			++i;
+		}
+	}
+	for(u32 i = 0; i < p4.uiChangesets.count;) {
+		p4UIChangeset *uicl = p4.uiChangesets.data + i;
+		if(uicl->id == 0) {
+			p4_reset_uichangeset(uicl);
+			bba_erase(p4.uiChangesets, i);
 		} else {
 			++i;
 		}
@@ -659,7 +668,7 @@ void p4_sort_uichangeset(p4UIChangeset *uics)
 {
 	for(u32 i = 0; i < p4.changesets.count; ++i) {
 		p4Changeset *cs = p4.changesets.data + i;
-		if(cs->pending == uics->pending) {
+		if(cs->pending == uics->config.pending) {
 			s_sortChangeset = cs;
 			break;
 		}
@@ -689,7 +698,7 @@ p4UIChangeset *p4_add_uichangeset(b32 pending)
 	if(bba_add(p4.uiChangesets, 1)) {
 		p4UIChangeset *cs = &bba_last(p4.uiChangesets);
 		cs->id = ++p4.lastId;
-		cs->pending = pending;
+		cs->config.pending = pending;
 		cs->lastClickIndex = ~0U;
 		return cs;
 	}
@@ -705,6 +714,11 @@ p4UIChangeset *p4_find_uichangeset(u32 id)
 		}
 	}
 	return NULL;
+}
+
+void p4_mark_uichangeset_for_removal(p4UIChangeset *uics)
+{
+	uics->id = 0;
 }
 
 p4UIChangelist *p4_add_uichangelist(void)

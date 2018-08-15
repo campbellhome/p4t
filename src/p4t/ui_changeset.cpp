@@ -174,7 +174,7 @@ static bool UIChangeset_PassesFilter(filterTokens *tokens, sdict_t *sd)
 
 void UIChangeset_SetWindowTitle(p4UIChangeset *uics)
 {
-	if(uics->pending) {
+	if(uics->config.pending) {
 		App_SetWindowTitle("Pending Changelists - p4t");
 	} else {
 		App_SetWindowTitle("Submitted Changelists - p4t");
@@ -326,23 +326,25 @@ void UIChangeset_Update(p4UIChangeset *uics)
 
 	b32 anyActive = false;
 	b32 anyChangelistFileActive = false;
+	b32 forceRebuild = false;
 
 	ImGui::TextUnformatted("Pending:");
 	ImGui::SameLine();
-	if(ImGui::Checkbox("###pending", &uics->pending)) {
+	if(ImGui::Checkbox("###pending", &uics->config.pending)) {
 		uics->parity = 0;
+		forceRebuild = true;
 	}
 
 	ImGui::SameLine();
 	ImGui::TextUnformatted("  User:");
 	ImGui::SameLine();
 	ImGui::PushItemWidth(140.0f * g_config.dpiScale);
-	if(sdictCombo("###user", &uics->user, &p4.allUsers, "User", "", "Current User")) {
+	if(sdictCombo("###user", &uics->config.user, &p4.allUsers, "User", "", "Current User")) {
 		uics->parity = 0;
 	}
 	ImGui::PopItemWidth();
 
-	const char *user = sb_get(&uics->user);
+	const char *user = sb_get(&uics->config.user);
 	if(*user) {
 		if(!strcmp(user, "Current User")) {
 			user = sdict_find_safe(&p4.info, "userName");
@@ -367,7 +369,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	ImGui::TextUnformatted("  Client:");
 	ImGui::SameLine();
 	ImGui::PushItemWidth(140.0f * g_config.dpiScale);
-	if(sbsCombo("###clientspec", &uics->clientspec, &clientspecs)) {
+	if(sbsCombo("###clientspec", &uics->config.clientspec, &clientspecs)) {
 		uics->parity = 0;
 	}
 	ImGui::PopItemWidth();
@@ -388,14 +390,14 @@ void UIChangeset_Update(p4UIChangeset *uics)
 
 	ImGui::TextUnformatted("Filter:");
 	ImGui::SameLine();
-	if(ImGui::Checkbox("###filter", &uics->filterEnabled)) {
+	if(ImGui::Checkbox("###filter", &uics->config.filterEnabled)) {
 		uics->parity = 0;
 	}
 	ImGui::SameLine();
-	if(ImGui::InputText("###filterInput", &uics->filterInput, 1024, ImGuiInputTextFlags_EnterReturnsTrue)) {
-		sb_reset(&uics->filter);
-		sb_append(&uics->filter, sb_get(&uics->filterInput));
-		uics->filterEnabled = true;
+	if(ImGui::InputText("###filterInput", &uics->config.filterInput, 1024, ImGuiInputTextFlags_EnterReturnsTrue)) {
+		sb_reset(&uics->config.filter);
+		sb_append(&uics->config.filter, sb_get(&uics->config.filterInput));
+		uics->config.filterEnabled = true;
 		uics->parity = 0;
 	}
 	if(ImGui::IsItemHovered()) {
@@ -412,7 +414,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		ImGui::EndTooltip();
 	}
 
-	p4Changeset *cs = p4_find_or_add_changeset(uics->pending);
+	p4Changeset *cs = p4_find_or_add_changeset(uics->config.pending);
 	if(!cs) {
 		ImGui::PopID();
 		return;
@@ -424,7 +426,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 
 	u32 paritySort = cs->parity;
 
-	if(uics->parity != cs->parity) {
+	if(uics->parity != cs->parity || forceRebuild) {
 		uics->parity = cs->parity;
 		uics->numChangelistsAppended = cs->changelists.count;
 		paritySort = 0;
@@ -432,8 +434,8 @@ void UIChangeset_Update(p4UIChangeset *uics)
 
 		//p4UIChangeset old = *uics; // TODO: retain selection when refreshing changelists
 
-		if(uics->filterEnabled) {
-			build_filter_tokens(&uics->filterTokens, sb_get(&uics->filter));
+		if(uics->config.filterEnabled) {
+			build_filter_tokens(&uics->filterTokens, sb_get(&uics->config.filter));
 		} else {
 			reset_filter_tokens(&uics->filterTokens);
 		}
@@ -445,7 +447,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 				t->exact = true;
 			}
 		}
-		const char *clientspec = sb_get(&uics->clientspec);
+		const char *clientspec = sb_get(&uics->config.clientspec);
 		if(*clientspec) {
 			if(!strcmp(clientspec, "Current Client")) {
 				clientspec = p4_clientspec();
@@ -484,7 +486,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		BB_LOG("changeset::rebuild_changeset", "done");
 	}
 
-	uiChangesetConfig *config = uics->pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
+	uiChangesetConfig *config = uics->config.pending ? &g_config.uiPendingChangesets : &g_config.uiSubmittedChangesets;
 
 	ImGui::columnDrawData data = {};
 	float columnOffsets[6] = {};
@@ -492,7 +494,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	data.columnWidths = config->columnWidth;
 	data.columnScales = s_columnScales;
 	data.columnOffsets = columnOffsets;
-	data.columnNames = uics->pending ? s_pendingColumnNames : s_submittedColumnNames;
+	data.columnNames = uics->config.pending ? s_pendingColumnNames : s_submittedColumnNames;
 	data.sortDescending = &config->sortDescending;
 	data.sortColumn = &config->sortColumn;
 	data.numColumns = BB_ARRAYSIZE(config->columnWidth);

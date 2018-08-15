@@ -569,7 +569,7 @@ static void UIChangelist_MessageBoxCallback(messageBox *mb, const char *action)
 		p4UIChangelist *uicl = p4_find_uichangelist(strtou32(sdict_find_safe(&mb->data, "id")));
 		if(uicl) {
 			if(!strcmp(action, "escape")) {
-				if(uicl->requested == 0) {
+				if(uicl->config.number == 0) {
 					p4_mark_uichangelist_for_removal(uicl);
 				}
 				return;
@@ -577,9 +577,9 @@ static void UIChangelist_MessageBoxCallback(messageBox *mb, const char *action)
 			const char *inputNumber = sdict_find_safe(&mb->data, "inputNumber");
 			s32 testChangelist = strtos32(inputNumber);
 			if(testChangelist > 0) {
-				uicl->requested = (u32)testChangelist;
+				uicl->config.number = (u32)testChangelist;
 				uicl->displayed = 0;
-				p4_describe_changelist(uicl->requested);
+				p4_describe_changelist(uicl->config.number);
 			}
 		}
 	}
@@ -591,7 +591,7 @@ void UIChangelist_EnterChangelist(p4UIChangelist *uicl)
 	mb.callback = UIChangelist_MessageBoxCallback;
 	sdict_add_raw(&mb.data, "title", "View Changelist");
 	sdict_add_raw(&mb.data, "text", "Enter changelist to view:");
-	sdict_add_raw(&mb.data, "inputNumber", va("%u", uicl->requested));
+	sdict_add_raw(&mb.data, "inputNumber", va("%u", uicl->config.number));
 	sdict_add_raw(&mb.data, "id", va("%u", uicl->id));
 	mb_queue(mb);
 }
@@ -630,8 +630,8 @@ void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *norma
 
 void UIChangelist_SetWindowTitle(p4UIChangelist *uicl)
 {
-	if(uicl->requested) {
-		App_SetWindowTitle(va("Changelist %u - p4t", uicl->requested));
+	if(uicl->config.number) {
+		App_SetWindowTitle(va("Changelist %u - p4t", uicl->config.number));
 	} else {
 		App_SetWindowTitle("Changelist - p4t");
 	}
@@ -639,13 +639,13 @@ void UIChangelist_SetWindowTitle(p4UIChangelist *uicl)
 
 void UIChangelist_Update(p4UIChangelist *uicl)
 {
-	p4Changelist *cl = p4_find_changelist(uicl->requested);
+	p4Changelist *cl = p4_find_changelist(uicl->config.number);
 	p4Changelist empty = {};
 	if(!cl) {
 		cl = &empty;
 	}
 	if(!uicl->displayed || uicl->parity != cl->parity) {
-		uicl->displayed = uicl->requested;
+		uicl->displayed = uicl->config.number;
 		uicl->parity = cl->parity;
 		p4_build_changelist_files(cl, &uicl->normalFiles, &uicl->shelvedFiles);
 		ImGui::SetActiveSelectables(uicl->shelvedFiles.count == 0 ? &uicl->normalFiles : &uicl->shelvedFiles);

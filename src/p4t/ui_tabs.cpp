@@ -66,9 +66,9 @@ void UITabs_Update(tabs *ts)
 		case kTabType_Changelist: {
 			p4UIChangelist *uicl = p4_find_uichangelist(t->id);
 			if(uicl) {
-				const char *title = uicl->requested ? va("Changelist %u", uicl->requested) : "Changelist";
+				const char *title = uicl->config.number ? va("Changelist %u", uicl->config.number) : "Changelist";
 				ImColor color = COLOR_PENDING_CHANGELIST_OTHER;
-				p4Changelist *cl = p4_find_changelist(uicl->requested);
+				p4Changelist *cl = p4_find_changelist(uicl->config.number);
 				if(cl) {
 					b32 pending = !strcmp(sdict_find_safe(&cl->normal, "status"), "pending");
 					color = (pending) ? COLOR_PENDING_CHANGELIST_LOCAL : COLOR_SUBMITTED_CHANGELIST;
@@ -89,10 +89,17 @@ void UITabs_Update(tabs *ts)
 		case kTabType_Changeset: {
 			p4UIChangeset *uics = p4_find_uichangeset(t->id);
 			if(uics) {
-				const char *title = uics->pending ? "Pending Changelists" : "Submitted Changelists";
-				ImColor color = (uics->pending) ? COLOR_PENDING_CHANGELIST_LOCAL : COLOR_SUBMITTED_CHANGELIST;
+				const char *title = uics->config.pending ? "Pending Changelists" : "Submitted Changelists";
+				ImColor color = (uics->config.pending) ? COLOR_PENDING_CHANGELIST_LOCAL : COLOR_SUBMITTED_CHANGELIST;
 				if(ImGui::TabButtonIconColored(ICON_CHANGELIST, color, va("%s%s ###changeset%u", UIIcons_GetIconSpaces(ICON_CHANGELIST), title, uics->id), &ts->activeTab, i)) {
 					UIChangeset_SetWindowTitle(uics);
+				}
+				if(ImGui::BeginContextMenu(va("context%u", uics->id))) {
+					ts->activeTab = i;
+					if(ImGui::MenuItem("Close Tab")) {
+						p4_mark_uichangeset_for_removal(uics);
+					}
+					ImGui::EndContextMenu();
 				}
 			}
 			break;
@@ -100,6 +107,25 @@ void UITabs_Update(tabs *ts)
 		case kTabType_Count:
 			break;
 		}
+	}
+	u32 dummy = 0;
+	if(ImGui::TabButton("+", &dummy, 1)) {
+		ImGui::OpenPopup("newtab");
+	}
+	if(ImGui::BeginContextMenu("newtab")) {
+		if(ImGui::MenuItem("Pending Changelists")) {
+			if(p4UIChangeset *uics = p4_add_uichangeset(true)) {
+				UITabs_AddTab(kTabType_Changeset, uics->id);
+				sb_append(&uics->config.user, "Current User");
+				sb_append(&uics->config.clientspec, "Current Client");
+			}
+		}
+		if(ImGui::MenuItem("Submitted Changelists")) {
+			if(p4UIChangeset *uics = p4_add_uichangeset(false)) {
+				UITabs_AddTab(kTabType_Changeset, uics->id);
+			}
+		}
+		ImGui::EndContextMenu();
 	}
 	ImGui::EndTabButtons();
 

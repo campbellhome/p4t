@@ -77,6 +77,33 @@ AUTOJSON typedef struct tag_p4Config {
 	u8 pad[4];
 } p4Config;
 
+AUTOJSON typedef struct tag_changelistConfig {
+	u32 number;
+	u8 pad[4];
+} changelistConfig;
+
+AUTOJSON typedef struct tag_changesetConfig {
+	b32 pending;
+	b32 filterEnabled;
+	sb_t user;
+	sb_t clientspec;
+	sb_t filter;
+	sb_t filterInput;
+} changesetConfig;
+
+AUTOJSON typedef struct tag_tabConfig {
+	b32 isChangeset;
+	u8 pad[4];
+	changelistConfig cl;
+	changesetConfig cs;
+} tabConfig;
+
+AUTOJSON typedef struct tag_tabsConfig {
+	u32 count;
+	u32 allocated;
+	tabConfig *data;
+} tabsConfig;
+
 AUTOJSON typedef struct config_s {
 	fontConfig_t logFontConfig;
 	fontConfig_t uiFontConfig;

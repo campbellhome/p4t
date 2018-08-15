@@ -87,6 +87,7 @@ static void GenerateJsonSource(sb_t *srcDir)
 	sb_append(s, "// clang-format off\n");
 	sb_append(s, "\n");
 	sb_append(s, "#include \"json_generated.h\"\n");
+	sb_append(s, "#include \"bb_array.h\"\n");
 	sb_append(s, "#include \"va.h\"\n");
 	sb_append(s, "\n");
 	for(const std::string &str : g_paths) {
@@ -98,6 +99,36 @@ static void GenerateJsonSource(sb_t *srcDir)
 	for(const struct_s &o : g_structs) {
 		if(o.headerOnly)
 			continue;
+		const struct_member_s *m_count = nullptr;
+		const struct_member_s *m_allocated = nullptr;
+		const struct_member_s *m_data = nullptr;
+		for(const struct_member_s &m : o.members) {
+			if(m.name == "count") {
+				m_count = &m;
+			} else if(m.name == "allocated") {
+				m_allocated = &m;
+			} else if(m.name == "data") {
+				m_data = &m;
+			}
+		}
+		if(o.members.size() == 3 && m_count && m_allocated && m_data) {
+			sb_va(s, "%s json_deserialize_%s(JSON_Value *src)\n", o.name.c_str(), o.name.c_str());
+			sb_append(s, "{\n");
+			sb_va(s, "\t%s dst;\n", o.name.c_str());
+			sb_append(s, "\tmemset(&dst, 0, sizeof(dst));\n");
+			sb_append(s, "\tif(src) {\n");
+			sb_append(s, "\t\tJSON_Array *arr = json_value_get_array(src);\n");
+			sb_append(s, "\t\tif(arr) {\n");
+			sb_append(s, "\t\t\tfor(u32 i = 0; i < json_array_get_count(arr); ++i) {\n");
+			sb_va(s, "\t\t\t\tbba_push(dst, json_deserialize_%.*s(json_array_get_value(arr, i)));\n", m_data->typeStr.length() - 1, m_data->typeStr.c_str());
+			sb_append(s, "\t\t\t}\n");
+			sb_append(s, "\t\t}\n");
+			sb_append(s, "\t}\n");
+			sb_append(s, "\treturn dst;\n");
+			sb_append(s, "}\n");
+			sb_append(s, "\n");
+			continue;
+		}
 		sb_va(s, "%s json_deserialize_%s(JSON_Value *src)\n", o.name.c_str(), o.name.c_str());
 		sb_append(s, "{\n");
 		sb_va(s, "\t%s dst;\n", o.name.c_str());
@@ -151,6 +182,36 @@ static void GenerateJsonSource(sb_t *srcDir)
 	for(const struct_s &o : g_structs) {
 		if(o.headerOnly)
 			continue;
+		const struct_member_s *m_count = nullptr;
+		const struct_member_s *m_allocated = nullptr;
+		const struct_member_s *m_data = nullptr;
+		for(const struct_member_s &m : o.members) {
+			if(m.name == "count") {
+				m_count = &m;
+			} else if(m.name == "allocated") {
+				m_allocated = &m;
+			} else if(m.name == "data") {
+				m_data = &m;
+			}
+		}
+		if(o.members.size() == 3 && m_count && m_allocated && m_data) {
+			sb_va(s, "JSON_Value *json_serialize_%s(const %s *src)\n", o.name.c_str(), o.name.c_str());
+			sb_append(s, "{\n");
+			sb_append(s, "\tJSON_Value *val = json_value_init_object();\n");
+			sb_append(s, "\tJSON_Array *arr = json_value_get_array(val);\n");
+			sb_append(s, "\tif(arr) {\n");
+			sb_append(s, "\t\tfor(u32 i = 0; i < src->count; ++i) {\n");
+			sb_va(s, "\t\t\tJSON_Value *child = json_serialize_%.*s(src->data + i);\n", m_data->typeStr.length() - 1, m_data->typeStr.c_str());
+			sb_append(s, "\t\t\tif(child) {\n");
+			sb_append(s, "\t\t\t\tjson_array_append_value(arr, child);\n");
+			sb_append(s, "\t\t\t}\n");
+			sb_append(s, "\t\t}\n");
+			sb_append(s, "\t}\n");
+			sb_append(s, "\treturn val;\n");
+			sb_append(s, "}\n");
+			sb_append(s, "\n");
+			continue;
+		}
 		sb_va(s, "JSON_Value *json_serialize_%s(const %s *src)\n", o.name.c_str(), o.name.c_str());
 		sb_append(s, "{\n");
 		sb_append(s, "\tJSON_Value *val = json_value_init_object();\n");

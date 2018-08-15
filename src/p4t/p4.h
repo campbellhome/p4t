@@ -4,6 +4,7 @@
 #pragma once
 
 #include "common.h"
+#include "config.h"
 #include "filter.h"
 #include "sdict.h"
 
@@ -110,23 +111,18 @@ typedef struct tag_p4UIChangesetSortKeys {
 } p4UIChangesetSortKeys;
 
 typedef struct tag_p4UIChangeset {
-	b32 pending;
+	changesetConfig config;
 	u32 parity;
 	u32 numChangelistsAppended;
-	u8 pad[4];
 	p4UIChangesetEntries entries;
 	p4UIChangesetSortKeys sorted;
-	sb_t user;
-	sb_t clientspec;
-	sb_t filter;
-	sb_t filterInput;
 	filterTokens filterTokens;
-	b32 filterEnabled;
 	u32 id;
 	u32 lastClickIndex;
 	u32 numValidStartY;
 	u32 lastStartIndex;
 	float lastStartY;
+	u8 pad[4];
 } p4UIChangeset;
 
 typedef struct tag_p4UIChangesets {
@@ -150,8 +146,9 @@ typedef struct tag_changesetColumnField {
 
 typedef struct tag_p4UIChangelist {
 	u32 id;
-	u32 requested;
 	u32 displayed;
+	changelistConfig config;
+	u8 pad[4];
 	u32 parity;
 	uiChangelistFiles normalFiles;
 	uiChangelistFiles shelvedFiles;
@@ -221,6 +218,7 @@ p4Changeset *p4_find_or_add_changeset(b32 pending);
 void p4_refresh_changeset(p4Changeset *cs);
 void p4_refresh_changelist_no_cache(p4Changeset *cs);
 void p4_request_newer_changes(p4Changeset *cs, u32 blockSize);
+void p4_mark_uichangeset_for_removal(p4UIChangeset *uics);
 
 p4UIChangeset *p4_add_uichangeset(b32 pending);
 p4UIChangeset *p4_find_uichangeset(u32 id);

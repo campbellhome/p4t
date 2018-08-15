@@ -135,7 +135,7 @@ bool App_Init(const char *cmdline)
 			if(index + 1 < argc) {
 				u32 cl = strtou32(argv[index + 1]);
 				if(cl) {
-					uicl->requested = cl;
+					uicl->config.number = cl;
 					p4_describe_changelist(cl);
 				} else {
 					UIChangelist_EnterChangelist(uicl);
@@ -146,6 +146,7 @@ bool App_Init(const char *cmdline)
 		} else {
 			return false;
 		}
+/*
 	} else {
 		p4UIChangeset *uics;
 		uics = p4_add_uichangeset(true);
@@ -158,6 +159,7 @@ bool App_Init(const char *cmdline)
 		if(uics) {
 			UITabs_AddTab(kTabType_Changeset, uics->id, false);
 		}
+*/
 	}
 
 	return App_CreateWindow();
