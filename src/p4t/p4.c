@@ -439,17 +439,15 @@ void p4_load_cached_changeset_statechanged(task *t)
 		cs->updating = false;
 		task_thread *th = t->userdata;
 		cachedChangesetLoad *data = th->data;
-		if(data->dicts.count && t->state == kTaskState_Succeeded) {
-			if(cs) {
-				p4_reset_changeset(cs);
-				++cs->parity;
-				cs->refreshed = true;
-				sdicts_move(&cs->changelists, &data->dicts);
-				for(u32 i = 0; i < cs->changelists.count; ++i) {
-					sdict_t *sd = cs->changelists.data + i;
-					u32 number = strtou32(sdict_find(sd, "change"));
-					cs->highestReceived = BB_MAX(cs->highestReceived, number);
-				}
+		if(cs && data->dicts.count && t->state == kTaskState_Succeeded) {
+			p4_reset_changeset(cs);
+			++cs->parity;
+			cs->refreshed = true;
+			sdicts_move(&cs->changelists, &data->dicts);
+			for(u32 i = 0; i < cs->changelists.count; ++i) {
+				sdict_t *sd = cs->changelists.data + i;
+				u32 number = strtou32(sdict_find(sd, "change"));
+				cs->highestReceived = BB_MAX(cs->highestReceived, number);
 			}
 			BB_LOG("p4::cache", "end load submitted changelists - count:%u highest:%u", cs->changelists.count, cs->highestReceived);
 		} else {
