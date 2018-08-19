@@ -193,8 +193,16 @@ void p4_diff_file_locators(const p4FileLocator *locatorA, const p4FileLocator *l
 		                                         "\"%s\" \"%s\" \"%s\"",
 		                                         diffExe, sb_get(&strA.target), sb_get(&strB.target)));
 		bba_push(s_diffDirs, diffDir);
-		bba_push(s_diffFiles, strA.target);
-		bba_push(s_diffFiles, strB.target);
+		if(locatorA->depotPath) {
+			bba_push(s_diffFiles, strA.target);
+		} else {
+			sb_reset(&strA.target);
+		}
+		if(locatorB->depotPath) {
+			bba_push(s_diffFiles, strB.target);
+		} else {
+			sb_reset(&strB.target);
+		}
 		task_queue(t);
 	} else {
 		sb_reset(&diffDir);

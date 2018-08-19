@@ -116,7 +116,8 @@ typedef struct tag_p4UIChangeset {
 	u32 numChangelistsAppended;
 	p4UIChangesetEntries entries;
 	p4UIChangesetSortKeys sorted;
-	filterTokens filterTokens;
+	filterTokens autoFilterTokens;
+	filterTokens manualFilterTokens;
 	u32 id;
 	u32 lastClickIndex;
 	u32 numValidStartY;

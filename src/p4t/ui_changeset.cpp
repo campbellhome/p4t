@@ -306,7 +306,7 @@ void UIChangeset_Menu()
 static bool UIChangeset_TryAddChangelist(p4UIChangeset *uics, p4Changeset *cs, u32 index)
 {
 	sdict_t *sd = cs->changelists.data + index;
-	if(UIChangeset_PassesFilter(&uics->filterTokens, sd)) {
+	if(UIChangeset_PassesFilter(&uics->autoFilterTokens, sd) && UIChangeset_PassesFilter(&uics->manualFilterTokens, sd)) {
 		p4UIChangesetEntry e = {};
 		e.changelistNumber = strtou32(sdict_find_safe(sd, "change"));
 		e.changelistIndex = index;
@@ -435,13 +435,14 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		//p4UIChangeset old = *uics; // TODO: retain selection when refreshing changelists
 
 		if(uics->config.filterEnabled) {
-			build_filter_tokens(&uics->filterTokens, sb_get(&uics->config.filter));
+			build_filter_tokens(&uics->manualFilterTokens, sb_get(&uics->config.filter));
 		} else {
-			reset_filter_tokens(&uics->filterTokens);
+			reset_filter_tokens(&uics->manualFilterTokens);
 		}
 
+		reset_filter_tokens(&uics->autoFilterTokens);
 		if(*user) {
-			if(filterToken *t = add_filter_token(&uics->filterTokens, "user", user)) {
+			if(filterToken *t = add_filter_token(&uics->autoFilterTokens, "user", user)) {
 				t->required = true;
 				t->prohibited = false;
 				t->exact = true;
@@ -452,7 +453,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 			if(!strcmp(clientspec, "Current Client")) {
 				clientspec = p4_clientspec();
 			}
-			if(filterToken *t = add_filter_token(&uics->filterTokens, "client", clientspec)) {
+			if(filterToken *t = add_filter_token(&uics->autoFilterTokens, "client", clientspec)) {
 				t->required = true;
 				t->prohibited = false;
 				t->exact = true;
@@ -468,7 +469,7 @@ void UIChangeset_Update(p4UIChangeset *uics)
 		BB_LOG("changeset::rebuild_changeset", "adding new entries");
 		for(u32 i = 0; i < cs->changelists.count; ++i) {
 			sdict_t *sd = cs->changelists.data + i;
-			if(UIChangeset_PassesFilter(&uics->filterTokens, sd)) {
+			if(UIChangeset_PassesFilter(&uics->autoFilterTokens, sd) && UIChangeset_PassesFilter(&uics->manualFilterTokens, sd)) {
 				p4UIChangesetEntry e = {};
 				e.changelistNumber = strtou32(sdict_find_safe(sd, "change"));
 				e.changelistIndex = i;

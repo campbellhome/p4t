@@ -130,35 +130,3 @@ b32 passes_filter_tokens(filterTokens *tokens, sdict_t *sd, const char **keys, u
 	}
 	return true;
 }
-
-#if 0
-	const char *text = decoded->packet.logText.text;
-	b32 ok = false;
-	u32 numRequired = 0;
-	u32 numProhibited = 0;
-	u32 numAllowed = 0;
-	u32 i;
-	for(i = 0; i < view->filter.count; ++i) {
-		view_filter_token_t *token = view->filter.data + i;
-		const char *s = view->filter.tokenBuffer + token->offset;
-		b32 required = *s == '+';
-		b32 prohibited = *s == '-';
-		b32 found;
-		numRequired += required;
-		numProhibited += prohibited;
-		numAllowed += (!required && !prohibited);
-		if(required || prohibited) {
-			++s;
-		}
-		found = bb_stristr(text, s) != NULL;
-		if(found && prohibited || !found && required) {
-			return false;
-			break;
-		} else if(found) {
-			ok = true;
-		}
-	}
-	if(!ok && numAllowed) {
-		return false;
-	}
-#endif

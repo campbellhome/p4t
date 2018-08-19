@@ -142,7 +142,8 @@ static void p4_reset_uichangeset(p4UIChangeset *uics)
 	sb_reset(&uics->config.clientspec);
 	sb_reset(&uics->config.filter);
 	sb_reset(&uics->config.filterInput);
-	reset_filter_tokens(&uics->filterTokens);
+	reset_filter_tokens(&uics->autoFilterTokens);
+	reset_filter_tokens(&uics->manualFilterTokens);
 	for(u32 i = 0; i < uics->entries.count; ++i) {
 		p4_reset_uichangesetentry(uics->entries.data + i);
 	}
