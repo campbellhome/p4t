@@ -5,6 +5,31 @@
 
 #include "json_generated.h"
 
+JSON_Value *json_serialize_sdictEntry_t(const sdictEntry_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "key", json_serialize_sb_t(&src->key));
+		json_object_set_value(obj, "value", json_serialize_sb_t(&src->value));
+	}
+	return val;
+}
+
+sdictEntry_t json_deserialize_sdictEntry_t(JSON_Value *src)
+{
+	sdictEntry_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.key = json_deserialize_sb_t(json_object_get_value(obj, "key"));
+			dst.value = json_deserialize_sb_t(json_object_get_value(obj, "value"));
+		}
+	}
+	return dst;
+}
+
 JSON_Value *json_serialize_sdict_t(const sdict_t *src)
 {
 	JSON_Value *val;

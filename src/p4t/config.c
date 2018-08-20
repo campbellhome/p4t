@@ -26,55 +26,6 @@ void config_getwindowplacement(HWND hwnd)
 	GetWindowPlacement(hwnd, &g_apptypeConfig.wp);
 }
 
-config_t *config_clone(config_t *config)
-{
-	config_t *target = (config_t *)malloc(sizeof(config_t));
-	if(!target)
-		return NULL;
-
-	memcpy(target, config, sizeof(*target));
-	sb_init(&target->logFontConfig.path);
-	sb_append(&target->logFontConfig.path, sb_get(&config->logFontConfig.path));
-	sb_init(&target->uiFontConfig.path);
-	sb_append(&target->uiFontConfig.path, sb_get(&config->uiFontConfig.path));
-	sb_init(&target->diff.path);
-	sb_append(&target->diff.path, sb_get(&config->diff.path));
-	sb_init(&target->diff.args);
-	sb_append(&target->diff.args, sb_get(&config->diff.args));
-	sb_init(&target->p4.clientspec);
-	sb_append(&target->p4.clientspec, sb_get(&config->p4.clientspec));
-	sb_init(&target->colorscheme);
-	sb_append(&target->colorscheme, sb_get(&config->colorscheme));
-	return target;
-}
-
-void config_reset_changeset(changesetConfig *csc)
-{
-	sb_reset(&csc->user);
-	sb_reset(&csc->clientspec);
-	sb_reset(&csc->filter);
-	sb_reset(&csc->filterInput);
-}
-
-void config_reset_tabs(tabsConfig *tc)
-{
-	for(u32 i=0; i < tc->count; ++i) {
-		config_reset_changeset(&tc->data[i].cs);
-	}
-	bba_free(*tc);
-}
-
-void config_reset(config_t *config)
-{
-	sb_reset(&config->logFontConfig.path);
-	sb_reset(&config->uiFontConfig.path);
-	sb_reset(&config->diff.path);
-	sb_reset(&config->diff.args);
-	sb_reset(&config->p4.clientspec);
-	sb_reset(&config->colorscheme);
-	config_reset_tabs(&config->tabs);
-}
-
 void config_free(config_t *config)
 {
 	config_reset(config);

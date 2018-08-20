@@ -6,6 +6,7 @@
 #include "bb_array.h"
 #include "imgui_utils.h"
 #include "p4.h"
+#include "structs_generated.h"
 #include "ui_changelist.h"
 #include "ui_changeset.h"
 #include "ui_icons.h"
@@ -53,7 +54,7 @@ void UITabs_SaveConfig(tabs *ts)
 		ts = &s_tabs;
 	}
 
-	config_reset_tabs(&g_config.tabs);
+	tabsConfig_reset(&g_config.tabs);
 	g_config.activeTab = ts->activeTab;
 	for(u32 i = 0; i < ts->count; ++i) {
 		tab *t = ts->data + i;

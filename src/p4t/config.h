@@ -130,12 +130,10 @@ extern appTypeConfig g_apptypeConfig;
 
 b32 config_read(config_t *config);
 b32 config_write(config_t *config);
-config_t *config_clone(config_t *config);
+config_t config_clone(config_t *config);
 void config_reset(config_t *config);
 void config_free(config_t *config);
 void config_getwindowplacement(HWND hwnd);
-void config_reset_changeset(changesetConfig *csc);
-void config_reset_tabs(tabsConfig *tc);
 
 b32 config_read_apptype(appTypeConfig *config);
 b32 config_write_apptype(appTypeConfig *config);

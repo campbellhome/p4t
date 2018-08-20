@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-AUTOJSON typedef struct sdictEntry_s {
+AUTOJSON AUTOHEADERONLY typedef struct sdictEntry_s {
 	sb_t key;
 	sb_t value;
 } sdictEntry_t;
@@ -30,6 +30,7 @@ typedef struct tag_sdicts {
 
 void sdict_init(sdict_t *sd);
 void sdict_reset(sdict_t *sd);
+void sdictEntry_reset(sdictEntry_t *e);
 void sdict_move(sdict_t *target, sdict_t *src);
 void sdict_copy(sdict_t *target, sdict_t *src);
 u32 sdict_find_index(sdict_t *sd, const char *key);

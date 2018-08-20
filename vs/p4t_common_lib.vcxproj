@@ -130,8 +130,8 @@
     <ClInclude Include="..\src\common\tokenize.h" />
     <ClInclude Include="..\src\common\va.h" />
   </ItemGroup>
-  <Import Project="..\..\bb\vs\bbcommon.props" />
-  <Import Project="..\..\bb\vs\bbcommon_internals.props" />
+  <Import Project="..\..\bb\vs\bbclient.props" />
+  <Import Project="..\..\bb\vs\bbclient_internals.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -461,7 +461,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 #endif // #ifdef LEAK_CHECK
 
 	// uncomment to debug preprocessing
-	//BB_INIT_WITH_FLAGS("p4t_preproc", kBBInitFlag_NoOpenView);
+	//BB_INIT("p4t_preproc");
 	BB_THREAD_SET_NAME("main");
 
 	char exeDir[_MAX_PATH];
@@ -479,6 +479,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	sb_va(&outDir, "%s\\..\\..\\..\\..\\..\\src\\p4t", exeDir);
 	path_resolve_inplace(&outDir);
 	GenerateJson(&outDir);
+	GenerateReset(&outDir);
 	CheckFreeType(&outDir);
 	sb_reset(&outDir);
 

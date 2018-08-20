@@ -81,6 +81,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\preproc\preproc_json.cpp" />
     <ClCompile Include="..\src\preproc\preproc_main.cpp" />
+    <ClCompile Include="..\src\preproc\preproc_structs.cpp" />
     <ClCompile Include="..\src\thirdparty\parson\parson.c" />
   </ItemGroup>
   <ItemGroup>
@@ -93,7 +94,7 @@
       <Project>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</Project>
     </ProjectReference>
   </ItemGroup>
-  <Import Project="..\..\bb\vs\bbcommon_internals.props" />
+  <Import Project="..\..\bb\vs\bbclient_internals.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

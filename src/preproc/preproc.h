@@ -47,3 +47,4 @@ extern std::vector< struct_s > g_structs;
 extern std::set< std::string > g_paths;
 
 void GenerateJson(sb_t *srcDir);
+void GenerateReset(sb_t *srcDir);

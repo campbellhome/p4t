@@ -119,6 +119,7 @@
     <ClInclude Include="..\src\p4t\p4.h" />
     <ClInclude Include="..\src\p4t\p4_task.h" />
     <ClInclude Include="..\src\p4t\py_parser.h" />
+    <ClInclude Include="..\src\p4t\structs_generated.h" />
     <ClInclude Include="..\src\p4t\task_describe_changelist.h" />
     <ClInclude Include="..\src\p4t\task_diff_file.h" />
     <ClInclude Include="..\src\p4t\thread_task.h" />
@@ -159,6 +160,7 @@
     <ClCompile Include="..\src\p4t\py_parser.c" />
     <ClCompile Include="..\src\p4t\sb_json.c" />
     <ClCompile Include="..\src\p4t\sdict_json.c" />
+    <ClCompile Include="..\src\p4t\structs_generated.c" />
     <ClCompile Include="..\src\p4t\task_describe_changelist.c" />
     <ClCompile Include="..\src\p4t\task_diff_file.c" />
     <ClCompile Include="..\src\p4t\thread_task.c" />
@@ -196,10 +198,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <Import Project="..\..\bb\vs\bbcommon_internals.props" />
+  <Import Project="..\..\bb\vs\bbclient_internals.props" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(BBCommonPropsDir)..\src\common;$(ProjectDir)..\src\thirdparty\imgui;$(ProjectDir)..\src\thirdparty\freetype\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BBClientPropsDir)..\src\client;$(ProjectDir)..\src\thirdparty\imgui;$(ProjectDir)..\src\thirdparty\freetype\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5045</DisableSpecificWarnings>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5045</DisableSpecificWarnings>
     </ClCompile>

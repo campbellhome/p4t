@@ -20,6 +20,9 @@
     <ClCompile Include="..\src\preproc\preproc_json.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\preproc\preproc_structs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\thirdparty\mm_lexer\mm_lexer.h">

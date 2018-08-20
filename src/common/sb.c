@@ -17,6 +17,13 @@ void sb_reset(sb_t *sb)
 	bba_free(*sb);
 }
 
+sb_t sb_clone(sb_t *src)
+{
+	sb_t dst = { 0 };
+	sb_append(&dst, sb_get(src));
+	return dst;
+}
+
 u32 sb_len(sb_t *sb)
 {
 	return sb->count ? sb->count - 1 : 0;
