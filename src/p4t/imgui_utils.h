@@ -70,7 +70,6 @@ namespace ImGui
 
 	struct columnDrawData {
 		float *columnWidths;
-		float *columnScales;
 		float *columnOffsets;
 		const char **columnNames;
 		b32 *sortDescending;

@@ -480,7 +480,6 @@ b32 UIChangelist_DrawFiles(uiChangelistFiles *files, p4Changelist *cl, float ind
 	BB_CTASSERT(BB_ARRAYSIZE(columnOffsets) == BB_ARRAYSIZE(g_config.uiChangelist.columnWidth) + 1);
 	ImGui::columnDrawData data = {};
 	data.columnWidths = g_config.uiChangelist.columnWidth;
-	data.columnScales = s_columnScales;
 	data.columnOffsets = columnOffsets;
 	data.columnNames = s_columnNames;
 	data.sortDescending = &g_config.uiChangelist.sortDescending;

@@ -307,7 +307,7 @@ namespace ImGui
 		if(last) {
 			*width = GetContentRegionAvailWidth();
 		} else if(*width <= 0.0f) {
-			*width = h.columnScales[columnIndex] * CalcTextSize(text).x + CalcTextSize(" " ICON_SORT_UP).x + GetStyle().ItemSpacing.x * 2.0f;
+			*width = CalcTextSize(text).x + CalcTextSize(" " ICON_SORT_UP).x + GetStyle().ItemSpacing.x * 2.0f;
 		}
 		float scale = (g_config.dpiScale <= 0.0f) ? 1.0f : g_config.dpiScale;
 		float startOffset = GetCursorPosX();

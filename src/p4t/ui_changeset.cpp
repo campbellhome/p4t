@@ -34,15 +34,6 @@ const char *s_pendingColumnNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_pendingColumnNames) == BB_ARRAYSIZE(g_config.uiPendingChangesets.columnWidth));
 
-float s_columnScales[] = {
-	1.0f,
-	1.0f,
-	1.0f,
-	1.0f,
-	1.0f,
-};
-BB_CTASSERT(BB_ARRAYSIZE(s_columnScales) == BB_ARRAYSIZE(g_config.uiPendingChangesets.columnWidth));
-
 static sb_t UIChangeset_SingleLineFromMultiline(const char *src)
 {
 	sb_t sb = { 0 };
@@ -493,7 +484,6 @@ void UIChangeset_Update(p4UIChangeset *uics)
 	float columnOffsets[6] = {};
 	BB_CTASSERT(BB_ARRAYSIZE(columnOffsets) == BB_ARRAYSIZE(config->columnWidth) + 1);
 	data.columnWidths = config->columnWidth;
-	data.columnScales = s_columnScales;
 	data.columnOffsets = columnOffsets;
 	data.columnNames = uics->config.pending ? s_pendingColumnNames : s_submittedColumnNames;
 	data.sortDescending = &config->sortDescending;
