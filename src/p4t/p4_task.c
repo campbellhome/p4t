@@ -59,7 +59,7 @@ void task_p4_reset(task *_t)
 	task_p4 *t = (task_p4 *)_t->userdata;
 	sdicts_reset(&t->parsedDicts);
 	if(t->parser.state == kParser_Error) {
-		sb_t path = appdata_get();
+		sb_t path = appdata_get("p4t");
 		sb_va(&path, "\\%s_error.bin", globals.appSpecific.configName);
 		fileData_t fd = { 0 };
 		fd.buffer = t->parser.data;

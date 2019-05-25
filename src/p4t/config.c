@@ -34,7 +34,7 @@ void config_free(config_t *config)
 
 static sb_t config_get_path(void)
 {
-	sb_t s = appdata_get();
+	sb_t s = appdata_get("p4t");
 	sb_append(&s, "\\p4t_common_config.json");
 	return s;
 }
@@ -96,7 +96,7 @@ b32 config_write(config_t *config)
 
 static sb_t config_get_apptype_path(void)
 {
-	sb_t s = appdata_get();
+	sb_t s = appdata_get("p4t");
 	sb_va(&s, "\\%s_config.json", globals.appSpecific.configName);
 	return s;
 }

@@ -34,7 +34,7 @@ const char *diff_exe(void)
 	return "";
 }
 
-void p4_diff_against_local(const char *depotPath, const char *rev, const char *localPath, bool depotFirst)
+void p4_diff_against_local(const char *depotPath, const char *rev, const char *localPath, b32 depotFirst)
 {
 	const char *filename = strrchr(depotPath, '/');
 	if(!filename++)

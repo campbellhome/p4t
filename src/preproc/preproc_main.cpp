@@ -1,3 +1,4 @@
+#include "cmdline.h"
 #include "preproc.h"
 
 #include <memory.h>
@@ -45,14 +46,14 @@ std::string lexer_token_string(const lexer_token &tok)
 	return buffer;
 }
 
-bool mm_lexer_parse_enum(lexer *lex, std::string defaultVal)
+bool mm_lexer_parse_enum(lexer *lex, std::string defaultVal, bool isTypedef)
 {
 	lexer_token name;
 	if(!lexer_read_on_line(lex, &name))
 		return false;
 
 	BB_LOG("mm_lexer", "AUTOJSON enum %s", lexer_token_string(name).c_str());
-	enum_s e = { lexer_token_string(name) };
+	enum_s e = { lexer_token_string(name), "" };
 
 	lexer_token tok;
 	if(!lexer_expect_type(lex, LEXER_TOKEN_PUNCTUATION, LEXER_PUNCT_BRACE_OPEN, &tok))
@@ -64,6 +65,12 @@ bool mm_lexer_parse_enum(lexer *lex, std::string defaultVal)
 
 		if(tok.type == LEXER_TOKEN_PUNCTUATION && tok.subtype == LEXER_PUNCT_BRACE_CLOSE) {
 			BB_LOG("mm_lexer", "AUTOJSON end enum");
+			if(isTypedef) {
+				e.typedefBaseName = e.name;
+				if(lexer_read(lex, &tok) && tok.type == LEXER_TOKEN_NAME) {
+					e.name = lexer_token_string(tok);
+				}
+			}
 			break;
 		}
 
@@ -76,8 +83,20 @@ bool mm_lexer_parse_enum(lexer *lex, std::string defaultVal)
 
 		e.members.push_back(member);
 
-		if(!lexer_read_on_line(lex, &tok))
+		if(!lexer_read_on_line(lex, &tok)) {
+			if(!lexer_read(lex, &tok))
+				break;
+			if(tok.type == LEXER_TOKEN_PUNCTUATION && tok.subtype == LEXER_PUNCT_BRACE_CLOSE) {
+				BB_LOG("mm_lexer", "AUTOJSON end enum");
+				if(isTypedef) {
+					e.typedefBaseName = e.name;
+					if(lexer_read(lex, &tok) && tok.type == LEXER_TOKEN_NAME) {
+						e.name = lexer_token_string(tok);
+					}
+				}
+			}
 			break;
+		}
 
 		if(tok.type == LEXER_TOKEN_PUNCTUATION && tok.subtype == LEXER_PUNCT_COMMA) {
 			BB_LOG("mm_lexer", "no value");
@@ -101,7 +120,7 @@ bool mm_lexer_parse_enum(lexer *lex, std::string defaultVal)
 	return false;
 }
 
-bool mm_lexer_parse_struct(lexer *lex, bool autovalidate, bool headerOnly, bool isTypedef)
+bool mm_lexer_parse_struct(lexer *lex, bool autovalidate, bool headerOnly, bool fromLoc, bool isTypedef)
 {
 	lexer_token name;
 	if(!lexer_read_on_line(lex, &name)) {
@@ -109,7 +128,7 @@ bool mm_lexer_parse_struct(lexer *lex, bool autovalidate, bool headerOnly, bool 
 		return false;
 	}
 
-	struct_s s = { lexer_token_string(name), "", autovalidate, headerOnly };
+	struct_s s = { lexer_token_string(name), "", autovalidate, headerOnly, fromLoc };
 	//BB_LOG("mm_lexer", "AUTOJSON struct %s on line %u", s.name.c_str(), name.line);
 
 	lexer_token tok;
@@ -294,8 +313,7 @@ bool mm_lexer_parse_struct(lexer *lex, bool autovalidate, bool headerOnly, bool 
 			sb_va(&sb, "  %s %s = %s\n", m.typeStr.c_str(), m.name.c_str(), m.val.c_str());
 		} else if(!m.arr.empty()) {
 			sb_va(&sb, "  %s %s[%s]\n", m.typeStr.c_str(), m.name.c_str(), m.arr.c_str());
-		}
-		else {
+		} else {
 			sb_va(&sb, "  %s %s\n", m.typeStr.c_str(), m.name.c_str());
 		}
 	}
@@ -316,8 +334,9 @@ void mm_lexer_scan_file(const char *text, lexer_size text_length, const char *pa
 
 	bool foundAny = false;
 	while(lexer_skip_until(&lex, "AUTOJSON")) {
+		bool isTypedef = lexer_check_string(&lex, "typedef");
 		if(lexer_check_string(&lex, "enum")) {
-			foundAny = mm_lexer_parse_enum(&lex, "") || foundAny;
+			foundAny = mm_lexer_parse_enum(&lex, "", isTypedef) || foundAny;
 		} else if(lexer_check_string(&lex, "AUTODEFAULT")) {
 			std::string defaultVal;
 			lexer_token tok;
@@ -326,8 +345,11 @@ void mm_lexer_scan_file(const char *text, lexer_size text_length, const char *pa
 					if(tok.type == LEXER_TOKEN_NAME) {
 						defaultVal = lexer_token_string(tok);
 						if(lexer_check_type(&lex, LEXER_TOKEN_PUNCTUATION, LEXER_PUNCT_PARENTHESE_CLOSE, &tok)) {
+							if(lexer_check_string(&lex, "typedef")) {
+								isTypedef = true;
+							}
 							if(lexer_check_string(&lex, "enum")) {
-								foundAny = mm_lexer_parse_enum(&lex, defaultVal) || foundAny;
+								foundAny = mm_lexer_parse_enum(&lex, defaultVal, isTypedef) || foundAny;
 							}
 						}
 					}
@@ -336,23 +358,24 @@ void mm_lexer_scan_file(const char *text, lexer_size text_length, const char *pa
 		} else {
 			bool autovalidate = false;
 			bool headerOnly = false;
+			bool fromLoc = false;
 
 			while(1) {
 				if(lexer_check_string(&lex, "AUTOVALIDATE")) {
 					autovalidate = true;
 				} else if(lexer_check_string(&lex, "AUTOHEADERONLY")) {
 					headerOnly = true;
+				} else if(lexer_check_string(&lex, "AUTOFROMLOC")) {
+					fromLoc = true;
+				} else if(lexer_check_string(&lex, "typedef")) {
+					isTypedef = true;
 				} else {
 					break;
 				}
 			}
 
 			if(lexer_check_string(&lex, "struct")) {
-				foundAny = mm_lexer_parse_struct(&lex, autovalidate, headerOnly, false) || foundAny;
-			} else if(lexer_check_string(&lex, "typedef")) {
-				if(lexer_check_string(&lex, "struct")) {
-					foundAny = mm_lexer_parse_struct(&lex, autovalidate, headerOnly, true) || foundAny;
-				}
+				foundAny = mm_lexer_parse_struct(&lex, autovalidate, headerOnly, fromLoc, isTypedef) || foundAny;
 			}
 		}
 	}
@@ -362,7 +385,7 @@ void mm_lexer_scan_file(const char *text, lexer_size text_length, const char *pa
 	}
 }
 
-static void find_include_files_in_dir(const char *dir, sdict_t *sd)
+void find_files_in_dir(const char *dir, const char *desiredExt, sdict_t *sd)
 {
 	WIN32_FIND_DATA find;
 	HANDLE hFind;
@@ -375,14 +398,15 @@ static void find_include_files_in_dir(const char *dir, sdict_t *sd)
 				if(find.cFileName[0] != '.') {
 					sb_t subdir = {};
 					sb_va(&subdir, "%s\\%s", dir, find.cFileName);
-					find_include_files_in_dir(sb_get(&subdir), sd);
+					find_files_in_dir(sb_get(&subdir), desiredExt, sd);
 					sb_reset(&subdir);
 				}
 			} else {
 				const char *ext = strrchr(find.cFileName, '.');
-				if(ext && !_stricmp(ext, ".h")) {
+				if(ext && !_stricmp(ext, desiredExt)) {
 					sdictEntry_t entry = {};
 					sb_va(&entry.key, "%s\\%s", dir, find.cFileName);
+					path_resolve_inplace(&entry.key);
 					sb_append(&entry.value, find.cFileName);
 					sdict_add(sd, &entry);
 				}
@@ -393,13 +417,10 @@ static void find_include_files_in_dir(const char *dir, sdict_t *sd)
 	sb_reset(&filter);
 }
 
-static void scanHeaders(const char *exeDir, const char *subdir)
+static void scanHeaders(const sb_t *scanDir)
 {
-	sb_t scanDir = {};
-	sb_va(&scanDir, "%s\\..\\..\\..\\..\\..\\src\\%s", exeDir, subdir);
-	path_resolve_inplace(&scanDir);
 	sdict_t sd = {};
-	find_include_files_in_dir(sb_get(&scanDir), &sd);
+	find_files_in_dir(sb_get(scanDir), ".h", &sd);
 	sdict_sort(&sd);
 
 	for(u32 i = 0; i < sd.count; ++i) {
@@ -409,10 +430,18 @@ static void scanHeaders(const char *exeDir, const char *subdir)
 			continue;
 
 		BB_LOG("mm_lexer::scan_file", "^8%s", path);
-		mm_lexer_scan_file((char *)contents.buffer, contents.bufferSize, path, &scanDir);
+		mm_lexer_scan_file((char *)contents.buffer, contents.bufferSize, path, scanDir);
 	}
 
 	sdict_reset(&sd);
+}
+
+static void scanBlackboxHeaders(const char *exeDir, const char *subdir)
+{
+	sb_t scanDir = {};
+	sb_va(&scanDir, "%s\\..\\..\\..\\..\\..\\src\\%s", exeDir, subdir);
+	path_resolve_inplace(&scanDir);
+	scanHeaders(&scanDir);
 	sb_reset(&scanDir);
 }
 
@@ -427,7 +456,7 @@ void CheckFreeType(sb_t *outDir)
 	sb_va(&freetypePath, "%s\\..\\thirdparty\\freetype\\include\\freetype\\freetype.h", sb_get(outDir));
 	path_resolve_inplace(&freetypePath);
 
-	sb_append(s, "// Copyright (c) 2012-2018 Matt Campbell\n");
+	sb_append(s, "// Copyright (c) 2012-2019 Matt Campbell\n");
 	sb_append(s, "// MIT license (see License.txt)\n");
 	sb_append(s, "\n");
 	sb_append(s, "// AUTOGENERATED FILE - DO NOT EDIT\n");
@@ -447,9 +476,12 @@ void CheckFreeType(sb_t *outDir)
 	sb_t path;
 	sb_init(&path);
 	sb_va(&path, "%s\\fonts_generated.h", sb_get(outDir));
-	fileData_writeIfChanged(sb_get(&path), NULL, { data.data, sb_len(s) });
+	if(fileData_writeIfChanged(sb_get(&path), NULL, { data.data, sb_len(s) })) {
+		BB_LOG("preproc", "updated %s", sb_get(&path));
+	}
 	sb_reset(&path);
 	sb_reset(&data);
+	sb_reset(&freetypePath);
 }
 
 int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInstance*/, _In_ LPSTR CommandLine, _In_ int /*ShowCode*/)
@@ -459,6 +491,8 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 #endif // #ifdef LEAK_CHECK
+
+	cmdline_init_composite(CommandLine);
 
 	// uncomment to debug preprocessing
 	//BB_INIT("p4t_preproc");
@@ -472,18 +506,38 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	exeFilename = exeSep + 1;
 	*exeSep = 0;
 
-	scanHeaders(exeDir, "p4t");
-	scanHeaders(exeDir, "common");
+	if(cmdline_argc() == 1 || !strcmp(cmdline_argv(1), "p4t")) {
+		scanBlackboxHeaders(exeDir, "p4t");
+		scanBlackboxHeaders(exeDir, "..\\..\\bb\\src\\common");
 
-	sb_t outDir = {};
-	sb_va(&outDir, "%s\\..\\..\\..\\..\\..\\src\\p4t", exeDir);
-	path_resolve_inplace(&outDir);
-	GenerateJson(&outDir);
-	GenerateReset(&outDir);
-	CheckFreeType(&outDir);
-	sb_reset(&outDir);
+		sb_t outDir = {};
+		sb_va(&outDir, "%s\\..\\..\\..\\..\\..\\src\\p4t", exeDir);
+		path_resolve_inplace(&outDir);
+		GenerateJson(&outDir);
+		GenerateReset(&outDir);
+		CheckFreeType(&outDir);
+		sb_reset(&outDir);
+	} else if(cmdline_argc() > 2) {
+		for(int i = 2; i < cmdline_argc(); ++i) {
+			sb_t scanDir = {};
+			sb_append(&scanDir, cmdline_argv(i));
+			path_resolve_inplace(&scanDir);
+			scanHeaders(&scanDir);
+			sb_reset(&scanDir);
+		}
+
+		sb_t outDir = {};
+		sb_append(&outDir, cmdline_argv(1));
+		path_resolve_inplace(&outDir);
+		GenerateJson(&outDir);
+		GenerateReset(&outDir);
+		CheckFreeType(&outDir);
+		sb_reset(&outDir);
+	}
 
 	BB_SHUTDOWN();
+
+	cmdline_shutdown();
 
 	return 0;
 }

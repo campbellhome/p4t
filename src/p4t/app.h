@@ -5,10 +5,10 @@
 
 #include "common.h"
 
-extern bool App_Init(const char *commandLine);
+extern b32 App_Init(const char *commandLine);
 extern void App_Shutdown(void);
 extern void App_Update(void);
-extern bool App_IsShuttingDown(void);
+extern b32 App_IsShuttingDown(void);
 extern void App_SingleInstanceRestored(void);
 
 #if defined(__cplusplus)
@@ -17,7 +17,7 @@ extern "C" {
 #endif
 extern b32 App_HasFocus(void);
 extern void App_RequestRender(void);
-extern bool App_GetAndClearRequestRender(void);
+extern b32 App_GetAndClearRequestRender(void);
 extern void App_SetWindowTitle(const char *title);
 extern void App_RequestShutdown(void);
 #include "bb_time.h"

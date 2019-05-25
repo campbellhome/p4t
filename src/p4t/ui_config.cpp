@@ -196,7 +196,7 @@ void UIConfig_Update(config_t *config)
 	}
 	ImGui::End();
 	if(!s_configOpen && s_configValid) {
-		config_free(&s_config);
+		config_reset(&s_config);
 		s_configOpen = false;
 		s_configValid = false;
 	}

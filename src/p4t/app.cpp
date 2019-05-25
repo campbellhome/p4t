@@ -29,6 +29,7 @@
 #include "bb.h"
 #include "bb_array.h"
 #include "bb_wrap_stdio.h"
+#include "process_utils.h"
 
 globals_t globals;
 bool g_shuttingDown;
@@ -91,7 +92,7 @@ extern "C" void App_SetWindowTitle(const char *title)
 	SetWindowTextA(globals.hwnd, title);
 }
 
-bool App_Init(const char *cmdline)
+b32 App_Init(const char *cmdline)
 {
 	cmdline_init_composite(cmdline);
 	if(!_stricmp(cmdline_get_exe_filename(), "p4cl.exe") ||
@@ -102,7 +103,7 @@ bool App_Init(const char *cmdline)
 		globals.appSpecific = s_appSpecific[kAppType_Normal];
 	}
 
-	s_imguiPath = appdata_get();
+	s_imguiPath = appdata_get("p4t");
 	sb_va(&s_imguiPath, "\\%s_imgui.ini", globals.appSpecific.configName);
 	ImGuiIO &io = ImGui::GetIO();
 	io.IniFilename = sb_get(&s_imguiPath);
@@ -132,8 +133,8 @@ bool App_Init(const char *cmdline)
 		if(uicl) {
 			UITabs_AddTab(kTabType_Changelist, uicl->id);
 			int index = cmdline_find("-change");
-			if(index + 1 < argc) {
-				u32 cl = strtou32(argv[index + 1]);
+			if(index + 1 < cmdline_argc()) {
+				u32 cl = strtou32(cmdline_argv(index + 1));
 				if(cl) {
 					uicl->config.number = cl;
 					p4_describe_changelist(cl);
@@ -187,7 +188,7 @@ extern "C" void App_RequestRender(void)
 {
 	g_appRequestRenderCount = 3;
 }
-extern "C" bool App_GetAndClearRequestRender(void)
+extern "C" b32 App_GetAndClearRequestRender(void)
 {
 	bool ret = g_appRequestRenderCount > 0;
 	g_appRequestRenderCount = BB_MAX(0, g_appRequestRenderCount - 1);
@@ -304,7 +305,7 @@ void App_Update()
 	}
 }
 
-bool App_IsShuttingDown()
+b32 App_IsShuttingDown()
 {
 	return g_shuttingDown;
 }

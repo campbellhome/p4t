@@ -22,12 +22,6 @@
     <ClCompile Include="..\src\p4t\json_generated.c">
       <Filter>Source\p4t</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\sb_json.c">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p4t\sdict_json.c">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\p4t\p4.c">
       <Filter>Source\p4t</Filter>
     </ClCompile>

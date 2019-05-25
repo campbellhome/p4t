@@ -6,11 +6,12 @@
 #include "bb_array.h"
 #include "imgui_utils.h"
 #include "p4.h"
-#include "structs_generated.h"
 #include "ui_changelist.h"
 #include "ui_changeset.h"
 #include "ui_icons.h"
 #include "va.h"
+
+extern "C" void tabsConfig_reset(tabsConfig *val);
 
 static tabs s_tabs;
 

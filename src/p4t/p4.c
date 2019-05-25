@@ -383,7 +383,7 @@ p4Changeset *p4_add_changeset(b32 pending)
 
 static void p4_save_submitted_changeset(p4Changeset *cs)
 {
-	sb_t path = appdata_get();
+	sb_t path = appdata_get("p4t");
 	sb_va(&path, "\\%s_submitted_changesets.bin", globals.appSpecific.configName);
 	BB_LOG("p4::cache", "begin save submitted changelists - path:%s", sb_get(&path));
 	BB_FLUSH();
@@ -534,7 +534,7 @@ void p4_refresh_changeset(p4Changeset *cs)
 				cachedChangesetLoad *data = malloc(sizeof(cachedChangesetLoad));
 				if(data) {
 					memset(data, 0, sizeof(cachedChangesetLoad));
-					data->path = appdata_get();
+					data->path = appdata_get("p4t");
 					sb_va(&data->path, "\\%s_submitted_changesets.bin", globals.appSpecific.configName);
 					BB_LOG("p4::cache", "begin load submitted changelists - path:%s", sb_get(&data->path));
 					BB_FLUSH();
@@ -792,7 +792,7 @@ static void p4_build_changelist_files_internal(sdict_t *change, sdicts *sds, uiC
 			const char *filename = (lastSlash) ? lastSlash + 1 : NULL;
 			const char *localPath = "";
 			const char *headRev = NULL;
-			bool unresolved = false;
+			b32 unresolved = false;
 			for(u32 i = 0; i < sds->count; ++i) {
 				sdict_t *sd = sds->data + i;
 				const char *detailedDepotFile = sdict_find_safe(sd, "depotFile");

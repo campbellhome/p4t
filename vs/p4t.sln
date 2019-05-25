@@ -17,7 +17,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "p4t_preproc", "p4t_preproc.
 		{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206} = {6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "p4t_common_lib", "p4t_common_lib.vcxproj", "{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbcommon_lib", "..\..\bb\vs\bbcommon_lib.vcxproj", "{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
