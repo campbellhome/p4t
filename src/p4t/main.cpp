@@ -329,8 +329,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 		//int atlasWidth;
 		//int atlasHeight;
 		//io.Fonts->GetTexDataAsRGBA32(&atlasPixels, &atlasWidth, &atlasHeight);
-		if(Fonts_UpdateAtlas())
-		{
+		if(Fonts_UpdateAtlas()) {
 			ResetD3D();
 		}
 
@@ -344,21 +343,17 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 
 		bool requestRender = App_GetAndClearRequestRender() || key_is_any_down_or_released_this_frame();
 		if(g_hasFocus) {
-			if(io.InputCharacters[0]) {
-				requestRender = true;
-			} else {
-				for(bool mouseDown : io.MouseDown) {
-					if(mouseDown) {
+			for(bool mouseDown : io.MouseDown) {
+				if(mouseDown) {
+					requestRender = true;
+					break;
+				}
+			}
+			if(!requestRender) {
+				for(bool keyDown : io.KeysDown) {
+					if(keyDown) {
 						requestRender = true;
 						break;
-					}
-				}
-				if(!requestRender) {
-					for(bool keyDown : io.KeysDown) {
-						if(keyDown) {
-							requestRender = true;
-							break;
-						}
 					}
 				}
 			}

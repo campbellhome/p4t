@@ -27,12 +27,6 @@
     <ClInclude Include="..\src\thirdparty\imgui\examples\imgui_impl_dx9.h">
       <Filter>ThirdParty\ImGui\examples</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\thirdparty\imgui\stb_textedit.h">
-      <Filter>ThirdParty\ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thirdparty\imgui\stb_truetype.h">
-      <Filter>ThirdParty\ImGui</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\thirdparty\imgui\imconfig.h">
       <Filter>ThirdParty\ImGui</Filter>
     </ClInclude>
@@ -42,11 +36,17 @@
     <ClInclude Include="..\src\thirdparty\imgui\imgui_internal.h">
       <Filter>ThirdParty\ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\thirdparty\imgui\stb_rect_pack.h">
-      <Filter>ThirdParty\ImGui</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\thirdparty\imgui\misc\fonts\forkawesome-webfont.h">
       <Filter>ThirdParty\ImGui\misc\fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\imgui\imstb_rectpack.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\imgui\imstb_textedit.h">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thirdparty\imgui\imstb_truetype.h">
+      <Filter>ThirdParty\ImGui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -68,16 +68,13 @@
     <ClCompile Include="..\src\thirdparty\imgui\misc\fonts\forkawesome-webfont.cpp">
       <Filter>ThirdParty\ImGui\misc\fonts</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\thirdparty\imgui\imgui_widgets.cpp">
+      <Filter>ThirdParty\ImGui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\src\thirdparty\imgui\misc\natvis\README.txt">
       <Filter>ThirdParty\ImGui\misc\natvis</Filter>
-    </Text>
-    <Text Include="..\src\thirdparty\imgui\TODO.txt">
-      <Filter>ThirdParty\ImGui</Filter>
-    </Text>
-    <Text Include="..\src\thirdparty\imgui\CHANGELOG.txt">
-      <Filter>ThirdParty\ImGui</Filter>
     </Text>
     <Text Include="..\src\thirdparty\imgui\LICENSE.txt">
       <Filter>ThirdParty\ImGui</Filter>
@@ -92,7 +89,7 @@
     </Natvis>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\thirdparty\imgui\README.md">
+    <None Include="..\src\thirdparty\imgui\docs\README.md">
       <Filter>ThirdParty\ImGui</Filter>
     </None>
   </ItemGroup>

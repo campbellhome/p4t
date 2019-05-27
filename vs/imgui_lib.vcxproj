@@ -16,10 +16,10 @@
     <ClInclude Include="..\src\thirdparty\imgui\imconfig.h" />
     <ClInclude Include="..\src\thirdparty\imgui\imgui.h" />
     <ClInclude Include="..\src\thirdparty\imgui\imgui_internal.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\src\thirdparty\imgui\imstb_truetype.h" />
     <ClInclude Include="..\src\thirdparty\imgui\misc\fonts\forkawesome-webfont.h" />
-    <ClInclude Include="..\src\thirdparty\imgui\stb_rect_pack.h" />
-    <ClInclude Include="..\src\thirdparty\imgui\stb_textedit.h" />
-    <ClInclude Include="..\src\thirdparty\imgui\stb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\thirdparty\imgui\examples\imgui_impl_dx9.cpp" />
@@ -27,20 +27,19 @@
     <ClCompile Include="..\src\thirdparty\imgui\imgui.cpp" />
     <ClCompile Include="..\src\thirdparty\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\src\thirdparty\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\src\thirdparty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\src\thirdparty\imgui\misc\fonts\forkawesome-webfont.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\src\thirdparty\imgui\CHANGELOG.txt" />
     <Text Include="..\src\thirdparty\imgui\LICENSE.txt" />
     <Text Include="..\src\thirdparty\imgui\misc\fonts\README.txt" />
     <Text Include="..\src\thirdparty\imgui\misc\natvis\README.txt" />
-    <Text Include="..\src\thirdparty\imgui\TODO.txt" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\src\thirdparty\imgui\misc\natvis\imgui.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\thirdparty\imgui\README.md" />
+    <None Include="..\src\thirdparty\imgui\docs\README.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

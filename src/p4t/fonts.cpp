@@ -24,9 +24,6 @@ BB_WARNING_POP
 struct fontBuilder {
 	bool useFreeType;
 	bool rebuild;
-	u8 pad[2];
-	float multiply;
-	unsigned int flags;
 
 	fontBuilder()
 	{
@@ -36,8 +33,6 @@ struct fontBuilder {
 		useFreeType = false;
 #endif // #else // #if BB_USING(FEATURE_FREETYPE)
 		rebuild = true;
-		multiply = 1.0f;
-		flags = 0;
 	}
 
 	// Call _BEFORE_ NewFrame()
@@ -46,15 +41,9 @@ struct fontBuilder {
 		if(!rebuild)
 			return false;
 		ImGuiIO &io = ImGui::GetIO();
-		for(int n = 0; n < io.Fonts->Fonts.Size; n++) {
-			if(io.Fonts->Fonts[n]->ConfigData) {
-				io.Fonts->Fonts[n]->ConfigData->RasterizerMultiply = multiply;
-				io.Fonts->Fonts[n]->ConfigData->RasterizerFlags = (useFreeType) ? flags : 0x00;
-			}
-		}
 #if BB_USING(FEATURE_FREETYPE)
 		if(useFreeType) {
-			ImGuiFreeType::BuildFontAtlas(io.Fonts, flags);
+			ImGuiFreeType::BuildFontAtlas(io.Fonts, 0);
 		} else
 #endif // #if BB_USING(FEATURE_FREETYPE)
 		{
@@ -63,28 +52,6 @@ struct fontBuilder {
 		rebuild = false;
 		return true;
 	}
-
-#if 0
-	void ShowFreetypeOptionsWindow()
-	{
-		ImGui::Begin("FreeType Options");
-		ImGui::ShowFontSelector("Fonts");
-		WantRebuild |= ImGui::RadioButton("FreeType", (int *)&BuildMode, FontBuildMode_FreeType);
-		ImGui::SameLine();
-		WantRebuild |= ImGui::RadioButton("Stb (Default)", (int *)&BuildMode, FontBuildMode_Stb);
-		WantRebuild |= ImGui::DragFloat("Multiply", &FontsMultiply, 0.001f, 0.0f, 2.0f);
-		if(BuildMode == FontBuildMode_FreeType) {
-			WantRebuild |= ImGui::CheckboxFlags("NoHinting", &FontsFlags, ImGuiFreeType::NoHinting);
-			WantRebuild |= ImGui::CheckboxFlags("NoAutoHint", &FontsFlags, ImGuiFreeType::NoAutoHint);
-			WantRebuild |= ImGui::CheckboxFlags("ForceAutoHint", &FontsFlags, ImGuiFreeType::ForceAutoHint);
-			WantRebuild |= ImGui::CheckboxFlags("LightHinting", &FontsFlags, ImGuiFreeType::LightHinting);
-			WantRebuild |= ImGui::CheckboxFlags("MonoHinting", &FontsFlags, ImGuiFreeType::MonoHinting);
-			WantRebuild |= ImGui::CheckboxFlags("Bold", &FontsFlags, ImGuiFreeType::Bold);
-			WantRebuild |= ImGui::CheckboxFlags("Oblique", &FontsFlags, ImGuiFreeType::Oblique);
-		}
-		ImGui::End();
-	}
-#endif
 };
 
 static fontBuilder s_fonts;
