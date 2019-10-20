@@ -1,3 +1,0 @@
-#include "win32_resource.h"
-IDI_ICON_P4_GREEN ICON "p4t_green.ico"
-IDI_ICON_P4_RED ICON "p4t_red.ico"

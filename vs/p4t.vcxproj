@@ -12,9 +12,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{30E52D92-D0BF-4857-9CF6-BEE209F788CE}</ProjectGuid>
+    <ProjectGuid>{71C1ADC0-7DA3-4878-A078-0E98DE5947E6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>bb</RootNamespace>
+    <RootNamespace>p4t</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -22,7 +22,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
-    <OutDir>..\windows\</OutDir>
+    <OutDir>..\bin\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\obj\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -47,22 +47,21 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)_d</TargetName>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>EnableAllWarnings</WarningLevel>
-      <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <MinimalRebuild>false</MinimalRebuild>
-      <AdditionalIncludeDirectories>..\src\;..\..\bb\src\;..\..\bb\src\common\</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <Link>
@@ -70,152 +69,100 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Shcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PreBuildEvent>
-      <Command>$(ProjectDir)..\obj\$(PlatformToolset)\p4t_preproc\$(Platform)\$(Configuration)\p4t_preproc.exe</Command>
-    </PreBuildEvent>
-    <PreBuildEvent>
-      <Message>Running p4t_preproc</Message>
-    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>EnableAllWarnings</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>true</TreatWarningAsError>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>..\src\;..\..\bb\src\;..\..\bb\src\common\</AdditionalIncludeDirectories>
-      <ExceptionHandling>false</ExceptionHandling>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Shcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PreBuildEvent>
-      <Command>$(ProjectDir)..\obj\$(PlatformToolset)\p4t_preproc\$(Platform)\$(Configuration)\p4t_preproc.exe</Command>
-    </PreBuildEvent>
-    <PreBuildEvent>
-      <Message>Running p4t_preproc</Message>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\p4t\app.h" />
-    <ClInclude Include="..\src\p4t\config.h" />
-    <ClInclude Include="..\src\p4t\fonts.h" />
-    <ClInclude Include="..\src\p4t\fonts_generated.h" />
-    <ClInclude Include="..\src\p4t\imgui_themes.h" />
-    <ClInclude Include="..\src\p4t\imgui_utils.h" />
-    <ClInclude Include="..\src\p4t\json_generated.h" />
-    <ClInclude Include="..\src\p4t\keys.h" />
-    <ClInclude Include="..\src\p4t\message_box.h" />
-    <ClInclude Include="..\src\p4t\p4.h" />
-    <ClInclude Include="..\src\p4t\p4_task.h" />
-    <ClInclude Include="..\src\p4t\py_parser.h" />
-    <ClInclude Include="..\src\p4t\structs_generated.h" />
-    <ClInclude Include="..\src\p4t\task_describe_changelist.h" />
-    <ClInclude Include="..\src\p4t\task_diff_file.h" />
-    <ClInclude Include="..\src\p4t\thread_task.h" />
-    <ClInclude Include="..\src\p4t\ui_changelist.h" />
-    <ClInclude Include="..\src\p4t\ui_changeset.h" />
-    <ClInclude Include="..\src\p4t\ui_clientspec.h" />
-    <ClInclude Include="..\src\p4t\ui_config.h" />
-    <ClInclude Include="..\src\p4t\ui_icons.h" />
-    <ClInclude Include="..\src\p4t\ui_message_box.h" />
-    <ClInclude Include="..\src\p4t\ui_output.h" />
-    <ClInclude Include="..\src\p4t\ui_tabs.h" />
-    <ClInclude Include="..\src\p4t\wrap_imgui.h" />
-    <ClInclude Include="..\src\p4t\wrap_shellscalingapi.h" />
-    <ClInclude Include="..\src\thirdparty\parson\parson.h" />
+    <ClInclude Include="..\src\config.h" />
+    <ClInclude Include="..\src\p4.h" />
+    <ClInclude Include="..\src\p4t_json_generated.h" />
+    <ClInclude Include="..\src\p4t_structs_generated.h" />
+    <ClInclude Include="..\src\p4t_update.h" />
+    <ClInclude Include="..\src\p4_task.h" />
+    <ClInclude Include="..\src\task_describe_changelist.h" />
+    <ClInclude Include="..\src\task_diff_file.h" />
+    <ClInclude Include="..\src\ui_changelist.h" />
+    <ClInclude Include="..\src\ui_changeset.h" />
+    <ClInclude Include="..\src\ui_clientspec.h" />
+    <ClInclude Include="..\src\ui_config.h" />
+    <ClInclude Include="..\src\ui_icons.h" />
+    <ClInclude Include="..\src\ui_output.h" />
+    <ClInclude Include="..\src\ui_tabs.h" />
+    <ClInclude Include="..\src\win32_resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\.gitignore" />
-    <None Include="..\.p4ignore" />
-    <None Include="..\README.md" />
-    <None Include="..\src\thirdparty\imgui\LICENSE" />
-    <None Include="..\src\thirdparty\imgui\README.md" />
-    <None Include="..\src\thirdparty\parson\LICENSE" />
-    <None Include="..\src\thirdparty\parson\README.md" />
-    <None Include="C:\Users\Matt\AppData\Local\p4t\p4t_preferences.json" />
+    <ClCompile Include="..\src\config.c" />
+    <ClCompile Include="..\src\p4.c" />
+    <ClCompile Include="..\src\p4t_json_generated.c" />
+    <ClCompile Include="..\src\p4t_main.cpp" />
+    <ClCompile Include="..\src\p4t_structs_generated.c" />
+    <ClCompile Include="..\src\p4t_update.cpp" />
+    <ClCompile Include="..\src\p4_task.c" />
+    <ClCompile Include="..\src\task_describe_changelist.c" />
+    <ClCompile Include="..\src\task_diff_file.c" />
+    <ClCompile Include="..\src\ui_changelist.cpp" />
+    <ClCompile Include="..\src\ui_changeset.cpp" />
+    <ClCompile Include="..\src\ui_clientspec.cpp" />
+    <ClCompile Include="..\src\ui_config.cpp" />
+    <ClCompile Include="..\src\ui_icons.cpp" />
+    <ClCompile Include="..\src\ui_output.cpp" />
+    <ClCompile Include="..\src\ui_tabs.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\p4t\app.cpp" />
-    <ClCompile Include="..\src\p4t\config.c" />
-    <ClCompile Include="..\src\p4t\fonts.cpp" />
-    <ClCompile Include="..\src\p4t\imgui_themes.cpp" />
-    <ClCompile Include="..\src\p4t\imgui_utils.cpp" />
-    <ClCompile Include="..\src\p4t\json_generated.c" />
-    <ClCompile Include="..\src\p4t\keys.c" />
-    <ClCompile Include="..\src\p4t\main.cpp" />
-    <ClCompile Include="..\src\p4t\message_box.c" />
-    <ClCompile Include="..\src\p4t\p4.c" />
-    <ClCompile Include="..\src\p4t\p4_task.c" />
-    <ClCompile Include="..\src\p4t\py_parser.c" />
-    <ClCompile Include="..\src\p4t\structs_generated.c" />
-    <ClCompile Include="..\src\p4t\task_describe_changelist.c" />
-    <ClCompile Include="..\src\p4t\task_diff_file.c" />
-    <ClCompile Include="..\src\p4t\thread_task.c" />
-    <ClCompile Include="..\src\p4t\ui_changelist.cpp" />
-    <ClCompile Include="..\src\p4t\ui_changeset.cpp" />
-    <ClCompile Include="..\src\p4t\ui_clientspec.cpp" />
-    <ClCompile Include="..\src\p4t\ui_config.cpp" />
-    <ClCompile Include="..\src\p4t\ui_icons.cpp" />
-    <ClCompile Include="..\src\p4t\ui_message_box.cpp" />
-    <ClCompile Include="..\src\p4t\ui_output.cpp" />
-    <ClCompile Include="..\src\p4t\ui_tabs.cpp" />
-    <ClCompile Include="..\src\thirdparty\parson\parson.c">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Level3</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level3</WarningLevel>
-    </ClCompile>
+    <ResourceCompile Include="..\src\win32_resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\src\p4t\win32_resource.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\src\p4t\p4t.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="imgui_lib.vcxproj">
-      <Project>{B7C212E2-07F8-4CD1-9D51-26F1D106AC90}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\bb\vs\bbcommon_lib.vcxproj">
-      <Project>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\notes.txt" />
-    <Text Include="..\todo.txt" />
+    <Image Include="..\src\p4t_green.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <Import Project="..\..\bb\vs\bbclient_internals.props" />
+  <Import Project="..\..\mc_imgui\vs\mc_imgui_lib.props" />
+  <Import Project="..\..\mc_imgui\submodules\mc_common\vs\mc_common_lib.props" />
+  <Import Project="..\..\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj">
+      <Project>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\mc_imgui\vs\mc_imgui_lib.vcxproj">
+      <Project>{66884295-0814-45d5-8187-0ff01a6c0333}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\p4t_preproc.json" />
+  </ItemGroup>
   <ItemDefinitionGroup>
+    <PreBuildEvent>
+      <Command>..\..\mc_imgui\submodules\mc_common\bin\$(PlatformToolset)\mc_common_preproc\$(Platform)\$(Configuration)\mc_common_preproc.exe -config=..\p4t_preproc.json
+if not exist "$(OutDir)freetype.dll" copy ..\..\mc_imgui\submodules\freetype\win64\freetype.dll "$(OutDir)"</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\mc_imgui\submodules\freetype\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(BBClientPropsDir)..\src\client;$(ProjectDir)..\src\thirdparty\imgui;$(ProjectDir)..\src\thirdparty\freetype\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5045</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5045</DisableSpecificWarnings>
     </ClCompile>
-    <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy $(OutDir)$(TargetName).exe $(OutDir)p4cl_d.exe
-copy $(OutDir)$(TargetName).pdb $(OutDir)p4cl_d.pdb</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy $(OutDir)$(TargetName).exe $(OutDir)p4cl.exe
-copy $(OutDir)$(TargetName).pdb $(OutDir)p4cl.pdb</Command>
-    </PostBuildEvent>
-    <Link>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)..\src\thirdparty\freetype\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <Link>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)..\src\thirdparty\freetype\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
   </ItemDefinitionGroup>
 </Project>

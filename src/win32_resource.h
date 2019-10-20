@@ -1,0 +1,2 @@
+#define IDI_ICON_P4_GREEN 101
+#define IDI_ICON_P4_RED 102

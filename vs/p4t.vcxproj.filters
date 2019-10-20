@@ -1,223 +1,132 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\src\p4t\main.cpp">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\p4.c">
+      <Filter>p4</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\app.cpp">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\p4_task.c">
+      <Filter>p4</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\config.c">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\p4t_json_generated.c">
+      <Filter>generated</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\imgui_utils.cpp">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\p4t_structs_generated.c">
+      <Filter>generated</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\keys.c">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\p4t_update.cpp">
+      <Filter>misc</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\thirdparty\parson\parson.c">
-      <Filter>ThirdParty\Parson</Filter>
+    <ClCompile Include="..\src\p4t_main.cpp">
+      <Filter>misc</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\json_generated.c">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\task_diff_file.c">
+      <Filter>p4</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\p4.c">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\task_describe_changelist.c">
+      <Filter>p4</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\ui_output.cpp">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\ui_changeset.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\py_parser.c">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\ui_clientspec.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\ui_changelist.cpp">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\ui_changelist.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\p4_task.c">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\config.c">
+      <Filter>misc</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\message_box.c">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\ui_icons.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\ui_message_box.cpp">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\ui_tabs.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\task_describe_changelist.c">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\ui_output.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\p4t\task_diff_file.c">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p4t\ui_config.cpp">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p4t\ui_clientspec.cpp">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p4t\ui_changeset.cpp">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p4t\ui_tabs.cpp">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p4t\ui_icons.cpp">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p4t\imgui_themes.cpp">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p4t\fonts.cpp">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p4t\thread_task.c">
-      <Filter>Source\p4t</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\p4t\structs_generated.c">
-      <Filter>Source\p4t</Filter>
+    <ClCompile Include="..\src\ui_config.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\p4t\wrap_imgui.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\p4.h">
+      <Filter>p4</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\app.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\p4_task.h">
+      <Filter>p4</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\config.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\p4t_json_generated.h">
+      <Filter>generated</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\imgui_utils.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\p4t_structs_generated.h">
+      <Filter>generated</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\keys.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\win32_resource.h">
+      <Filter>misc</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\wrap_shellscalingapi.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\p4t_update.h">
+      <Filter>misc</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\thirdparty\parson\parson.h">
-      <Filter>ThirdParty\Parson</Filter>
+    <ClInclude Include="..\src\task_diff_file.h">
+      <Filter>p4</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\json_generated.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\task_describe_changelist.h">
+      <Filter>p4</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\p4.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\ui_changeset.h">
+      <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\ui_output.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\ui_clientspec.h">
+      <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\py_parser.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\ui_changelist.h">
+      <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\ui_changelist.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\config.h">
+      <Filter>misc</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\p4_task.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\ui_icons.h">
+      <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\message_box.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\ui_tabs.h">
+      <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\ui_message_box.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\ui_output.h">
+      <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\p4t\task_describe_changelist.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\task_diff_file.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\ui_config.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\ui_clientspec.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\ui_changeset.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\ui_tabs.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\ui_icons.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\imgui_themes.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\fonts.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\fonts_generated.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\thread_task.h">
-      <Filter>Source\p4t</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\p4t\structs_generated.h">
-      <Filter>Source\p4t</Filter>
+    <ClInclude Include="..\src\ui_config.h">
+      <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\thirdparty\imgui\LICENSE">
-      <Filter>ThirdParty\ImGui</Filter>
-    </None>
-    <None Include="..\src\thirdparty\imgui\README.md">
-      <Filter>ThirdParty\ImGui</Filter>
-    </None>
-    <None Include="..\.gitignore">
-      <Filter>Config</Filter>
-    </None>
-    <None Include="..\.p4ignore">
-      <Filter>Config</Filter>
-    </None>
-    <None Include="..\README.md">
-      <Filter>Config</Filter>
-    </None>
-    <None Include="..\src\thirdparty\parson\LICENSE">
-      <Filter>ThirdParty\Parson</Filter>
-    </None>
-    <None Include="..\src\thirdparty\parson\README.md">
-      <Filter>ThirdParty\Parson</Filter>
-    </None>
-    <None Include="C:\Users\Matt\AppData\Local\p4t\p4t_preferences.json">
-      <Filter>Config</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="Config">
-      <UniqueIdentifier>{de621544-dd8a-442d-9d0b-86d9eb9b6ad1}</UniqueIdentifier>
+    <Filter Include="UI">
+      <UniqueIdentifier>{758a379d-e8b7-4030-b71b-f8d087ef0623}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source">
-      <UniqueIdentifier>{bdb5ed12-ef7b-4bf0-93ef-32ddc9b3d49a}</UniqueIdentifier>
+    <Filter Include="p4">
+      <UniqueIdentifier>{eeadedbd-d151-49c6-a938-029b2954a968}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\p4t">
-      <UniqueIdentifier>{3c93cae6-1614-4d91-94c9-d38bb1eb128a}</UniqueIdentifier>
+    <Filter Include="generated">
+      <UniqueIdentifier>{bac2b5c8-90b9-457e-bd2f-7165ee15e022}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ThirdParty">
-      <UniqueIdentifier>{bf1a8c57-7949-4216-8527-b8038f12505f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\ImGui">
-      <UniqueIdentifier>{8f7e618c-8e45-45cc-93a3-e5809aa2acf4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\Parson">
-      <UniqueIdentifier>{6174e9e3-43dd-4e35-a9b0-f0cc5e86b1ff}</UniqueIdentifier>
+    <Filter Include="misc">
+      <UniqueIdentifier>{f8073ffd-b497-40c1-b84d-26c48f79653d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\src\p4t\win32_resource.rc" />
+    <ResourceCompile Include="..\src\win32_resource.rc">
+      <Filter>misc</Filter>
+    </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\src\p4t\p4t.ico" />
+    <None Include="..\p4t_preproc.json">
+      <Filter>misc</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\todo.txt">
-      <Filter>Config</Filter>
-    </Text>
-    <Text Include="..\notes.txt">
-      <Filter>Config</Filter>
-    </Text>
+    <Image Include="..\src\p4t_green.ico">
+      <Filter>misc</Filter>
+    </Image>
   </ItemGroup>
 </Project>

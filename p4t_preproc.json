@@ -1,0 +1,18 @@
+{
+	"input": {
+		"sourceDirs": [
+			{ "dir": "src" }
+		],
+		"includeDirs": [
+			{ "dir": "../mc_imgui/submodules/mc_common/include" },
+			{ "dir": "../mc_imgui/submodules/mc_common/include/uuid_rfc4122", "base": "../mc_imgui/submodules/mc_common/include/" },
+			{ "dir": "../mc_imgui/include" }
+		]
+	},
+	"output": {
+		"prefix": "p4t_",
+		"sourceDir": "src",
+		"includeDir": "src",
+		"baseDir": "src"
+	}
+}

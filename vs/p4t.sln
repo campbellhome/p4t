@@ -3,40 +3,52 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "p4t", "p4t.vcxproj", "{30E52D92-D0BF-4857-9CF6-BEE209F788CE}"
-	ProjectSection(ProjectDependencies) = postProject
-		{01A852AC-56AD-4E41-88B1-BAF7A71783A2} = {01A852AC-56AD-4E41-88B1-BAF7A71783A2}
-		{B7C212E2-07F8-4CD1-9D51-26F1D106AC90} = {B7C212E2-07F8-4CD1-9D51-26F1D106AC90}
-		{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206} = {6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imgui_lib", "imgui_lib.vcxproj", "{B7C212E2-07F8-4CD1-9D51-26F1D106AC90}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "p4t_preproc", "p4t_preproc.vcxproj", "{01A852AC-56AD-4E41-88B1-BAF7A71783A2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "p4t", "p4t.vcxproj", "{71C1ADC0-7DA3-4878-A078-0E98DE5947E6}"
 	ProjectSection(ProjectDependencies) = postProject
 		{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206} = {6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}
+		{66884295-0814-45D5-8187-0FF01A6C0333} = {66884295-0814-45D5-8187-0FF01A6C0333}
+		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbcommon_lib", "..\..\bb\vs\bbcommon_lib.vcxproj", "{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_imgui_lib", "..\..\mc_imgui\vs\mc_imgui_lib.vcxproj", "{66884295-0814-45D5-8187-0FF01A6C0333}"
+	ProjectSection(ProjectDependencies) = postProject
+		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
+		{766B8754-81EE-4880-91CE-5DEAF459205F} = {766B8754-81EE-4880-91CE-5DEAF459205F}
+	EndProjectSection
 EndProject
-Global
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_preproc", "..\..\mc_imgui\submodules\mc_common\vs\mc_common_preproc.vcxproj", "{766B8754-81EE-4880-91CE-5DEAF459205F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_lib", "..\..\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.vcxproj", "{383FD59A-3CD9-4ECC-9395-6EE453A114FA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_lib", "..\..\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj", "{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}"
+	ProjectSection(ProjectDependencies) = postProject
+		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
+	EndProjectSection
+EndProject
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{30E52D92-D0BF-4857-9CF6-BEE209F788CE}.Debug|x64.ActiveCfg = Debug|x64
-		{30E52D92-D0BF-4857-9CF6-BEE209F788CE}.Debug|x64.Build.0 = Debug|x64
-		{30E52D92-D0BF-4857-9CF6-BEE209F788CE}.Release|x64.ActiveCfg = Release|x64
-		{30E52D92-D0BF-4857-9CF6-BEE209F788CE}.Release|x64.Build.0 = Release|x64
-		{B7C212E2-07F8-4CD1-9D51-26F1D106AC90}.Debug|x64.ActiveCfg = Debug|x64
-		{B7C212E2-07F8-4CD1-9D51-26F1D106AC90}.Debug|x64.Build.0 = Debug|x64
-		{B7C212E2-07F8-4CD1-9D51-26F1D106AC90}.Release|x64.ActiveCfg = Release|x64
-		{B7C212E2-07F8-4CD1-9D51-26F1D106AC90}.Release|x64.Build.0 = Release|x64
-		{01A852AC-56AD-4E41-88B1-BAF7A71783A2}.Debug|x64.ActiveCfg = Debug|x64
-		{01A852AC-56AD-4E41-88B1-BAF7A71783A2}.Debug|x64.Build.0 = Debug|x64
-		{01A852AC-56AD-4E41-88B1-BAF7A71783A2}.Release|x64.ActiveCfg = Release|x64
-		{01A852AC-56AD-4E41-88B1-BAF7A71783A2}.Release|x64.Build.0 = Release|x64
+		{71C1ADC0-7DA3-4878-A078-0E98DE5947E6}.Debug|x64.ActiveCfg = Debug|x64
+		{71C1ADC0-7DA3-4878-A078-0E98DE5947E6}.Debug|x64.Build.0 = Debug|x64
+		{71C1ADC0-7DA3-4878-A078-0E98DE5947E6}.Release|x64.ActiveCfg = Release|x64
+		{71C1ADC0-7DA3-4878-A078-0E98DE5947E6}.Release|x64.Build.0 = Release|x64
+		{66884295-0814-45D5-8187-0FF01A6C0333}.Debug|x64.ActiveCfg = Debug|x64
+		{66884295-0814-45D5-8187-0FF01A6C0333}.Debug|x64.Build.0 = Debug|x64
+		{66884295-0814-45D5-8187-0FF01A6C0333}.Release|x64.ActiveCfg = Release|x64
+		{66884295-0814-45D5-8187-0FF01A6C0333}.Release|x64.Build.0 = Release|x64
+		{766B8754-81EE-4880-91CE-5DEAF459205F}.Debug|x64.ActiveCfg = Debug|x64
+		{766B8754-81EE-4880-91CE-5DEAF459205F}.Debug|x64.Build.0 = Debug|x64
+		{766B8754-81EE-4880-91CE-5DEAF459205F}.Release|x64.ActiveCfg = Release|x64
+		{766B8754-81EE-4880-91CE-5DEAF459205F}.Release|x64.Build.0 = Release|x64
+		{383FD59A-3CD9-4ECC-9395-6EE453A114FA}.Debug|x64.ActiveCfg = Debug|x64
+		{383FD59A-3CD9-4ECC-9395-6EE453A114FA}.Debug|x64.Build.0 = Debug|x64
+		{383FD59A-3CD9-4ECC-9395-6EE453A114FA}.Release|x64.ActiveCfg = Release|x64
+		{383FD59A-3CD9-4ECC-9395-6EE453A114FA}.Release|x64.Build.0 = Release|x64
 		{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}.Debug|x64.ActiveCfg = Debug|x64
 		{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}.Debug|x64.Build.0 = Debug|x64
 		{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}.Release|x64.ActiveCfg = Release|x64
