@@ -6,7 +6,6 @@
 #include "config.h"
 #include "crt_leak_check.h"
 #include "imgui_core.h"
-#include "ui_tabs.h"
 #include "output.h"
 #include "p4.h"
 #include "p4t_update.h"
@@ -33,9 +32,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	sb_append(&s_imguiPath, "\\p4t_imgui.ini");
 	ImGuiIO &io = ImGui::GetIO();
 	io.IniFilename = sb_get(&s_imguiPath);
-
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	io.ConfigFlags |= (ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable);
 
 	output_init();
 
@@ -50,6 +47,11 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 
 	WINDOWPLACEMENT wp = { BB_EMPTY_INITIALIZER };
 	if(Imgui_Core_InitWindow("p4t_wndclass", "p4t", LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_P4_GREEN)), wp)) {
+		if(g_config.bDocking) {
+			UITabs_SetRedockAll();
+		} else {
+			io.ConfigFlags &= ~(ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable);
+		}
 		while(!Imgui_Core_IsShuttingDown()) {
 			if(Imgui_Core_GetAndClearDirtyWindowPlacement()) {
 				// config_getwindowplacement();

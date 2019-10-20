@@ -115,6 +115,8 @@ AUTOJSON typedef struct config_s {
 	float doubleClickSeconds;
 	float dpiScale;
 	u32 activeTab;
+	b32 bDocking;
+	u8 pad[4];
 } config_t;
 
 enum { kConfigVersion = 1,

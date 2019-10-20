@@ -243,6 +243,10 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.doubleClickSeconds = (float)json_object_get_number(obj, "doubleClickSeconds");
 			dst.dpiScale = (float)json_object_get_number(obj, "dpiScale");
 			dst.activeTab = (u32)json_object_get_number(obj, "activeTab");
+			dst.bDocking = json_object_get_boolean_safe(obj, "bDocking");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
 		}
 	}
 	return dst;
@@ -440,6 +444,10 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_number(obj, "doubleClickSeconds", src->doubleClickSeconds);
 		json_object_set_number(obj, "dpiScale", src->dpiScale);
 		json_object_set_number(obj, "activeTab", src->activeTab);
+		json_object_set_boolean(obj, "bDocking", src->bDocking);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
 	}
 	return val;
 }

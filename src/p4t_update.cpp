@@ -6,6 +6,7 @@
 #include "crt_leak_check.h"
 #include "fonts.h"
 #include "imgui_core.h"
+#include "imgui_utils.h"
 #include "message_box.h"
 #include "p4.h"
 #include "tasks.h"
@@ -78,6 +79,16 @@ static void p4t_menubar(void)
 				ImGui::EndMenu();
 			}
 			Fonts_Menu();
+			if(ImGui::Checkbox("Docking", &g_config.bDocking)) {
+				ImGuiIO &io = ImGui::GetIO();
+				if(g_config.bDocking) {
+					io.ConfigFlags |= (ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable);
+				} else {
+					io.ConfigFlags &= ~(ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable);
+				}
+				config_write(&g_config);
+				UITabs_SetRedockAll();
+			}
 			UIChangeset_Menu();
 			if(ImGui::BeginMenu("Imgui Help")) {
 				ImGui::MenuItem("Demo", nullptr, &s_showImguiDemo);
@@ -116,31 +127,41 @@ void p4t_update(void)
 		ImGui::ShowStyleEditor();
 	}
 
-	float startY = ImGui::GetFrameHeight();
 	ImGuiIO &io = ImGui::GetIO();
-	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiCond_Always);
-	ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiCond_Always);
-	bool open = true;
 	ImGuiStyle &style = ImGui::GetStyle();
-	float oldWindowRounding = style.WindowRounding;
-	style.WindowRounding = 0.0f;
-	if(ImGui::Begin("mainwindow", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
-		if(UIConfig_IsOpen()) {
-			UIConfig_Update(&g_config);
-		} else {
-			UITabs_Update();
+	float startY = ImGui::GetFrameHeight();
+	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiCond_Always);
+	if((ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) == 0) {
+		ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiCond_Always);
+		bool open = true;
+		float oldWindowRounding = style.WindowRounding;
+		style.WindowRounding = 0.0f;
+		if(ImGui::Begin("mainwindow", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
+			if(UIConfig_IsOpen()) {
+				UIConfig_Update(&g_config);
+			} else {
+				UITabs_Update();
 
-			if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
-				p4UIChangelist *uicl = p4_add_uichangelist();
-				if(uicl) {
-					UITabs_AddTab(kTabType_Changelist, uicl->id);
-					UIChangelist_EnterChangelist(uicl);
+				if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
+					p4UIChangelist *uicl = p4_add_uichangelist();
+					if(uicl) {
+						UITabs_AddTab(kTabType_Changelist, uicl->id);
+						UIChangelist_EnterChangelist(uicl);
+					}
 				}
 			}
 		}
+		ImGui::End();
+		style.WindowRounding = oldWindowRounding;
+	} else {
+		bool open = true;
+		ImVec2 ViewportPos = ImGui::GetWindowViewport()->Pos;
+		ImGui::SetNextWindowPos(ImVec2(ViewportPos.x, ViewportPos.y + startY), ImGuiCond_Always);
+		if(ImGui::Begin("mainwindow", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
+			UITabs_Update();
+		}
+		ImGui::End();
 	}
-	ImGui::End();
-	style.WindowRounding = oldWindowRounding;
 
 	UIOutput_Update();
 }

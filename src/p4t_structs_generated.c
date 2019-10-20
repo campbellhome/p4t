@@ -286,6 +286,10 @@ config_t config_clone(const config_t *src)
 		dst.doubleClickSeconds = src->doubleClickSeconds;
 		dst.dpiScale = src->dpiScale;
 		dst.activeTab = src->activeTab;
+		dst.bDocking = src->bDocking;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
 	}
 	return dst;
 }
