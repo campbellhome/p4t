@@ -46,56 +46,56 @@ static void p4t_menubar(void)
 				BB_LOG("UI::Menu::Config", "UIConfig_Open");
 				UIConfig_Open(&g_config);
 			}
-			ImGui::EndMenu();
-		}
-		if(ImGui::BeginMenu("Debug")) {
-			if(ImGui::BeginMenu("Color schemes")) {
-				const char *colorscheme = Imgui_Core_GetColorScheme();
-				for(int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i) {
-					bool bSelected = !strcmp(colorscheme, s_colorschemes[i]);
-					if(ImGui::MenuItem(s_colorschemes[i], nullptr, &bSelected)) {
-						Imgui_Core_SetColorScheme(s_colorschemes[i]);
+			if(ImGui::BeginMenu("Debug")) {
+				if(ImGui::BeginMenu("Color schemes")) {
+					const char *colorscheme = Imgui_Core_GetColorScheme();
+					for(int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i) {
+						bool bSelected = !strcmp(colorscheme, s_colorschemes[i]);
+						if(ImGui::MenuItem(s_colorschemes[i], nullptr, &bSelected)) {
+							Imgui_Core_SetColorScheme(s_colorschemes[i]);
+						}
 					}
+					ImGui::EndMenu();
 				}
-				ImGui::EndMenu();
-			}
-			if(ImGui::BeginMenu("DEBUG Scale")) {
-				float dpiScale = Imgui_Core_GetDpiScale();
-				if(ImGui::MenuItem("1", nullptr, dpiScale == 1.0f)) {
-					Imgui_Core_SetDpiScale(1.0f);
+				if(ImGui::BeginMenu("DEBUG Scale")) {
+					float dpiScale = Imgui_Core_GetDpiScale();
+					if(ImGui::MenuItem("1", nullptr, dpiScale == 1.0f)) {
+						Imgui_Core_SetDpiScale(1.0f);
+					}
+					if(ImGui::MenuItem("1.25", nullptr, dpiScale == 1.25f)) {
+						Imgui_Core_SetDpiScale(1.25f);
+					}
+					if(ImGui::MenuItem("1.5", nullptr, dpiScale == 1.5f)) {
+						Imgui_Core_SetDpiScale(1.5f);
+					}
+					if(ImGui::MenuItem("1.75", nullptr, dpiScale == 1.75f)) {
+						Imgui_Core_SetDpiScale(1.75f);
+					}
+					if(ImGui::MenuItem("2", nullptr, dpiScale == 2.0f)) {
+						Imgui_Core_SetDpiScale(2.0f);
+					}
+					ImGui::EndMenu();
 				}
-				if(ImGui::MenuItem("1.25", nullptr, dpiScale == 1.25f)) {
-					Imgui_Core_SetDpiScale(1.25f);
+				Fonts_Menu();
+				if(ImGui::Checkbox("Docking", &g_config.bDocking)) {
+					ImGuiIO &io = ImGui::GetIO();
+					if(g_config.bDocking) {
+						io.ConfigFlags |= (ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable);
+					} else {
+						io.ConfigFlags &= ~(ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable);
+					}
+					config_write(&g_config);
+					UITabs_SetRedockAll();
 				}
-				if(ImGui::MenuItem("1.5", nullptr, dpiScale == 1.5f)) {
-					Imgui_Core_SetDpiScale(1.5f);
+				UIChangeset_Menu();
+				if(ImGui::BeginMenu("Imgui Help")) {
+					ImGui::MenuItem("Demo", nullptr, &s_showImguiDemo);
+					ImGui::MenuItem("About", nullptr, &s_showImguiAbout);
+					ImGui::MenuItem("Metrics", nullptr, &s_showImguiMetrics);
+					ImGui::MenuItem("User Guide", nullptr, &s_showImguiUserGuide);
+					ImGui::MenuItem("Style Editor", nullptr, &s_showImguiStyleEditor);
+					ImGui::EndMenu();
 				}
-				if(ImGui::MenuItem("1.75", nullptr, dpiScale == 1.75f)) {
-					Imgui_Core_SetDpiScale(1.75f);
-				}
-				if(ImGui::MenuItem("2", nullptr, dpiScale == 2.0f)) {
-					Imgui_Core_SetDpiScale(2.0f);
-				}
-				ImGui::EndMenu();
-			}
-			Fonts_Menu();
-			if(ImGui::Checkbox("Docking", &g_config.bDocking)) {
-				ImGuiIO &io = ImGui::GetIO();
-				if(g_config.bDocking) {
-					io.ConfigFlags |= (ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable);
-				} else {
-					io.ConfigFlags &= ~(ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable);
-				}
-				config_write(&g_config);
-				UITabs_SetRedockAll();
-			}
-			UIChangeset_Menu();
-			if(ImGui::BeginMenu("Imgui Help")) {
-				ImGui::MenuItem("Demo", nullptr, &s_showImguiDemo);
-				ImGui::MenuItem("About", nullptr, &s_showImguiAbout);
-				ImGui::MenuItem("Metrics", nullptr, &s_showImguiMetrics);
-				ImGui::MenuItem("User Guide", nullptr, &s_showImguiUserGuide);
-				ImGui::MenuItem("Style Editor", nullptr, &s_showImguiStyleEditor);
 				ImGui::EndMenu();
 			}
 			ImGui::EndMenu();
