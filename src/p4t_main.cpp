@@ -4,6 +4,7 @@
 #include "app_update.h"
 #include "appdata.h"
 #include "bb.h"
+#include "bb_array.h"
 #include "cmdline.h"
 #include "config.h"
 #include "crt_leak_check.h"
@@ -25,6 +26,7 @@ static sb_t s_imguiPath;
 int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInstance*/, _In_ LPSTR CommandLine, _In_ int /*ShowCode*/)
 {
 	crt_leak_check_init();
+	//bba_set_logging(true, true);
 
 	cmdline_init_composite(CommandLine);
 
@@ -89,6 +91,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 		Imgui_Core_ShutdownWindow();
 	}
 
+	Update_Shutdown();
 	UITabs_SaveConfig();
 	p4_diff_shutdown();
 	UIChangelist_Shutdown();
