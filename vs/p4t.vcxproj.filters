@@ -49,6 +49,9 @@
     <ClCompile Include="..\src\ui_config.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\site_config.c">
+      <Filter>misc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\p4.h">
@@ -98,6 +101,9 @@
     </ClInclude>
     <ClInclude Include="..\src\ui_config.h">
       <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\site_config.h">
+      <Filter>misc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,8 +1,10 @@
 // Copyright (c) 2012-2019 Matt Campbell
 // MIT license (see License.txt)
 
+#include "app_update.h"
 #include "appdata.h"
 #include "bb.h"
+#include "cmdline.h"
 #include "config.h"
 #include "crt_leak_check.h"
 #include "imgui_core.h"
@@ -11,8 +13,10 @@
 #include "p4t_update.h"
 #include "process_utils.h"
 #include "sb.h"
+#include "site_config.h"
 #include "tasks.h"
 #include "ui_changelist.h"
+#include "ui_config.h"
 #include "ui_tabs.h"
 #include "win32_resource.h"
 
@@ -22,9 +26,30 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 {
 	crt_leak_check_init();
 
-	BB_INIT_WITH_FLAGS("p4t", kBBInitFlag_None);
+	cmdline_init_composite(CommandLine);
+
+	BB_INIT_WITH_FLAGS("p4t", (cmdline_find("-bb") > 0) ? kBBInitFlag_None : kBBInitFlag_NoDiscovery);
 	BB_THREAD_SET_NAME("main");
 	BB_LOG("Startup", "Arguments: %s", CommandLine);
+
+	site_config_init();
+	config_read(&g_config);
+
+	updateData updatedata = { BB_EMPTY_INITIALIZER };
+	updatedata.appName = "p4t";
+	updatedata.appName = "p4t.exe";
+	updatedata.windowClassname = "p4t_wndclass";
+	updatedata.resultDir = sb_get(&g_site_config.updates.updateResultDir);
+	updatedata.manifestDir = sb_get(&g_site_config.updates.updateManifestDir);
+	updatedata.waitForDebugger = g_config.updates.waitForDebugger;
+	updatedata.pauseAfterSuccess = g_config.updates.pauseAfterSuccess;
+	updatedata.pauseAfterFailure = g_config.updates.pauseAfterFailure;
+	updatedata.updateCheckMs = g_site_config.updates.updateCheckMs;
+	updatedata.showUpdateManagement = g_config.updates.showManagement;
+
+	if(!Update_Init(&updatedata)) {
+		return false;
+	}
 
 	Imgui_Core_Init(CommandLine);
 
@@ -36,7 +61,6 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 
 	output_init();
 
-	config_read(&g_config);
 	config_read_apptype(&g_apptypeConfig);
 
 	tasks_startup();
@@ -70,14 +94,16 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	UIChangelist_Shutdown();
 	p4_shutdown();
 	tasks_shutdown();
-	// #TODO: UIConfig_Reset();
+	UIConfig_Reset();
 	config_write(&g_config);
 	config_reset(&g_config);
 	config_write_apptype(&g_apptypeConfig);
 	UITabs_Reset();
 	output_shutdown();
+	site_config_shutdown();
 
 	Imgui_Core_Shutdown();
+	cmdline_shutdown();
 	sb_reset(&s_imguiPath);
 
 	BB_SHUTDOWN();

@@ -32,7 +32,10 @@ typedef struct tag_changelistConfig changelistConfig;
 typedef struct tag_changesetConfig changesetConfig;
 typedef struct tag_tabConfig tabConfig;
 typedef struct tag_tabsConfig tabsConfig;
+typedef struct tag_updatesConfig updatesConfig;
 typedef struct config_s config_t;
+typedef struct updateConfig_s updateConfig_t;
+typedef struct site_config_s site_config_t;
 
 
 sb_t json_deserialize_sb_t(JSON_Value *src);
@@ -54,7 +57,10 @@ changelistConfig json_deserialize_changelistConfig(JSON_Value *src);
 changesetConfig json_deserialize_changesetConfig(JSON_Value *src);
 tabConfig json_deserialize_tabConfig(JSON_Value *src);
 tabsConfig json_deserialize_tabsConfig(JSON_Value *src);
+updatesConfig json_deserialize_updatesConfig(JSON_Value *src);
 config_t json_deserialize_config_t(JSON_Value *src);
+updateConfig_t json_deserialize_updateConfig_t(JSON_Value *src);
+site_config_t json_deserialize_site_config_t(JSON_Value *src);
 
 JSON_Value *json_serialize_sb_t(const sb_t *src);
 JSON_Value *json_serialize_sbs_t(const sbs_t *src);
@@ -75,7 +81,10 @@ JSON_Value *json_serialize_changelistConfig(const changelistConfig *src);
 JSON_Value *json_serialize_changesetConfig(const changesetConfig *src);
 JSON_Value *json_serialize_tabConfig(const tabConfig *src);
 JSON_Value *json_serialize_tabsConfig(const tabsConfig *src);
+JSON_Value *json_serialize_updatesConfig(const updatesConfig *src);
 JSON_Value *json_serialize_config_t(const config_t *src);
+JSON_Value *json_serialize_updateConfig_t(const updateConfig_t *src);
+JSON_Value *json_serialize_site_config_t(const site_config_t *src);
 
 
 

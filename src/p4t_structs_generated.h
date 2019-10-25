@@ -32,7 +32,10 @@ typedef struct tag_changelistConfig changelistConfig;
 typedef struct tag_changesetConfig changesetConfig;
 typedef struct tag_tabConfig tabConfig;
 typedef struct tag_tabsConfig tabsConfig;
+typedef struct tag_updatesConfig updatesConfig;
 typedef struct config_s config_t;
+typedef struct updateConfig_s updateConfig_t;
+typedef struct site_config_s site_config_t;
 
 void sb_reset_from_loc(const char *file, int line, sb_t *val);
 void sbs_reset_from_loc(const char *file, int line, sbs_t *val);
@@ -53,7 +56,10 @@ void changelistConfig_reset(changelistConfig *val);
 void changesetConfig_reset(changesetConfig *val);
 void tabConfig_reset(tabConfig *val);
 void tabsConfig_reset(tabsConfig *val);
+void updatesConfig_reset(updatesConfig *val);
 void config_reset(config_t *val);
+void updateConfig_reset(updateConfig_t *val);
+void site_config_reset(site_config_t *val);
 
 sb_t sb_clone_from_loc(const char *file, int line, const sb_t *src);
 sbs_t sbs_clone_from_loc(const char *file, int line, const sbs_t *src);
@@ -74,7 +80,10 @@ changelistConfig changelistConfig_clone(const changelistConfig *src);
 changesetConfig changesetConfig_clone(const changesetConfig *src);
 tabConfig tabConfig_clone(const tabConfig *src);
 tabsConfig tabsConfig_clone(const tabsConfig *src);
+updatesConfig updatesConfig_clone(const updatesConfig *src);
 config_t config_clone(const config_t *src);
+updateConfig_t updateConfig_clone(const updateConfig_t *src);
+site_config_t site_config_clone(const site_config_t *src);
 
 #if defined(__cplusplus)
 } // extern "C"

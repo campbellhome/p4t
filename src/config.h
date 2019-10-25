@@ -12,8 +12,8 @@ extern "C" {
 #endif
 
 #include "bb.h"
-#include "sdict.h"
 #include "fonts.h"
+#include "sdict.h"
 
 // define the Windows structs for preproc
 #if 0
@@ -98,6 +98,13 @@ AUTOJSON typedef struct tag_tabsConfig {
 	tabConfig *data;
 } tabsConfig;
 
+AUTOJSON typedef struct tag_updatesConfig {
+	b32 waitForDebugger;
+	b32 pauseAfterSuccess;
+	b32 pauseAfterFailure;
+	b32 showManagement;
+} updatesConfig;
+
 AUTOJSON typedef struct config_s {
 	fontConfig_t logFontConfig;
 	fontConfig_t uiFontConfig;
@@ -105,6 +112,7 @@ AUTOJSON typedef struct config_s {
 	uiChangelistConfig uiChangelist;
 	uiChangesetConfig uiPendingChangesets;
 	uiChangesetConfig uiSubmittedChangesets;
+	updatesConfig updates;
 	u32 version;
 	diffConfig_t diff;
 	sb_t colorscheme;

@@ -14,6 +14,7 @@
 #include "fonts.h"
 #include "sb.h"
 #include "sdict.h"
+#include "site_config.h"
 #include "uuid_rfc4122/sysdep.h"
 
 #include <string.h>
@@ -252,6 +253,23 @@ tabsConfig tabsConfig_clone(const tabsConfig *src)
 	return dst;
 }
 
+void updatesConfig_reset(updatesConfig *val)
+{
+	if(val) {
+	}
+}
+updatesConfig updatesConfig_clone(const updatesConfig *src)
+{
+	updatesConfig dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.waitForDebugger = src->waitForDebugger;
+		dst.pauseAfterSuccess = src->pauseAfterSuccess;
+		dst.pauseAfterFailure = src->pauseAfterFailure;
+		dst.showManagement = src->showManagement;
+	}
+	return dst;
+}
+
 void config_reset(config_t *val)
 {
 	if(val) {
@@ -261,6 +279,7 @@ void config_reset(config_t *val)
 		uiChangelistConfig_reset(&val->uiChangelist);
 		uiChangesetConfig_reset(&val->uiPendingChangesets);
 		uiChangesetConfig_reset(&val->uiSubmittedChangesets);
+		updatesConfig_reset(&val->updates);
 		diffConfig_reset(&val->diff);
 		sb_reset(&val->colorscheme);
 		p4Config_reset(&val->p4);
@@ -276,6 +295,7 @@ config_t config_clone(const config_t *src)
 		dst.uiChangelist = uiChangelistConfig_clone(&src->uiChangelist);
 		dst.uiPendingChangesets = uiChangesetConfig_clone(&src->uiPendingChangesets);
 		dst.uiSubmittedChangesets = uiChangesetConfig_clone(&src->uiSubmittedChangesets);
+		dst.updates = updatesConfig_clone(&src->updates);
 		dst.version = src->version;
 		dst.diff = diffConfig_clone(&src->diff);
 		dst.colorscheme = sb_clone(&src->colorscheme);
@@ -287,6 +307,50 @@ config_t config_clone(const config_t *src)
 		dst.dpiScale = src->dpiScale;
 		dst.activeTab = src->activeTab;
 		dst.bDocking = src->bDocking;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
+	}
+	return dst;
+}
+
+void updateConfig_reset(updateConfig_t *val)
+{
+	if(val) {
+		sb_reset(&val->updateResultDir);
+		sb_reset(&val->updateManifestDir);
+	}
+}
+updateConfig_t updateConfig_clone(const updateConfig_t *src)
+{
+	updateConfig_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.updateResultDir = sb_clone(&src->updateResultDir);
+		dst.updateManifestDir = sb_clone(&src->updateManifestDir);
+		dst.updateCheckMs = src->updateCheckMs;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
+	}
+	return dst;
+}
+
+void site_config_reset(site_config_t *val)
+{
+	if(val) {
+		updateConfig_reset(&val->updates);
+		sb_reset(&val->bugAssignee);
+		sb_reset(&val->bugProject);
+	}
+}
+site_config_t site_config_clone(const site_config_t *src)
+{
+	site_config_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.updates = updateConfig_clone(&src->updates);
+		dst.bugAssignee = sb_clone(&src->bugAssignee);
+		dst.bugProject = sb_clone(&src->bugProject);
+		dst.bugPort = src->bugPort;
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
 			dst.pad[i] = src->pad[i];
 		}

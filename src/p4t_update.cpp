@@ -2,6 +2,8 @@
 // MIT license (see License.txt)
 
 #include "p4t_update.h"
+#include "app_update.h"
+#include "bb_string.h"
 #include "common.h"
 #include "crt_leak_check.h"
 #include "fonts.h"
@@ -17,6 +19,7 @@
 #include "ui_message_box.h"
 #include "ui_output.h"
 #include "ui_tabs.h"
+#include "va.h"
 
 static bool s_showImguiDemo;
 static bool s_showImguiAbout;
@@ -100,6 +103,7 @@ static void p4t_menubar(void)
 			}
 			ImGui::EndMenu();
 		}
+		Update_Menu();
 		UIClientspec_MenuBar();
 		ImGui::EndMainMenuBar();
 	}
@@ -110,6 +114,7 @@ void p4t_update(void)
 	tasks_tick();
 	p4_update();
 	p4t_menubar();
+	Update_Tick();
 
 	if(s_showImguiDemo) {
 		ImGui::ShowDemoWindow(&s_showImguiDemo);

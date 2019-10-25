@@ -14,6 +14,7 @@
 #include "fonts.h"
 #include "sb.h"
 #include "sdict.h"
+#include "site_config.h"
 #include "uuid_rfc4122/sysdep.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -220,6 +221,22 @@ tabsConfig json_deserialize_tabsConfig(JSON_Value *src)
 	return dst;
 }
 
+updatesConfig json_deserialize_updatesConfig(JSON_Value *src)
+{
+	updatesConfig dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.waitForDebugger = json_object_get_boolean_safe(obj, "waitForDebugger");
+			dst.pauseAfterSuccess = json_object_get_boolean_safe(obj, "pauseAfterSuccess");
+			dst.pauseAfterFailure = json_object_get_boolean_safe(obj, "pauseAfterFailure");
+			dst.showManagement = json_object_get_boolean_safe(obj, "showManagement");
+		}
+	}
+	return dst;
+}
+
 config_t json_deserialize_config_t(JSON_Value *src)
 {
 	config_t dst;
@@ -233,6 +250,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.uiChangelist = json_deserialize_uiChangelistConfig(json_object_get_value(obj, "uiChangelist"));
 			dst.uiPendingChangesets = json_deserialize_uiChangesetConfig(json_object_get_value(obj, "uiPendingChangesets"));
 			dst.uiSubmittedChangesets = json_deserialize_uiChangesetConfig(json_object_get_value(obj, "uiSubmittedChangesets"));
+			dst.updates = json_deserialize_updatesConfig(json_object_get_value(obj, "updates"));
 			dst.version = (u32)json_object_get_number(obj, "version");
 			dst.diff = json_deserialize_diffConfig_t(json_object_get_value(obj, "diff"));
 			dst.colorscheme = json_deserialize_sb_t(json_object_get_value(obj, "colorscheme"));
@@ -244,6 +262,43 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.dpiScale = (float)json_object_get_number(obj, "dpiScale");
 			dst.activeTab = (u32)json_object_get_number(obj, "activeTab");
 			dst.bDocking = json_object_get_boolean_safe(obj, "bDocking");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
+		}
+	}
+	return dst;
+}
+
+updateConfig_t json_deserialize_updateConfig_t(JSON_Value *src)
+{
+	updateConfig_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.updateResultDir = json_deserialize_sb_t(json_object_get_value(obj, "updateResultDir"));
+			dst.updateManifestDir = json_deserialize_sb_t(json_object_get_value(obj, "updateManifestDir"));
+			dst.updateCheckMs = (u32)json_object_get_number(obj, "updateCheckMs");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
+		}
+	}
+	return dst;
+}
+
+site_config_t json_deserialize_site_config_t(JSON_Value *src)
+{
+	site_config_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.updates = json_deserialize_updateConfig_t(json_object_get_value(obj, "updates"));
+			dst.bugAssignee = json_deserialize_sb_t(json_object_get_value(obj, "bugAssignee"));
+			dst.bugProject = json_deserialize_sb_t(json_object_get_value(obj, "bugProject"));
+			dst.bugPort = (u16)json_object_get_number(obj, "bugPort");
 			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
 				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
 			}
@@ -423,6 +478,19 @@ JSON_Value *json_serialize_tabsConfig(const tabsConfig *src)
 	return val;
 }
 
+JSON_Value *json_serialize_updatesConfig(const updatesConfig *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_boolean(obj, "waitForDebugger", src->waitForDebugger);
+		json_object_set_boolean(obj, "pauseAfterSuccess", src->pauseAfterSuccess);
+		json_object_set_boolean(obj, "pauseAfterFailure", src->pauseAfterFailure);
+		json_object_set_boolean(obj, "showManagement", src->showManagement);
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_config_t(const config_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -434,6 +502,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "uiChangelist", json_serialize_uiChangelistConfig(&src->uiChangelist));
 		json_object_set_value(obj, "uiPendingChangesets", json_serialize_uiChangesetConfig(&src->uiPendingChangesets));
 		json_object_set_value(obj, "uiSubmittedChangesets", json_serialize_uiChangesetConfig(&src->uiSubmittedChangesets));
+		json_object_set_value(obj, "updates", json_serialize_updatesConfig(&src->updates));
 		json_object_set_number(obj, "version", src->version);
 		json_object_set_value(obj, "diff", json_serialize_diffConfig_t(&src->diff));
 		json_object_set_value(obj, "colorscheme", json_serialize_sb_t(&src->colorscheme));
@@ -445,6 +514,37 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_number(obj, "dpiScale", src->dpiScale);
 		json_object_set_number(obj, "activeTab", src->activeTab);
 		json_object_set_boolean(obj, "bDocking", src->bDocking);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_updateConfig_t(const updateConfig_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "updateResultDir", json_serialize_sb_t(&src->updateResultDir));
+		json_object_set_value(obj, "updateManifestDir", json_serialize_sb_t(&src->updateManifestDir));
+		json_object_set_number(obj, "updateCheckMs", src->updateCheckMs);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_site_config_t(const site_config_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "updates", json_serialize_updateConfig_t(&src->updates));
+		json_object_set_value(obj, "bugAssignee", json_serialize_sb_t(&src->bugAssignee));
+		json_object_set_value(obj, "bugProject", json_serialize_sb_t(&src->bugProject));
+		json_object_set_number(obj, "bugPort", src->bugPort);
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
 			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
 		}
