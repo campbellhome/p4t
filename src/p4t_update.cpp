@@ -101,9 +101,9 @@ static void p4t_menubar(void)
 				}
 				ImGui::EndMenu();
 			}
+			Update_Menu();
 			ImGui::EndMenu();
 		}
-		Update_Menu();
 		UIClientspec_MenuBar();
 		ImGui::EndMainMenuBar();
 	}
