@@ -39,7 +39,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 
 	updateData updatedata = { BB_EMPTY_INITIALIZER };
 	updatedata.appName = "p4t";
-	updatedata.appName = "p4t.exe";
+	updatedata.exeName = "p4t.exe";
 	updatedata.windowClassname = "p4t_wndclass";
 	updatedata.resultDir = sb_get(&g_site_config.updates.updateResultDir);
 	updatedata.manifestDir = sb_get(&g_site_config.updates.updateManifestDir);
