@@ -163,7 +163,20 @@ void p4t_update(void)
 		ImVec2 ViewportPos = ImGui::GetWindowViewport()->Pos;
 		ImGui::SetNextWindowPos(ImVec2(ViewportPos.x, ViewportPos.y + startY), ImGuiCond_Always);
 		if(ImGui::Begin("mainwindow", &open, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove)) {
+			ImGuiID MainDockSpace = ImGui::GetID("MainDockSpace");
+			ImGui::DockSpace(MainDockSpace);
+			if(UIConfig_IsOpen()) {
+				ImGui::SetNextWindowDockID(MainDockSpace, ImGuiCond_FirstUseEver);
+				UIConfig_Update(&g_config);
+			}
 			UITabs_Update();
+		}
+		if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
+			p4UIChangelist *uicl = p4_add_uichangelist();
+			if(uicl) {
+				UITabs_AddTab(kTabType_Changelist, uicl->id);
+				UIChangelist_EnterChangelist(uicl);
+			}
 		}
 		ImGui::End();
 	}

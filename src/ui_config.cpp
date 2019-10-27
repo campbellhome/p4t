@@ -17,7 +17,7 @@ bool s_configNeedFocus;
 void UIConfig_Open(config_t *config)
 {
 	if(s_configValid) {
-		config_free(&s_config);
+		config_reset(&s_config);
 		s_configValid = false;
 	}
 
@@ -30,7 +30,7 @@ void UIConfig_Open(config_t *config)
 void UIConfig_Reset()
 {
 	if(s_configValid) {
-		config_free(&s_config);
+		config_reset(&s_config);
 		s_configOpen = false;
 		s_configValid = false;
 	}
@@ -62,8 +62,10 @@ void UIConfig_Update(config_t *config)
 {
 	float startY = ImGui::GetItemsLineHeightWithSpacing();
 	ImGuiIO &io = ImGui::GetIO();
-	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiCond_Always);
-	ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiCond_Always);
+	if((ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) == 0) {
+		ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiCond_Always);
+		ImGui::SetNextWindowPos(ImVec2(0, startY), ImGuiCond_Always);
+	}
 
 	if(ImGui::Begin("Configuration", &s_configOpen, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
 		if(ImGui::CollapsingHeader("Interface", ImGuiTreeNodeFlags_DefaultOpen)) {

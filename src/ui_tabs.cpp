@@ -279,13 +279,11 @@ void UITabs_Update(tabs *ts)
 		}
 	} else {
 
-		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-		ImGui::DockSpace(dockspace_id);
-
+		ImGuiID MainDockSpace = ImGui::GetID("MainDockSpace");
 		for(u32 i = 0; i < ts->count; ++i) {
 			tab *t = ts->data + i;
 			UITab_TitleData titleData = UITabs_Title(t);
-			ImGui::SetNextWindowDockID(dockspace_id, ts->bRedockAll ? ImGuiCond_Always : ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowDockID(MainDockSpace, ts->bRedockAll ? ImGuiCond_Always : ImGuiCond_FirstUseEver);
 			if(ImGui::Begin(va("%s##tab%u", titleData.title, t->id))) {
 				switch(t->type) {
 				case kTabType_Changelist: {
