@@ -122,6 +122,49 @@ void UITabs_LoadConfig(tabs *ts)
 	}
 }
 
+struct UITab_TitleData {
+	const char *title;
+	const char *icon;
+	ImColor color;
+};
+
+static UITab_TitleData UITabs_Title(tab *t)
+{
+	UITab_TitleData result = { BB_EMPTY_INITIALIZER };
+	switch(t->type) {
+	case kTabType_Changelist: {
+		p4UIChangelist *uicl = p4_find_uichangelist(t->id);
+		if(uicl) {
+			result.title = uicl->config.number ? va("Changelist %u", uicl->config.number) : "Changelist";
+			result.icon = ICON_CHANGELIST;
+			result.color = COLOR_PENDING_CHANGELIST_OTHER;
+			p4Changelist *cl = p4_find_changelist(uicl->config.number);
+			if(cl) {
+				b32 pending = !strcmp(sdict_find_safe(&cl->normal, "status"), "pending");
+				result.color = (pending) ? COLOR_PENDING_CHANGELIST_LOCAL : COLOR_SUBMITTED_CHANGELIST;
+			}
+			//result.title = va("%s%s ###changelist%u", UIIcons_GetIconSpaces(ICON_CHANGELIST), title, uicl->id);
+		}
+		break;
+	}
+	case kTabType_Changeset: {
+		p4UIChangeset *uics = p4_find_uichangeset(t->id);
+		if(uics) {
+			result.title = uics->config.pending ? "Pending Changelists" : "Submitted Changelists";
+			result.icon = ICON_CHANGELIST;
+			result.color = (uics->config.pending) ? COLOR_PENDING_CHANGELIST_LOCAL : COLOR_SUBMITTED_CHANGELIST;
+		}
+		break;
+	}
+	case kTabType_Count:
+		break;
+	}
+	if(!result.title) {
+		result.title = "untitled";
+	}
+	return result;
+}
+
 void UITabs_Update(tabs *ts)
 {
 	if(!ts) {
@@ -241,8 +284,9 @@ void UITabs_Update(tabs *ts)
 
 		for(u32 i = 0; i < ts->count; ++i) {
 			tab *t = ts->data + i;
+			UITab_TitleData titleData = UITabs_Title(t);
 			ImGui::SetNextWindowDockID(dockspace_id, ts->bRedockAll ? ImGuiCond_Always : ImGuiCond_FirstUseEver);
-			if(ImGui::Begin(va("tab%u", t->id))) {
+			if(ImGui::Begin(va("%s##tab%u", titleData.title, t->id))) {
 				switch(t->type) {
 				case kTabType_Changelist: {
 					p4UIChangelist *uicl = p4_find_uichangelist(t->id);
