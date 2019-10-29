@@ -17,8 +17,12 @@
 
 // warning C4820 : 'StructName' : '4' bytes padding added after data member 'MemberName'
 BB_WARNING_PUSH(4820)
+#include "appdata.h"
+#include "file_utils.h"
 #include <time.h>
 BB_WARNING_POP
+
+void OpenFileInExplorer(const char *path);
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -69,12 +73,22 @@ static void UIChangelist_DrawInformationColumn(sdict_t *cl, float fullWidth, cha
 	ImGui::EndGroup();
 }
 
-static void UIChangelist_Files_CopySelectedToClipboard(uiChangelistFiles *files, bool extraInfo)
+static u32 UIChangelist_Files_CountSelected(uiChangelistFiles *files)
 {
-	u32 i;
-	sb_t sb;
-	sb_init(&sb);
-	for(i = 0; i < files->count; ++i) {
+	u32 count = 0;
+	for(u32 i = 0; i < files->count; ++i) {
+		uiChangelistFile *file = files->data + i;
+		if(file->selected) {
+			++count;
+		}
+	}
+	return count;
+}
+
+static sb_t UIChangelist_Files_CopySelectedToBuffer(uiChangelistFiles *files, bool extraInfo)
+{
+	sb_t sb = { BB_EMPTY_INITIALIZER };
+	for(u32 i = 0; i < files->count; ++i) {
 		uiChangelistFile *file = files->data + i;
 		if(file->selected) {
 			if(extraInfo) {
@@ -84,8 +98,28 @@ static void UIChangelist_Files_CopySelectedToClipboard(uiChangelistFiles *files,
 			}
 		}
 	}
+	return sb;
+}
+
+static void UIChangelist_Files_CopySelectedToClipboard(uiChangelistFiles *files, bool extraInfo)
+{
+	sb_t sb = UIChangelist_Files_CopySelectedToBuffer(files, extraInfo);
 	const char *clipboardText = sb_get(&sb);
 	ImGui::SetClipboardText(clipboardText);
+	sb_reset(&sb);
+}
+
+static void UIChangelist_Files_CopySelectedToFile(uiChangelistFiles *files, bool extraInfo)
+{
+	sb_t sb = UIChangelist_Files_CopySelectedToBuffer(files, extraInfo);
+	fileData_t fileData = { BB_EMPTY_INITIALIZER };
+	fileData.buffer = (void *)sb_get(&sb);
+	fileData.bufferSize = sb_len(&sb);
+	sb_t tempPath = appdata_get("p4t");
+	sb_append(&tempPath, "\\p4t_selected_changesets.txt");
+	fileData_write(sb_get(&tempPath), NULL, fileData);
+	OpenFileInExplorer(sb_get(&tempPath));
+	sb_reset(&tempPath);
 	sb_reset(&sb);
 }
 
@@ -406,6 +440,15 @@ b32 UIChangelist_FileSelectable(p4Changelist *cl, p4ChangelistType cltype, uiCha
 			UIChangelist_Logs_AddSelection(files, index);
 		}
 
+		u32 selected = UIChangelist_Files_CountSelected(files);
+		if(ImGui::MenuItem(va("Copy %d %s to clipboard", selected, selected == 1 ? "path" : "paths"))) {
+			ImGuiIO &io = ImGui::GetIO();
+			UIChangelist_Files_CopySelectedToClipboard(files, io.KeyShift);
+		}
+		if(ImGui::MenuItem(va("Copy %d %s to file", selected, selected == 1 ? "path" : "paths"))) {
+			ImGuiIO &io = ImGui::GetIO();
+			UIChangelist_Files_CopySelectedToFile(files, io.KeyShift);
+		}
 		if(files->shelved || cltype != kChangelistType_PendingOther) {
 			if(ImGui::MenuItem("Diff against depot")) {
 				if(files->shelved) {

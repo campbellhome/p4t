@@ -2,8 +2,10 @@
 // MIT license (see License.txt)
 
 #include "ui_changeset.h"
+#include "appdata.h"
 #include "bb_array.h"
 #include "config.h"
+#include "file_utils.h"
 #include "filter.h"
 #include "imgui_utils.h"
 #include "keys.h"
@@ -49,12 +51,23 @@ static sb_t UIChangeset_SingleLineFromMultiline(const char *src)
 	return sb;
 }
 
-static void UIChangeset_CopySelectedToClipboard(p4UIChangeset *uics, p4Changeset *cs, ImGui::columnDrawData *data, bool /*extraInfo*/)
+static u32 UIChangeset_CountSelectedChangelists(p4UIChangeset *uics)
 {
-	u32 i;
-	sb_t sb;
-	sb_init(&sb);
-	for(i = 0; i < uics->sorted.count; ++i) {
+	u32 count = 0;
+	for(u32 i = 0; i < uics->sorted.count; ++i) {
+		p4UIChangesetSortKey *s = uics->sorted.data + i;
+		p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
+		if(e->selected) {
+			++count;
+		}
+	}
+	return count;
+}
+
+static sb_t UIChangeset_CopySelectedToBuffer(p4UIChangeset *uics, p4Changeset *cs, ImGui::columnDrawData *data, bool /*extraInfo*/)
+{
+	sb_t sb = { BB_EMPTY_INITIALIZER };
+	for(u32 i = 0; i < uics->sorted.count; ++i) {
 		p4UIChangesetSortKey *s = uics->sorted.data + i;
 		p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
 		if(e->selected) {
@@ -84,8 +97,48 @@ static void UIChangeset_CopySelectedToClipboard(p4UIChangeset *uics, p4Changeset
 			}
 		}
 	}
+	return sb;
+}
+
+static void UIChangeset_CopySelectedToClipboard(p4UIChangeset *uics, p4Changeset *cs, ImGui::columnDrawData *data, bool extraInfo)
+{
+	sb_t sb = UIChangeset_CopySelectedToBuffer(uics, cs, data, extraInfo);
 	const char *clipboardText = sb_get(&sb);
 	ImGui::SetClipboardText(clipboardText);
+	sb_reset(&sb);
+}
+
+// #TODO: move this
+void OpenFileInExplorer(const char *path)
+{
+	sb_t sb = sb_from_va("C:\\Windows\\explorer.exe \"%s\"", path);
+	STARTUPINFOA startupInfo;
+	memset(&startupInfo, 0, sizeof(startupInfo));
+	startupInfo.cb = sizeof(startupInfo);
+	PROCESS_INFORMATION procInfo;
+	memset(&procInfo, 0, sizeof(procInfo));
+	BOOL ret = CreateProcessA(nullptr, sb.data, nullptr, nullptr, FALSE, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &startupInfo, &procInfo);
+	if(!ret) {
+		BB_ERROR("View", "Failed to create process for '%s'", sb.data);
+	} else {
+		BB_LOG("View", "Created process for '%s'", sb.data);
+	}
+	CloseHandle(procInfo.hThread);
+	CloseHandle(procInfo.hProcess);
+	sb_reset(&sb);
+}
+
+static void UIChangeset_CopySelectedToFile(p4UIChangeset *uics, p4Changeset *cs, ImGui::columnDrawData *data, bool extraInfo)
+{
+	sb_t sb = UIChangeset_CopySelectedToBuffer(uics, cs, data, extraInfo);
+	fileData_t fileData = { BB_EMPTY_INITIALIZER };
+	fileData.buffer = (void *)sb_get(&sb);
+	fileData.bufferSize = sb_len(&sb);
+	sb_t tempPath = appdata_get("p4t");
+	sb_append(&tempPath, "\\p4t_selected_changesets.txt");
+	fileData_write(sb_get(&tempPath), NULL, fileData);
+	OpenFileInExplorer(sb_get(&tempPath));
+	sb_reset(&tempPath);
 	sb_reset(&sb);
 }
 
@@ -614,6 +667,26 @@ void UIChangeset_Update(p4UIChangeset *uics)
 					if(ImGui::IsItemClicked()) {
 						UIChangeset_HandleClick(uics, i);
 					}
+				}
+				if(ImGui::BeginContextMenu(va("context_%u_%d", uics->id, i))) {
+					BB_LOG("popup", "context_%u_%d", uics->id, i);
+					anyActive = true;
+					UIChangeset_AddSelection(uics, i);
+
+					u32 selected = UIChangeset_CountSelectedChangelists(uics);
+					if(ImGui::MenuItem(va("Copy %d %s to clipboard", selected, selected == 1 ? "changelist" : "changelists"))) {
+						ImGuiIO &io = ImGui::GetIO();
+						UIChangeset_CopySelectedToClipboard(uics, cs, &data, io.KeyShift);
+					}
+					if(ImGui::MenuItem(va("Copy %d %s to file", selected, selected == 1 ? "changelist" : "changelists"))) {
+						ImGuiIO &io = ImGui::GetIO();
+						UIChangeset_CopySelectedToFile(uics, cs, &data, io.KeyShift);
+					}
+					//if(ImGui::MenuItem(va("Diff %d %s against depot", selected, selected == 1 ? "changelist" : "changelists"))) {
+					//	UIChangelist_DiffSelected(cltype, files, cl);
+					//}
+
+					ImGui::EndContextMenu();
 				}
 
 				ImGui::SameLine();
