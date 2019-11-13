@@ -15,6 +15,7 @@
 #include "time_utils.h"
 #include "ui_changelist.h"
 #include "ui_icons.h"
+#include "ui_tabs.h"
 #include "va.h"
 
 const char *s_submittedColumnNames[] = {
@@ -201,6 +202,17 @@ static void UIChangeset_HandleClick(p4UIChangeset *uics, u32 index)
 	} else {
 		UIChangeset_ClearSelection(uics);
 		UIChangeset_AddSelection(uics, index);
+		if(io.MouseDoubleClicked[0]) {
+			p4UIChangesetSortKey *s = uics->sorted.data + index;
+			p4UIChangesetEntry *e = uics->entries.data + s->entryIndex;
+			p4UIChangelist *uicl = p4_add_uichangelist();
+			if(uicl) {
+				UITabs_AddTab(kTabType_Changelist, uicl->id);
+				uicl->config.number = e->changelistNumber;
+				uicl->displayed = 0;
+				p4_describe_changelist(uicl->config.number);
+			}
+		}
 	}
 }
 

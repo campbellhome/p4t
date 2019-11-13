@@ -13,6 +13,30 @@
 extern "C" {
 #endif
 
+struct sb_s;
+struct sbs_s;
+struct sdictEntry_s;
+struct sdict_s;
+struct uuid_node_s;
+struct fontConfig_s;
+struct fontConfigs_s;
+struct tagPOINT;
+struct tagRECT;
+struct tagWINDOWPLACEMENT;
+struct tag_uiChangelistConfig;
+struct tag_uiChangesetConfig;
+struct diffConfig_s;
+struct tag_appTypeConfig;
+struct tag_p4Config;
+struct tag_changelistConfig;
+struct tag_changesetConfig;
+struct tag_tabConfig;
+struct tag_tabsConfig;
+struct tag_updatesConfig;
+struct config_s;
+struct updateConfig_s;
+struct site_config_s;
+
 typedef struct sb_s sb_t;
 typedef struct sbs_s sbs_t;
 typedef struct sdictEntry_s sdictEntry_t;
@@ -61,29 +85,75 @@ void config_reset(config_t *val);
 void updateConfig_reset(updateConfig_t *val);
 void site_config_reset(site_config_t *val);
 
+#if !defined(__cplusplus) || defined(DECLARE_sb_clone)
 sb_t sb_clone_from_loc(const char *file, int line, const sb_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sbs_clone)
 sbs_t sbs_clone_from_loc(const char *file, int line, const sbs_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sdictEntry_clone)
 sdictEntry_t sdictEntry_clone(const sdictEntry_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sdict_clone)
 sdict_t sdict_clone(const sdict_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_uuid_node_clone)
 uuid_node_t uuid_node_clone(const uuid_node_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_fontConfig_clone)
 fontConfig_t fontConfig_clone(const fontConfig_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_fontConfigs_clone)
 fontConfigs_t fontConfigs_clone(const fontConfigs_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_POINT_clone)
 POINT POINT_clone(const POINT *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_RECT_clone)
 RECT RECT_clone(const RECT *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_WINDOWPLACEMENT_clone)
 WINDOWPLACEMENT WINDOWPLACEMENT_clone(const WINDOWPLACEMENT *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_uiChangelistConfig_clone)
 uiChangelistConfig uiChangelistConfig_clone(const uiChangelistConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_uiChangesetConfig_clone)
 uiChangesetConfig uiChangesetConfig_clone(const uiChangesetConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_diffConfig_clone)
 diffConfig_t diffConfig_clone(const diffConfig_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_appTypeConfig_clone)
 appTypeConfig appTypeConfig_clone(const appTypeConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_p4Config_clone)
 p4Config p4Config_clone(const p4Config *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_changelistConfig_clone)
 changelistConfig changelistConfig_clone(const changelistConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_changesetConfig_clone)
 changesetConfig changesetConfig_clone(const changesetConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_tabConfig_clone)
 tabConfig tabConfig_clone(const tabConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_tabsConfig_clone)
 tabsConfig tabsConfig_clone(const tabsConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_updatesConfig_clone)
 updatesConfig updatesConfig_clone(const updatesConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_config_clone)
 config_t config_clone(const config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_updateConfig_clone)
 updateConfig_t updateConfig_clone(const updateConfig_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_site_config_clone)
 site_config_t site_config_clone(const site_config_t *src);
+#endif
 
 #if defined(__cplusplus)
 } // extern "C"

@@ -13,6 +13,30 @@
 extern "C" {
 #endif
 
+struct sb_s;
+struct sbs_s;
+struct sdictEntry_s;
+struct sdict_s;
+struct uuid_node_s;
+struct fontConfig_s;
+struct fontConfigs_s;
+struct tagPOINT;
+struct tagRECT;
+struct tagWINDOWPLACEMENT;
+struct tag_uiChangelistConfig;
+struct tag_uiChangesetConfig;
+struct diffConfig_s;
+struct tag_appTypeConfig;
+struct tag_p4Config;
+struct tag_changelistConfig;
+struct tag_changesetConfig;
+struct tag_tabConfig;
+struct tag_tabsConfig;
+struct tag_updatesConfig;
+struct config_s;
+struct updateConfig_s;
+struct site_config_s;
+
 typedef struct sb_s sb_t;
 typedef struct sbs_s sbs_t;
 typedef struct sdictEntry_s sdictEntry_t;
