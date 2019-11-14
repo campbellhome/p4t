@@ -33,7 +33,7 @@ int main(int argc, const char **argv)
 #else
 		sb_append(&logPath, "/p4tupdater.bbox");
 #endif
-		path_mkdir(sb_get(&logPath));
+		path_mkdir(path_get_dir(sb_get(&logPath)));
 		path_resolve_inplace(&logPath);
 		bb_init_file(sb_get(&logPath));
 		sb_reset(&logPath);
@@ -46,6 +46,8 @@ int main(int argc, const char **argv)
 
 	bba_push(globals.contentsFilenames, "p4t.exe");
 	bba_push(globals.contentsFilenames, "p4t.pdb");
+	bba_push(globals.contentsFilenames, "p4tupdater.exe");
+	bba_push(globals.contentsFilenames, "p4tupdater.pdb");
 	bba_push(globals.contentsFilenames, "p4t_site_config.json");
 	bba_push(globals.contentsFilenames, "freetype.dll");
 
