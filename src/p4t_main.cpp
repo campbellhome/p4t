@@ -9,6 +9,7 @@
 #include "config.h"
 #include "crt_leak_check.h"
 #include "imgui_core.h"
+#include "message_box.h"
 #include "output.h"
 #include "p4.h"
 #include "p4t_update.h"
@@ -70,6 +71,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	p4_init();
 
 	UITabs_LoadConfig();
+	mb_get_queue()->modal = true;
 
 	WINDOWPLACEMENT wp = { BB_EMPTY_INITIALIZER };
 	if(Imgui_Core_InitWindow("p4t_wndclass", "p4t", LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON_P4_GREEN)), wp)) {

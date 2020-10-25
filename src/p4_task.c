@@ -18,7 +18,7 @@ static void mb_error_report(const char *title, const char *text)
 	sdict_add_raw(&mb.data, "title", title);
 	sdict_add_raw(&mb.data, "text", text);
 	sdict_add_raw(&mb.data, "button1", "ok");
-	mb_queue(mb);
+	mb_queue(mb, NULL);
 }
 
 void task_p4_tick(task *_t)

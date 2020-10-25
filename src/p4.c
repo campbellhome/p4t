@@ -47,7 +47,7 @@ const char *p4_dir(void)
 	if(root) {
 		return root;
 	} else {
-		return "C:\\";
+		return ".";
 	}
 }
 

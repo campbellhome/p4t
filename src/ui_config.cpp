@@ -60,7 +60,7 @@ void UIConfig_ApplyColorscheme(config_t *config)
 
 void UIConfig_Update(config_t *config)
 {
-	float startY = ImGui::GetItemsLineHeightWithSpacing();
+	float startY = ImGui::GetTextLineHeightWithSpacing();
 	ImGuiIO &io = ImGui::GetIO();
 	if((ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) == 0) {
 		ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - startY), ImGuiCond_Always);
@@ -97,7 +97,7 @@ void UIConfig_Update(config_t *config)
 			ImGui::PushID("UIFont");
 			ImGui::Checkbox("Custom UI Font", &s_config.uiFontConfig.enabled);
 			if(s_config.uiFontConfig.enabled) {
-				ImGui::AlignFirstTextHeightToWidgets();
+				ImGui::AlignTextToFramePadding();
 				ImGui::TextUnformatted("Font size:");
 				ImGui::SameLine();
 				int val = (int)s_config.uiFontConfig.size;
@@ -118,7 +118,7 @@ void UIConfig_Update(config_t *config)
 			ImGui::PushID("LogFont");
 			ImGui::Checkbox("Custom Log Font", &s_config.logFontConfig.enabled);
 			if(s_config.logFontConfig.enabled) {
-				ImGui::AlignFirstTextHeightToWidgets();
+				ImGui::AlignTextToFramePadding();
 				ImGui::TextUnformatted("Font size:");
 				ImGui::SameLine();
 				int val = (int)s_config.logFontConfig.size;
@@ -155,7 +155,7 @@ void UIConfig_Update(config_t *config)
 		}
 		if(ImGui::CollapsingHeader("Perforce", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::PushID("Perforce");
-			ImGui::AlignFirstTextHeightToWidgets();
+			ImGui::AlignTextToFramePadding();
 			ImGui::TextUnformatted("Changelists to fetch at a time:");
 			ImGui::SameLine();
 			int val = (int)s_config.p4.changelistBlockSize;

@@ -4,9 +4,9 @@
 			{ "dir": "src" }
 		],
 		"includeDirs": [
-			{ "dir": "../mc_imgui/submodules/mc_common/include" },
-			{ "dir": "../mc_imgui/submodules/mc_common/include/uuid_rfc4122", "base": "../mc_imgui/submodules/mc_common/include/" },
-			{ "dir": "../mc_imgui/include" }
+			{ "dir": "../bbserver/submodules/mc_imgui/submodules/mc_common/include" },
+			{ "dir": "../bbserver/submodules/mc_imgui/submodules/mc_common/include/uuid_rfc4122", "base": "../bbserver/submodules/mc_imgui/submodules/mc_common/include/" },
+			{ "dir": "../bbserver/submodules/mc_imgui/include" }
 		]
 	},
 	"output": {

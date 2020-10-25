@@ -10,20 +10,20 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "p4t", "p4t.vcxproj", "{71C1
 		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_imgui_lib", "..\..\mc_imgui\vs\mc_imgui_lib.vcxproj", "{66884295-0814-45D5-8187-0FF01A6C0333}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_imgui_lib", "..\..\bbserver\submodules\mc_imgui\vs\mc_imgui_lib.vcxproj", "{66884295-0814-45D5-8187-0FF01A6C0333}"
 	ProjectSection(ProjectDependencies) = postProject
 		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 		{766B8754-81EE-4880-91CE-5DEAF459205F} = {766B8754-81EE-4880-91CE-5DEAF459205F}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_preproc", "..\..\mc_imgui\submodules\mc_common\vs\mc_common_preproc.vcxproj", "{766B8754-81EE-4880-91CE-5DEAF459205F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_preproc", "..\..\bbserver\submodules\mc_imgui\submodules\mc_common\vs\mc_common_preproc.vcxproj", "{766B8754-81EE-4880-91CE-5DEAF459205F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_lib", "..\..\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.vcxproj", "{383FD59A-3CD9-4ECC-9395-6EE453A114FA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_lib", "..\..\bbserver\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.vcxproj", "{383FD59A-3CD9-4ECC-9395-6EE453A114FA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_lib", "..\..\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj", "{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_lib", "..\..\bbserver\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj", "{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}"
 	ProjectSection(ProjectDependencies) = postProject
 		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 	EndProjectSection

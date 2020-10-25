@@ -15,12 +15,12 @@
     <ProjectGuid>{71C1ADC0-7DA3-4878-A078-0E98DE5947E6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>p4t</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <OutDir>..\bin\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\obj\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
@@ -136,14 +136,14 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <Import Project="..\..\mc_imgui\vs\mc_imgui_lib.props" />
-  <Import Project="..\..\mc_imgui\submodules\mc_common\vs\mc_common_lib.props" />
-  <Import Project="..\..\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.props" />
+  <Import Project="..\..\bbserver\submodules\mc_imgui\vs\mc_imgui_lib.props" />
+  <Import Project="..\..\bbserver\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.props" />
+  <Import Project="..\..\bbserver\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.props" />
   <ItemGroup>
-    <ProjectReference Include="..\..\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj">
+    <ProjectReference Include="..\..\bbserver\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj">
       <Project>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\mc_imgui\vs\mc_imgui_lib.vcxproj">
+    <ProjectReference Include="..\..\bbserver\submodules\mc_imgui\vs\mc_imgui_lib.vcxproj">
       <Project>{66884295-0814-45d5-8187-0ff01a6c0333}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -152,13 +152,13 @@
   </ItemGroup>
   <ItemDefinitionGroup>
     <PreBuildEvent>
-      <Command>..\..\mc_imgui\submodules\mc_common\bin\$(PlatformToolset)\mc_common_preproc\$(Platform)\$(Configuration)\mc_common_preproc.exe -config=..\p4t_preproc.json
-if not exist "$(OutDir)freetype.dll" copy ..\..\mc_imgui\submodules\freetype\win64\freetype.dll "$(OutDir)"</Command>
+      <Command>..\..\bbserver\submodules\mc_imgui\submodules\mc_common\bin\$(PlatformToolset)\mc_common_preproc\$(Platform)\$(Configuration)\mc_common_preproc.exe -config=..\p4t_preproc.json
+if not exist "$(OutDir)freetype.dll" copy ..\..\bbserver\submodules\mc_imgui\submodules\freetype\win64\freetype.dll "$(OutDir)"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\mc_imgui\submodules\freetype\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\bbserver\submodules\mc_imgui\submodules\freetype\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ClCompile>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5045</DisableSpecificWarnings>

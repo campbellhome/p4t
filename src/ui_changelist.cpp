@@ -57,7 +57,7 @@ static void UIChangelist_DrawInformationColumn(sdict_t *cl, float fullWidth, cha
 	ImGui::BeginGroup();
 	for(int i = 0; i < 3; ++i) {
 		ImGui::BeginGroup();
-		ImGui::AlignFirstTextHeightToWidgets();
+		ImGui::AlignTextToFramePadding();
 		ImGui::TextUnformatted(changeFields[i].desc);
 		ImGui::SameLine(width);
 		ImGui::PushItemWidth(fullWidth - width);
@@ -395,7 +395,7 @@ void UIChangelist_DrawInformation(sdict_t *cl)
 		g_config.uiChangelist.descHeight = (ImGui::GetTextLineHeight() * 8.0f + ImGui::GetStyle().FramePadding.y * 2.0f) / scale;
 	}
 
-	ImGui::AlignFirstTextHeightToWidgets();
+	ImGui::AlignTextToFramePadding();
 	ImGui::TextUnformatted("Description:");
 	ImGui::SelectableTextUnformattedMultiline("###desc", sdict_find_safe(cl, "desc"), ImVec2(fullWidth, g_config.uiChangelist.descHeight * scale));
 
@@ -634,7 +634,7 @@ void UIChangelist_EnterChangelist(p4UIChangelist *uicl)
 	sdict_add_raw(&mb.data, "text", "Enter changelist to view:");
 	sdict_add_raw(&mb.data, "inputNumber", va("%u", uicl->config.number));
 	sdict_add_raw(&mb.data, "id", va("%u", uicl->id));
-	mb_queue(mb);
+	mb_queue(mb, NULL);
 }
 
 void UIChangelist_DrawFilesAndHeaders(p4Changelist *cl, uiChangelistFiles *normalFiles, uiChangelistFiles *shelvedFiles, b32 shelvedOpenByDefault, float indent)

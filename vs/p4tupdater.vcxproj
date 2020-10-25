@@ -12,19 +12,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\p4tupdater\p4tupdater.c" />
-    <ClCompile Include="..\..\mc_imgui\submodules\mc_common\src\mc_updater\mc_updater.c" />
+    <ClCompile Include="..\..\bbserver\submodules\mc_imgui\submodules\mc_common\src\mc_updater\mc_updater.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{13F6230A-C408-42B6-9F5E-55E44CFA754D}</ProjectGuid>
     <RootNamespace>p4tupdater</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
     <ProjectName>p4tupdater</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <OutDir>..\bin\$(PlatformToolset)\p4t\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\obj\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
@@ -91,14 +91,14 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <Import Project="..\..\mc_imgui\submodules\mc_common\vs\mc_common_lib.props" />
-  <Import Project="..\..\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.props" />
+  <Import Project="..\..\bbserver\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.props" />
+  <Import Project="..\..\bbserver\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.props" />
   <ItemGroup>
-    <ProjectReference Include="..\..\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj">
+    <ProjectReference Include="..\..\bbserver\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj">
       <Project>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\mc_imgui\submodules\mc_common\include\mc_updater\mc_updater.h" />
+    <ClInclude Include="..\..\bbserver\submodules\mc_imgui\submodules\mc_common\include\mc_updater\mc_updater.h" />
   </ItemGroup>
 </Project>
